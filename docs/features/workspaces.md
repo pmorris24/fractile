@@ -202,7 +202,7 @@ Reopened at a parking spot                                 // ws.stale-parked
     that display, cascaded 24 pt apart, then recalled or adopted like any new window
 
 Displays                                                    // ws.displays
-├── Default: 1-5 main, 6-7 secondary, 8-10 tertiary; monitor = main | secondary | tertiary | UUID | name
+├── Default: 1-4 main, 5-7 secondary, 8-10 tertiary; monitor = main | secondary | tertiary | UUID | name
 ├── Settings › Workspaces offers every connected display as its own picker segment and card:
 │   Main and Secondary with two displays, and past two Main then each display by its own name,
 │   numbered when two share one (Studio Display 1 / Studio Display 2; Display 2/3/4 in the

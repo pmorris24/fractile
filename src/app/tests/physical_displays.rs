@@ -49,7 +49,7 @@ fn menu_bar_keeps_the_order_macos_reports_while_the_lab_is_off() {
     let status = runtime.status(0, &portrait_left());
     assert_eq!(
         shown(&status),
-        [("1".into(), false, None), ("6".into(), false, None)]
+        [("1".into(), false, None), ("5".into(), false, None)]
     );
     let names: Vec<_> = status.menu.iter().map(|d| d.display.as_str()).collect();
     assert_eq!(names, ["DELL U2720Q (1)", "DELL U2720Q (2)"]);
@@ -63,7 +63,7 @@ fn menu_bar_follows_the_physical_order_and_shape_with_the_lab_on() {
     assert_eq!(
         shown(&status),
         [
-            ("6".into(), true, Some("DELL U2720Q (left)".into())),
+            ("5".into(), true, Some("DELL U2720Q (left)".into())),
             ("1".into(), false, Some("DELL U2720Q (right)".into())),
         ]
     );
@@ -84,9 +84,9 @@ fn a_compact_menu_bar_icon_shows_only_the_focused_display() {
         shown(&runtime.status(0, &portrait_left())),
         [("1".into(), false, None)]
     );
-    runtime.record_focused_workspace(WorkspaceId::SIX);
+    runtime.record_focused_workspace(WorkspaceId::FIVE);
     let status = runtime.status(0, &portrait_left());
-    assert_eq!(shown(&status), [("6".into(), false, None)]);
+    assert_eq!(shown(&status), [("5".into(), false, None)]);
     // The menu still lists every display.
     assert_eq!(status.menu.len(), 2);
 }

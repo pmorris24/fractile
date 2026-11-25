@@ -45,7 +45,7 @@ fn two_displays(config: &str, pointer: (i32, i32)) -> WorkspaceRuntime<FakeBacke
     };
     let mut rt = runtime_with_config(backend, Config::parse(config).unwrap());
     bind(&mut rt, WorkspaceId::ONE, &main_tile);
-    bind(&mut rt, WorkspaceId::SIX, &side_tile);
+    bind(&mut rt, WorkspaceId::FIVE, &side_tile);
     rt
 }
 

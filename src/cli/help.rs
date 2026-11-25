@@ -249,7 +249,7 @@ pub(crate) fn workspaces_help(executable: &str) -> String {
         &format!("  {executable} workspaces clear <ws> [--json]"),
         "",
         "Notes:",
-        "  - Workspaces 1-5 default to 'main', 6-7 to 'secondary', 8-10 to 'tertiary'.",
+        "  - Workspaces 1-4 default to 'main', 5-7 to 'secondary', 8-10 to 'tertiary'.",
         "  - 'secondary' and 'tertiary' are the non-main displays, left to right. With two",
         "    displays, 'tertiary' workspaces show on the secondary display.",
         "  - Named workspaces A-Z are opt-in and default to 'main'.",

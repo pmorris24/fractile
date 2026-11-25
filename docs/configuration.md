@@ -591,7 +591,7 @@ each of 128 applications, evicting the least recently changed application.
 
 ## Display Assignments
 
-Defaults assign workspaces 1-5 to `main`, 6-7 to `secondary`, and 8-10 to `tertiary`. `monitor`
+Defaults assign workspaces 1-4 to `main`, 5-7 to `secondary`, and 8-10 to `tertiary`. `monitor`
 accepts:
 
 - `main`, the display macOS marks as main;
@@ -606,7 +606,7 @@ accepts:
 spaceman displays
 ```
 
-A missing `tertiary` falls back to `secondary`, so with two displays workspaces 6-10 all show on
+A missing `tertiary` falls back to `secondary`, so with two displays workspaces 5-10 all show on
 the secondary display. A missing `secondary`, UUID, or name falls back to the main display. Spaceman retains the preferred
 assignment as its own active lane; reconnecting that display makes its assigned active workspace
 visible again.

@@ -118,7 +118,7 @@ impl Default for Workspaces {
             }),
             displays: DisplayMap::new([
                 (DisplaySelector::Main, WorkspaceId::ONE),
-                (DisplaySelector::Secondary, WorkspaceId::SIX),
+                (DisplaySelector::Secondary, WorkspaceId::FIVE),
                 (DisplaySelector::Tertiary, WorkspaceId::EIGHT),
             ]),
             residency: residency::WindowTable::default(),
@@ -258,7 +258,7 @@ impl Workspaces {
     pub fn default_assignment(workspace: WorkspaceId) -> DisplaySelector {
         match workspace.number() {
             Some(number) if number >= 8 => DisplaySelector::Tertiary,
-            Some(number) if number >= 6 => DisplaySelector::Secondary,
+            Some(number) if number >= 5 => DisplaySelector::Secondary,
             _ => DisplaySelector::Main,
         }
     }

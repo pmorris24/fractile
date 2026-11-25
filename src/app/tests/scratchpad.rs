@@ -696,7 +696,7 @@ fn scratchpad_actions_honor_and_track_pending_focus_during_activation_lag() {
         let mut rt = runtime_with_config(backend, lab());
         bind(&mut rt, WorkspaceId::ONE, &w(10));
         bind(&mut rt, WorkspaceId::ONE, &w(20));
-        bind(&mut rt, WorkspaceId::SIX, &w(30));
+        bind(&mut rt, WorkspaceId::FIVE, &w(30));
         rt
     };
     let hidden_ids = |rt: &WorkspaceRuntime<FakeBackend>| {
@@ -731,7 +731,7 @@ fn scratchpad_actions_honor_and_track_pending_focus_during_activation_lag() {
         act(&mut rt, WorkerAction::Scratchpad(ScratchpadCommand::Mark)).unwrap();
         assert_eq!(hidden_ids(&rt), vec![20]);
 
-        // 2. Hide 20, focus right 10 -> 30 on secondary, Toggle summons onto ws 6.
+        // 2. Hide 20, focus right 10 -> 30 on secondary, Toggle summons onto ws 5.
         let mut rt = setup();
         report(&mut rt, 20);
         act(&mut rt, WorkerAction::Scratchpad(ScratchpadCommand::Mark)).unwrap();
@@ -742,7 +742,7 @@ fn scratchpad_actions_honor_and_track_pending_focus_during_activation_lag() {
         act(&mut rt, WorkerAction::Scratchpad(ScratchpadCommand::Toggle)).unwrap();
         assert_eq!(
             pad(&rt).entry(&w(20)).unwrap().shown_on,
-            Some(WorkspaceId::SIX)
+            Some(WorkspaceId::FIVE)
         );
 
         // 3. Summon 20, then Mark tiles 20 instead of hiding 10.

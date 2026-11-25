@@ -79,7 +79,10 @@ fn journal_writes_a_snapshot_then_only_diffs() {
     let Some(JournalEvent::Snapshot { arrangement }) = runtime.backend.journal.last() else {
         panic!("expected a snapshot, got {:?}", runtime.backend.journal);
     };
-    assert_eq!(arrangement.active, vec![WorkspaceId::ONE, WorkspaceId::SIX]);
+    assert_eq!(
+        arrangement.active,
+        vec![WorkspaceId::ONE, WorkspaceId::FIVE]
+    );
     assert_eq!(arrangement.windows.len(), 1);
     assert_eq!(arrangement.windows[0].owner, Some(WorkspaceId::ONE));
     assert_eq!(arrangement.windows[0].role, WindowRole::Tiled);
@@ -104,7 +107,7 @@ fn journal_writes_a_snapshot_then_only_diffs() {
     };
     assert_eq!(
         active.as_deref(),
-        Some([WorkspaceId::new(2).unwrap(), WorkspaceId::SIX].as_slice())
+        Some([WorkspaceId::new(2).unwrap(), WorkspaceId::FIVE].as_slice())
     );
     assert_eq!(changes.len(), 1);
     assert!(changes[0].after.as_ref().is_some_and(|after| after.parked));

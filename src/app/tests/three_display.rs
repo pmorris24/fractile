@@ -90,7 +90,9 @@ fn rig_with(
 layout = 'columns'
 "
     );
+    // Pin 5 (the default secondary lane) too, so 5-8 share one lane on the left display.
     for (n, id) in [
+        (5, "left"),
         (6, "left"),
         (7, "left"),
         (8, "left"),

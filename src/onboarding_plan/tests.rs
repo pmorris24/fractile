@@ -50,8 +50,8 @@ fn single(width: i32, apps: Vec<OpenApp>) -> Inventory {
 fn dual(apps: Vec<OpenApp>) -> Inventory {
     Inventory {
         apps,
-        main: lane(LAPTOP, 1..=5),
-        secondary: Some(lane(WIDE, 6..=10)),
+        main: lane(LAPTOP, 1..=4),
+        secondary: Some(lane(WIDE, 5..=10)),
     }
 }
 
@@ -301,9 +301,9 @@ fn two_displays_keep_web_and_code_on_main_and_the_rest_on_secondary() {
         vec![
             (1, vec!["com.apple.Safari"]),
             (2, vec!["com.apple.Terminal"]),
-            (6, vec!["com.tinyspeck.slackmacgap", "com.apple.mail"]),
-            (7, vec!["com.apple.Notes"]),
-            (8, vec!["com.spotify.client"]),
+            (5, vec!["com.tinyspeck.slackmacgap", "com.apple.mail"]),
+            (6, vec!["com.apple.Notes"]),
+            (7, vec!["com.spotify.client"]),
         ]
     );
     let screens: Vec<_> = plan.workspaces.iter().map(|entry| entry.screen).collect();
@@ -325,7 +325,7 @@ fn two_displays_keep_web_and_code_on_main_and_the_rest_on_secondary() {
             .iter()
             .map(|(number, _)| *number)
             .collect::<Vec<_>>(),
-        vec![1, 2, 6, 7]
+        vec![1, 2, 5, 6]
     );
 
     // A browser's overflow stays on its own display while there is room.

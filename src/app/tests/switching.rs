@@ -89,7 +89,7 @@ fn focusing_a_parked_window_activates_its_workspace() {
     let expected = outputs.main().frame;
     let status = runtime.cycle(outputs, &AtomicBool::new(false)).unwrap();
 
-    assert_eq!(status.active, vec![workspace, WorkspaceId::SIX]);
+    assert_eq!(status.active, vec![workspace, WorkspaceId::FIVE]);
     assert_eq!(runtime.backend.frames[&window], expected);
 }
 
@@ -123,7 +123,7 @@ fn frontmost_app_activates_before_ax_focus_catches_up() {
 
     let status = runtime.cycle(outputs, &AtomicBool::new(false)).unwrap();
 
-    assert_eq!(status.active, vec![target, WorkspaceId::SIX]);
+    assert_eq!(status.active, vec![target, WorkspaceId::FIVE]);
 }
 
 #[test]
@@ -395,7 +395,7 @@ fn the_hud_gives_each_display_its_own_row_and_only_the_switched_one_moves() {
     backend.frames.insert(secondary.clone(), frame(1050));
     let mut runtime = runtime(backend);
     bind(&mut runtime, WorkspaceId::ONE, &main);
-    bind(&mut runtime, WorkspaceId::SIX, &secondary);
+    bind(&mut runtime, WorkspaceId::FIVE, &secondary);
     let cancelled = AtomicBool::new(false);
 
     let target = WorkspaceId::new(7).unwrap();
@@ -432,8 +432,8 @@ fn the_hud_gives_each_display_its_own_row_and_only_the_switched_one_moves() {
             (
                 "secondary-id",
                 Some(target),
-                Some(WorkspaceId::SIX),
-                vec![WorkspaceId::SIX, target]
+                Some(WorkspaceId::FIVE),
+                vec![WorkspaceId::FIVE, target]
             ),
         ]
     );
@@ -530,7 +530,7 @@ fn focusing_an_unmanaged_window_of_a_multi_window_app_does_not_switch_workspaces
 
     let status = runtime.cycle(outputs(), &AtomicBool::new(false)).unwrap();
 
-    assert_eq!(status.active, vec![WorkspaceId::ONE, WorkspaceId::SIX]);
+    assert_eq!(status.active, vec![WorkspaceId::ONE, WorkspaceId::FIVE]);
     assert_eq!(
         runtime.workspaces.workspace_of(&secondary_window),
         Some(WorkspaceId::ONE)
@@ -589,7 +589,7 @@ fn switch_rollback_preserves_original_recovery_frames_and_suppresses_focus_loop(
     // Next cycle does not loop into another focus-follow switch while focus is unchanged.
     runtime.backend.managed_outcome = None;
     let status = runtime.cycle(outputs, &AtomicBool::new(false)).unwrap();
-    assert_eq!(status.active, vec![WorkspaceId::ONE, WorkspaceId::SIX]);
+    assert_eq!(status.active, vec![WorkspaceId::ONE, WorkspaceId::FIVE]);
 }
 
 #[test]
@@ -627,7 +627,7 @@ fn status_menu_lists_each_displays_visible_and_occupied_workspaces() {
             },
             status_item::DisplayWorkspaces {
                 display: "Secondary".into(),
-                workspaces: vec![entry(WorkspaceId::SIX, true, &[])],
+                workspaces: vec![entry(WorkspaceId::FIVE, true, &[])],
             },
         ]
     );
@@ -675,19 +675,19 @@ fn swipes_step_through_the_occupied_workspaces_of_the_display_under_the_pointer(
 
     assert_eq!(
         swipe(&mut runtime, Swipe::Left, main_display),
-        [WorkspaceId::THREE, WorkspaceId::SIX]
+        [WorkspaceId::THREE, WorkspaceId::FIVE]
     );
     assert_eq!(
         swipe(&mut runtime, Swipe::Left, main_display),
-        [WorkspaceId::THREE, WorkspaceId::SIX]
+        [WorkspaceId::THREE, WorkspaceId::FIVE]
     );
     assert_eq!(
         swipe(&mut runtime, Swipe::Left, (1500, 400)),
-        [WorkspaceId::THREE, WorkspaceId::SIX]
+        [WorkspaceId::THREE, WorkspaceId::FIVE]
     );
     assert_eq!(
         swipe(&mut runtime, Swipe::Right, main_display),
-        [WorkspaceId::ONE, WorkspaceId::SIX]
+        [WorkspaceId::ONE, WorkspaceId::FIVE]
     );
 }
 

@@ -146,9 +146,10 @@ impl Board {
             open("com.apple.Notes", 1, WINDOW),
             open("com.apple.calculator", 1, (230, 408)),
         ]);
+        inventory.main.workspaces = numbered(1..=4);
         inventory.secondary = Some(Lane {
             width: 2560,
-            workspaces: numbered(6..=10),
+            workspaces: numbered(5..=10),
         });
         Self::with(inventory)
     }

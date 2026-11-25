@@ -877,7 +877,7 @@ fn rules_rejects_invalid_inputs() {
 fn workspaces_list_assign_and_clear_round_trip() {
     let temp = TempConfig::new("workspaces");
 
-    // Default list has 1..=10 (1-5 main, 6-7 secondary, 8-10 tertiary)
+    // Default list has 1..=10 (1-4 main, 5-7 secondary, 8-10 tertiary)
     let initial: Value = serde_json::from_str(
         temp.run(&["workspaces", "list", "--json"])
             .stdout

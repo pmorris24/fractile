@@ -431,7 +431,7 @@ fn directional_focus_steps_through_a_fullscreen_stack_then_crosses_displays() {
     for window in [&first, &second, &third] {
         bind(&mut runtime, WorkspaceId::ONE, window);
     }
-    bind(&mut runtime, WorkspaceId::SIX, &neighbor);
+    bind(&mut runtime, WorkspaceId::FIVE, &neighbor);
     let cancelled = AtomicBool::new(false);
     runtime
         .toggle_fullscreen_layout(outputs.clone(), &cancelled)
@@ -717,9 +717,9 @@ fn routing_moving_and_unfloating_preserve_fullscreen_layout() {
     let outputs = outputs();
     let secondary_frame = outputs.displays()[1].frame;
     let cancelled = AtomicBool::new(false);
-    // Route `com.example.Routed` directly onto workspace 6 (visible on secondary).
+    // Route `com.example.Routed` directly onto workspace 5 (visible on secondary).
     let config = Config::parse(
-        "version = 1\n[[rules]]\nbundle_id = 'com.example.Routed'\naction = 'route'\nworkspace = 6",
+        "version = 1\n[[rules]]\nbundle_id = 'com.example.Routed'\naction = 'route'\nworkspace = 5",
     )
     .unwrap();
     let mut backend = FakeBackend {
@@ -732,18 +732,18 @@ fn routing_moving_and_unfloating_preserve_fullscreen_layout() {
     backend.frames.insert(moved.clone(), frame(100));
     backend.frames.insert(unfloated.clone(), secondary_frame);
     let mut rt = runtime_with_config(backend, config);
-    bind(&mut rt, WorkspaceId::SIX, &existing);
+    bind(&mut rt, WorkspaceId::FIVE, &existing);
     bind(&mut rt, WorkspaceId::ONE, &moved);
     rt.workspaces.float(
         unfloated.clone(),
-        WorkspaceId::SIX,
+        WorkspaceId::FIVE,
         crate::workspace::FloatCause::Manual,
     );
     rt.workspaces
-        .set_deck(WorkspaceId::SIX, crate::workspace::DeckMode::Monocle);
-    rt.workspaces.remember_focus(WorkspaceId::SIX, &existing);
+        .set_deck(WorkspaceId::FIVE, crate::workspace::DeckMode::Monocle);
+    rt.workspaces.remember_focus(WorkspaceId::FIVE, &existing);
 
-    // 1. Routing a new window from display 1 onto visible Fullscreen Layout workspace 6
+    // 1. Routing a new window from display 1 onto visible Fullscreen Layout workspace 5
     // keeps Monocle, preserves the front tile, and emits the Fullscreen HUD cue.
     rt.backend.observation = Some(crate::NativeObservation {
         cycle: 0,
@@ -808,49 +808,49 @@ fn routing_moving_and_unfloating_preserve_fullscreen_layout() {
         ],
     });
     let status = rt.cycle(outputs.clone(), &cancelled).unwrap();
-    assert!(rt.workspaces.deck(WorkspaceId::SIX).is_monocle());
-    assert_eq!(rt.workspaces.workspace_of(&routed), Some(WorkspaceId::SIX));
+    assert!(rt.workspaces.deck(WorkspaceId::FIVE).is_monocle());
+    assert_eq!(rt.workspaces.workspace_of(&routed), Some(WorkspaceId::FIVE));
     assert_eq!(rt.backend.frames[&routed], secondary_frame);
     assert_eq!(
-        rt.workspaces.preferred_focus(WorkspaceId::SIX),
+        rt.workspaces.preferred_focus(WorkspaceId::FIVE),
         Some(existing.clone())
     );
     let hud = status
         .hud
         .expect("routing to visible Fullscreen workspace cues HUD");
-    assert_eq!(hud.workspace, WorkspaceId::SIX);
+    assert_eq!(hud.workspace, WorkspaceId::FIVE);
     assert_eq!(hud.kind, UiHudKind::Fullscreen { enabled: true });
 
-    // 2. Moving a tiled window onto Fullscreen Layout workspace 6 keeps Monocle.
+    // 2. Moving a tiled window onto Fullscreen Layout workspace 5 keeps Monocle.
     rt.backend.focused = Some(moved.clone());
     rt.backend.frontmost = Some(moved.app.clone());
     let status = rt
-        .move_focused(WorkspaceId::SIX, outputs.clone(), &cancelled)
+        .move_focused(WorkspaceId::FIVE, outputs.clone(), &cancelled)
         .unwrap();
-    assert!(rt.workspaces.deck(WorkspaceId::SIX).is_monocle());
-    assert_eq!(rt.workspaces.workspace_of(&moved), Some(WorkspaceId::SIX));
+    assert!(rt.workspaces.deck(WorkspaceId::FIVE).is_monocle());
+    assert_eq!(rt.workspaces.workspace_of(&moved), Some(WorkspaceId::FIVE));
     assert_eq!(rt.backend.frames[&moved], secondary_frame);
     assert_eq!(status.hud.unwrap().kind, UiHudKind::Moved);
 
-    // 3. Unfloating a window onto Fullscreen Layout workspace 6 keeps Monocle
+    // 3. Unfloating a window onto Fullscreen Layout workspace 5 keeps Monocle
     // and cues the Fullscreen HUD.
     rt.backend.focused = Some(unfloated.clone());
     rt.backend.frontmost = Some(unfloated.app.clone());
     let status = rt.toggle_float(outputs, &cancelled).unwrap();
-    assert!(rt.workspaces.deck(WorkspaceId::SIX).is_monocle());
+    assert!(rt.workspaces.deck(WorkspaceId::FIVE).is_monocle());
     assert_eq!(
         rt.workspaces.workspace_of(&unfloated),
-        Some(WorkspaceId::SIX)
+        Some(WorkspaceId::FIVE)
     );
     assert_eq!(rt.backend.frames[&unfloated], secondary_frame);
     assert_eq!(
-        rt.workspaces.preferred_focus(WorkspaceId::SIX),
+        rt.workspaces.preferred_focus(WorkspaceId::FIVE),
         Some(unfloated)
     );
     let hud = status
         .hud
         .expect("unfloating into Fullscreen workspace cues HUD");
-    assert_eq!(hud.workspace, WorkspaceId::SIX);
+    assert_eq!(hud.workspace, WorkspaceId::FIVE);
     assert_eq!(hud.kind, UiHudKind::Fullscreen { enabled: true });
 }
 

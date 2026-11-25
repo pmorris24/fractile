@@ -35,22 +35,22 @@ fn switch_steps_through_the_occupied_workspaces_of_the_focused_display_and_stops
             .unwrap()
             .active
     };
-    // Empty Workspace 2 is skipped, and the other display keeps showing 6.
+    // Empty Workspace 2 is skipped, and the other display keeps showing 5.
     assert_eq!(
         press(WorkspaceStep::Next),
-        [WorkspaceId::THREE, WorkspaceId::SIX]
+        [WorkspaceId::THREE, WorkspaceId::FIVE]
     );
     assert_eq!(
         press(WorkspaceStep::Next),
-        [WorkspaceId::THREE, WorkspaceId::SIX]
+        [WorkspaceId::THREE, WorkspaceId::FIVE]
     );
     assert_eq!(
         press(WorkspaceStep::Prev),
-        [WorkspaceId::ONE, WorkspaceId::SIX]
+        [WorkspaceId::ONE, WorkspaceId::FIVE]
     );
     assert_eq!(
         press(WorkspaceStep::Prev),
-        [WorkspaceId::ONE, WorkspaceId::SIX]
+        [WorkspaceId::ONE, WorkspaceId::FIVE]
     );
 }
 
@@ -114,7 +114,7 @@ fn workspace_steps_do_nothing_while_the_lab_is_off() {
     );
 }
 
-/// A tile on Workspace 6 and a float on 8, both on the secondary display, which shows 6.
+/// A tile on Workspace 5 and a float on 8, both on the secondary display, which shows 5.
 fn side_display_runtime(focused: bool) -> WorkspaceRuntime<FakeBackend> {
     let tiled = window(20);
     let eight = WorkspaceId::new(8).unwrap();
@@ -126,7 +126,7 @@ fn side_display_runtime(focused: bool) -> WorkspaceRuntime<FakeBackend> {
     backend.frames.insert(tiled.clone(), frame(1050));
     backend.frames.insert(window(21), frame(1100));
     let mut runtime = runtime_with_config(backend, lab());
-    bind(&mut runtime, WorkspaceId::SIX, &tiled);
+    bind(&mut runtime, WorkspaceId::FIVE, &tiled);
     runtime.workspaces.own_floating(window(21), eight);
     runtime
 }
@@ -146,7 +146,7 @@ fn switch_steps_on_the_side_display_that_has_focus() {
     assert_eq!(press(WorkspaceStep::Next), [WorkspaceId::ONE, eight]);
     assert_eq!(
         press(WorkspaceStep::Prev),
-        [WorkspaceId::ONE, WorkspaceId::SIX]
+        [WorkspaceId::ONE, WorkspaceId::FIVE]
     );
 }
 
@@ -154,7 +154,7 @@ fn switch_steps_on_the_side_display_that_has_focus() {
 fn with_no_window_focused_switch_steps_the_display_switched_to_last_and_move_refuses() {
     let eight = WorkspaceId::new(8).unwrap();
     let mut runtime = side_display_runtime(false);
-    runtime.record_focused_workspace(WorkspaceId::SIX);
+    runtime.record_focused_workspace(WorkspaceId::FIVE);
 
     let refused = runtime.move_focused_step(
         WorkspaceStep::Next,
@@ -168,7 +168,7 @@ fn with_no_window_focused_switch_steps_the_display_switched_to_last_and_move_ref
     );
     assert_eq!(
         runtime.workspaces.workspace_of(&window(20)),
-        Some(WorkspaceId::SIX)
+        Some(WorkspaceId::FIVE)
     );
 
     let active = runtime

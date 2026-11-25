@@ -15,7 +15,7 @@ fn fixture(windows: &[(u32, WorkspaceId)]) -> WorkspaceRuntime<FakeBackend> {
     let displays = outputs();
     let cancelled = AtomicBool::new(false);
     rt.layout_workspace(WorkspaceId::ONE, displays.main().frame, &cancelled);
-    rt.layout_workspace(WorkspaceId::SIX, displays.displays()[1].frame, &cancelled);
+    rt.layout_workspace(WorkspaceId::FIVE, displays.displays()[1].frame, &cancelled);
     rt
 }
 
@@ -99,7 +99,7 @@ fn debug_targets_match_the_focus_command() {
     }
 
     // An empty workspace on the focused display, a tile on the display to its right.
-    let mut empty = fixture(&[(12, WorkspaceId::SIX)]);
+    let mut empty = fixture(&[(12, WorkspaceId::FIVE)]);
     empty.record_focused_workspace(WorkspaceId::ONE);
     assert_eq!(
         compare(&mut empty, "empty", Direction::Right),

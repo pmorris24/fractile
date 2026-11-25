@@ -59,8 +59,8 @@ fn new_rig(
     minimum: impl Fn(u32) -> i32,
 ) -> WorkspaceRuntime<FakeBackend> {
     let output = match side {
-        6 => LEFT,
-        9 => RIGHT,
+        5 => LEFT,
+        8 => RIGHT,
         _ => CENTER,
     };
     let initial = crate::Rect {
@@ -88,7 +88,7 @@ fn new_rig(
         ..FakeBackend::default()
     };
     let config = Config::parse(&format!(
-        "version = 1\n[settings]\nlayout = '{layout}'\n[settings.gaps]\ninner = {gap}\n[[workspaces]]\nworkspace = 6\nmonitor = 'left'\n[[workspaces]]\nworkspace = 9\nmonitor = 'right'\n"
+        "version = 1\n[settings]\nlayout = '{layout}'\n[settings.gaps]\ninner = {gap}\n[[workspaces]]\nworkspace = 5\nmonitor = 'left'\n[[workspaces]]\nworkspace = 8\nmonitor = 'right'\n"
     )).unwrap();
     let mut runtime = runtime_with_config(backend, config);
     assert_eq!(command(&mut runtime, WorkerAction::Retile).failed, 0);
@@ -101,7 +101,7 @@ fn new_rig(
 #[test]
 fn research_resize_is_exact_when_a_known_minimum_can_be_preserved() {
     for minimum in [0, 600] {
-        let mut runtime = new_rig("columns", 0, 6, 3, |id| if id == 2 { minimum } else { 0 });
+        let mut runtime = new_rig("columns", 0, 5, 3, |id| if id == 2 { minimum } else { 0 });
         let before = [window(1), window(2), window(3)].map(|w| runtime.backend.frames[&w]);
         assert_eq!(
             command(

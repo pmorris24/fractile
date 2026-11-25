@@ -165,18 +165,18 @@ enum ManagementScope {
 impl ManagementScope {
     fn initial_workspaces(self) -> &'static [WorkspaceId] {
         match self {
-            Self::Both => &[WorkspaceId::ONE, WorkspaceId::SIX, WorkspaceId::EIGHT],
+            Self::Both => &[WorkspaceId::ONE, WorkspaceId::FIVE, WorkspaceId::EIGHT],
             Self::Main => &[WorkspaceId::ONE],
-            Self::Secondary => &[WorkspaceId::SIX],
+            Self::Secondary => &[WorkspaceId::FIVE],
             Self::Tertiary => &[WorkspaceId::EIGHT],
         }
     }
 
     fn automatic_status(self) -> &'static str {
         match self {
-            Self::Both => "Automatic tiling enabled · Workspaces 1 / 6 / 8",
+            Self::Both => "Automatic tiling enabled · Workspaces 1 / 5 / 8",
             Self::Main => "Automatic tiling enabled · Workspace 1",
-            Self::Secondary => "Automatic tiling enabled · Workspace 6",
+            Self::Secondary => "Automatic tiling enabled · Workspace 5",
             Self::Tertiary => "Automatic tiling enabled · Workspace 8",
         }
     }

@@ -199,7 +199,7 @@ fn crossing_onto_the_display_above_still_moves_the_window_there() {
     drag(&mut rt, 10, (360, 1200), &[(360, 10)], (360, -100));
     assert_eq!(
         rt.workspaces.workspace_of(&window(10)),
-        Some(WorkspaceId::SIX)
+        Some(WorkspaceId::FIVE)
     );
     assert_eq!(layout(&rt), [(20, 0, 25, 1440, 2535)]);
 }

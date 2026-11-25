@@ -56,11 +56,11 @@ fn workspace_range_and_default_assignment_match_aerospace() {
         WorkspaceId::named('D').unwrap()
     );
     assert_eq!(
-        Workspaces::default().assignment(WorkspaceId::new(5).unwrap()),
+        Workspaces::default().assignment(WorkspaceId::new(4).unwrap()),
         &DisplaySelector::Main
     );
     assert_eq!(
-        Workspaces::default().assignment(WorkspaceId::new(6).unwrap()),
+        Workspaces::default().assignment(WorkspaceId::new(5).unwrap()),
         &DisplaySelector::Secondary
     );
     assert!(!Workspaces::default().is_enabled(WorkspaceId::named('D').unwrap()));
@@ -70,12 +70,12 @@ fn workspace_range_and_default_assignment_match_aerospace() {
     );
 }
 
-/// 1-5 on the main display, 6-7 on the secondary, 8-10 on the tertiary.
+/// 1-4 on the main display, 5-7 on the secondary, 8-10 on the tertiary.
 #[test]
 fn default_assignment_splits_numbered_workspaces_across_three_displays() {
     let expected = [
-        (5, DisplaySelector::Main),
-        (6, DisplaySelector::Secondary),
+        (4, DisplaySelector::Main),
+        (5, DisplaySelector::Secondary),
         (7, DisplaySelector::Secondary),
         (8, DisplaySelector::Tertiary),
         (10, DisplaySelector::Tertiary),
@@ -117,7 +117,7 @@ fn switching_one_display_preserves_the_other() {
     );
     assert_eq!(
         workspaces.active_for(&DisplaySelector::Secondary),
-        Some(WorkspaceId::SIX)
+        Some(WorkspaceId::FIVE)
     );
 }
 
@@ -132,7 +132,7 @@ fn switching_to_a_named_workspace_preserves_the_other_display() {
     assert_eq!(workspaces.active_for(&DisplaySelector::Main), Some(named));
     assert_eq!(
         workspaces.active_for(&DisplaySelector::Secondary),
-        Some(WorkspaceId::SIX)
+        Some(WorkspaceId::FIVE)
     );
 }
 
@@ -163,7 +163,7 @@ fn per_display_previous_history_is_independent_for_moves() {
     );
     assert_eq!(
         workspaces.previous_for(&DisplaySelector::Secondary),
-        Some(WorkspaceId::SIX)
+        Some(WorkspaceId::FIVE)
     );
     workspaces.switch(WorkspaceId::ONE);
     assert_eq!(
@@ -172,7 +172,7 @@ fn per_display_previous_history_is_independent_for_moves() {
     );
     assert_eq!(
         workspaces.previous_for(&DisplaySelector::Secondary),
-        Some(WorkspaceId::SIX)
+        Some(WorkspaceId::FIVE)
     );
 }
 
@@ -532,7 +532,7 @@ fn preferred_monitor_creates_an_independent_active_lane() {
     );
     assert_eq!(
         workspaces.active_for(&DisplaySelector::Secondary),
-        Some(WorkspaceId::SIX)
+        Some(WorkspaceId::FIVE)
     );
     assert_eq!(
         workspaces.active_for(&DisplaySelector::Preferred("third-id".into())),
@@ -595,7 +595,7 @@ fn move_to_display_activates_on_target_and_promotes_source_previous() {
     );
     assert_eq!(
         workspaces.previous_for(&DisplaySelector::Secondary),
-        Some(WorkspaceId::SIX)
+        Some(WorkspaceId::FIVE)
     );
     assert_eq!(
         workspaces.active_for(&DisplaySelector::Main),

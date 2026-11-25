@@ -305,13 +305,13 @@ fn the_setup_inventory_carries_no_titles_and_counts_parked_windows() {
     assert_eq!(fresh.main.width, 1000);
     assert_eq!(
         fresh.main.workspaces,
-        (1..=5)
+        (1..=4)
             .map(|number| WorkspaceId::new(number).unwrap())
             .collect::<Vec<_>>()
     );
     assert_eq!(
         fresh.secondary.as_ref().map(|lane| lane.workspaces.len()),
-        Some(5)
+        Some(6)
     );
     let text = format!("{fresh:?}");
     assert!(!text.contains(TITLE) && !text.contains("title"));
@@ -334,7 +334,7 @@ fn the_setup_inventory_carries_no_titles_and_counts_parked_windows() {
     runtime.backend.observation = None;
     let unreadable = runtime.inventory(&outputs());
     assert!(unreadable.apps.is_empty());
-    assert_eq!(unreadable.main.workspaces.len(), 5);
+    assert_eq!(unreadable.main.workspaces.len(), 4);
 }
 
 #[test]

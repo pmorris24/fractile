@@ -59,8 +59,8 @@ fn new_rig(
     minimum: impl Fn(u32) -> i32,
 ) -> WorkspaceRuntime<FakeBackend> {
     let output = match side {
-        6 => LEFT,
-        9 => RIGHT,
+        5 => LEFT,
+        8 => RIGHT,
         _ => CENTER,
     };
     let initial = crate::Rect {
@@ -88,7 +88,7 @@ fn new_rig(
         ..FakeBackend::default()
     };
     let config = Config::parse(&format!(
-        "version = 1\n[settings]\nlayout = '{layout}'\n[settings.gaps]\ninner = {gap}\n[[workspaces]]\nworkspace = 6\nmonitor = 'left'\n[[workspaces]]\nworkspace = 9\nmonitor = 'right'\n"
+        "version = 1\n[settings]\nlayout = '{layout}'\n[settings.gaps]\ninner = {gap}\n[[workspaces]]\nworkspace = 5\nmonitor = 'left'\n[[workspaces]]\nworkspace = 8\nmonitor = 'right'\n"
     )).unwrap();
     let mut runtime = runtime_with_config(backend, config);
     assert_eq!(command(&mut runtime, WorkerAction::Retile).failed, 0);
@@ -102,7 +102,7 @@ fn new_rig(
 fn research_keyboard_resize_keeps_known_minimums_in_temporary_stack() {
     let mut escaped = false;
     for minimum in [0, 600] {
-        let mut runtime = new_rig("columns", 10, 6, 3, |_| minimum);
+        let mut runtime = new_rig("columns", 10, 5, 3, |_| minimum);
         let requested = runtime.workspaces.state();
         let widths = |runtime: &WorkspaceRuntime<FakeBackend>| {
             [window(1), window(2), window(3)].map(|w| runtime.backend.frames[&w])

@@ -445,13 +445,13 @@ fn moving_a_floating_window_dragged_to_a_third_display_restores_it_on_the_target
         rt.cycle(three_outputs(), &cancelled).unwrap();
         assert_eq!(
             rt.workspaces.floating_workspace_of(&id),
-            Some(WorkspaceId::SIX)
+            Some(WorkspaceId::FIVE)
         );
         rt.backend.frames.insert(id.clone(), frame(x));
         rt.cycle(three_outputs(), &cancelled).unwrap();
         assert_eq!(
             rt.workspaces.floating_workspace_of(&id),
-            Some(WorkspaceId::SIX)
+            Some(WorkspaceId::FIVE)
         );
         assert_eq!(rt.backend.frames[&id], frame(x));
         (rt, id)

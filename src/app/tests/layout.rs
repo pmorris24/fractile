@@ -105,7 +105,7 @@ fn focus_navigation_crosses_to_the_adjacent_display() {
     backend.frames.insert(secondary.clone(), frame(1050));
     let mut runtime = runtime(backend);
     bind(&mut runtime, WorkspaceId::ONE, &main);
-    bind(&mut runtime, WorkspaceId::SIX, &secondary);
+    bind(&mut runtime, WorkspaceId::FIVE, &secondary);
 
     runtime
         .focus_relative(Direction::Right, outputs(), &AtomicBool::new(false))
@@ -343,7 +343,7 @@ fn reorder_moves_to_the_adjacent_display_at_a_tile_boundary() {
     backend.frames.insert(secondary.clone(), frame(1050));
     let mut runtime = runtime(backend);
     bind(&mut runtime, WorkspaceId::ONE, &moving);
-    bind(&mut runtime, WorkspaceId::SIX, &secondary);
+    bind(&mut runtime, WorkspaceId::FIVE, &secondary);
 
     runtime
         .reorder_focused(Direction::Right, outputs(), &AtomicBool::new(false))
@@ -351,7 +351,7 @@ fn reorder_moves_to_the_adjacent_display_at_a_tile_boundary() {
 
     assert_eq!(
         runtime.workspaces.workspace_of(&moving),
-        Some(WorkspaceId::SIX)
+        Some(WorkspaceId::FIVE)
     );
     assert_eq!(runtime.backend.focused, Some(moving));
 }
@@ -466,7 +466,7 @@ fn reorder_moves_to_an_empty_workspace_on_the_adjacent_display() {
     backend.frames.insert(moving.clone(), frame(50));
     let mut runtime = runtime(backend);
     bind(&mut runtime, WorkspaceId::ONE, &moving);
-    assert!(runtime.workspaces.windows(WorkspaceId::SIX).is_empty());
+    assert!(runtime.workspaces.windows(WorkspaceId::FIVE).is_empty());
 
     runtime
         .reorder_focused(Direction::Right, outputs(), &AtomicBool::new(false))
@@ -474,9 +474,9 @@ fn reorder_moves_to_an_empty_workspace_on_the_adjacent_display() {
 
     assert_eq!(
         runtime.workspaces.workspace_of(&moving),
-        Some(WorkspaceId::SIX)
+        Some(WorkspaceId::FIVE)
     );
-    assert!(runtime.is_visible(WorkspaceId::SIX, &outputs()));
+    assert!(runtime.is_visible(WorkspaceId::FIVE, &outputs()));
     assert_eq!(runtime.backend.focused, Some(moving.clone()));
 
     // Nothing lies further right: the key does nothing.
@@ -485,6 +485,6 @@ fn reorder_moves_to_an_empty_workspace_on_the_adjacent_display() {
         .unwrap();
     assert_eq!(
         runtime.workspaces.workspace_of(&moving),
-        Some(WorkspaceId::SIX)
+        Some(WorkspaceId::FIVE)
     );
 }

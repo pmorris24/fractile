@@ -170,9 +170,9 @@ fn detached_tab_tiles_on_a_target_visible_on_another_display() {
         Config::default(),
     );
 
-    move_tab(&mut rt, WorkspaceId::SIX, false).unwrap();
+    move_tab(&mut rt, WorkspaceId::FIVE, false).unwrap();
 
-    assert_eq!(rt.workspaces.workspace_of(&tab), Some(WorkspaceId::SIX));
+    assert_eq!(rt.workspaces.workspace_of(&tab), Some(WorkspaceId::FIVE));
     assert!(!rt.parked.contains_key(&tab));
     let tab_frame = rt.backend.frames[&tab];
     assert!(

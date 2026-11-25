@@ -146,13 +146,13 @@ fn scratchpad_mark_keeps_current_workspace() {
         act(&mut rt, WorkerAction::Scratchpad(Mark));
         focus(&mut rt, &id(61));
         act(&mut rt, WorkerAction::Scratchpad(Toggle));
-        assert_eq!(rt.workspaces.floating_workspace_of(&marked), Some(ws(6)));
+        assert_eq!(rt.workspaces.floating_workspace_of(&marked), Some(ws(5)));
         assert_eq!(rt.backend.focused.as_ref(), Some(&marked));
         act(&mut rt, WorkerAction::Scratchpad(Mark));
         assert!(!rt.workspaces.scratchpad().contains(&marked));
         assert_eq!(
             rt.workspaces.workspace_of(&marked),
-            Some(ws(6)),
+            Some(ws(5)),
             "route={routed}"
         );
         assert!(

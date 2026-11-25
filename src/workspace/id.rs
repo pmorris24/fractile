@@ -12,6 +12,7 @@ impl WorkspaceId {
     pub const TWO: Self = Self(2);
     pub const THREE: Self = Self(3);
     pub const FOUR: Self = Self(4);
+    pub const FIVE: Self = Self(5);
     pub const SIX: Self = Self(6);
     pub const EIGHT: Self = Self(8);
 

@@ -4,7 +4,7 @@ use super::*;
 fn move_workspace_to_occupied_display_promotes_source_previous_and_parks_displaced() {
     let w1 = window(10);
     let w3 = window(20);
-    let w6 = window(30);
+    let w5 = window(30);
     let w3_normal = frame(100);
     let mut backend = FakeBackend {
         focused: Some(w1.clone()),
@@ -14,11 +14,11 @@ fn move_workspace_to_occupied_display_promotes_source_previous_and_parks_displac
     backend
         .frames
         .insert(w3.clone(), main_parked_frame(w3_normal));
-    backend.frames.insert(w6.clone(), frame(1050));
+    backend.frames.insert(w5.clone(), frame(1050));
     let mut runtime = runtime_with_parked(backend, [(w3.clone(), w3_normal)]);
     bind(&mut runtime, WorkspaceId::ONE, &w1);
     bind(&mut runtime, WorkspaceId::THREE, &w3);
-    bind(&mut runtime, WorkspaceId::SIX, &w6);
+    bind(&mut runtime, WorkspaceId::FIVE, &w5);
     // Record workspace 3 as Main's previous workspace while workspace 1 stays active.
     runtime.workspaces.switch(WorkspaceId::THREE);
     runtime.workspaces.switch(WorkspaceId::ONE);
@@ -38,7 +38,7 @@ fn move_workspace_to_occupied_display_promotes_source_previous_and_parks_displac
     );
     assert_eq!(
         runtime.workspaces.previous_for(&DisplaySelector::Secondary),
-        Some(WorkspaceId::SIX)
+        Some(WorkspaceId::FIVE)
     );
     assert_eq!(
         runtime.workspaces.active_for(&DisplaySelector::Main),
@@ -50,7 +50,7 @@ fn move_workspace_to_occupied_display_promotes_source_previous_and_parks_displac
         outputs().secondary().unwrap().frame
     );
     assert_eq!(runtime.backend.frames[&w3], outputs().main().frame);
-    assert!(runtime.parked.contains_key(&w6));
+    assert!(runtime.parked.contains_key(&w5));
     assert!(!runtime.parked.contains_key(&w3));
     assert_eq!(
         runtime.backend.persisted_monitors,
@@ -64,23 +64,23 @@ fn move_workspace_to_occupied_display_promotes_source_previous_and_parks_displac
         pos(&|c| matches!(c, BackendCall::SetPosition(w, f) if w == &w3 && f == &w3_normal));
     let layout_source = pos(&|c| matches!(c, BackendCall::Apply(w, _) if w == &w3));
     let layout_moved = pos(&|c| matches!(c, BackendCall::Apply(w, _) if w == &w1));
-    let park_displaced = pos(&|c| matches!(c, BackendCall::SetPosition(w, _) if w == &w6));
+    let park_displaced = pos(&|c| matches!(c, BackendCall::SetPosition(w, _) if w == &w5));
     assert!(
         reveal_source < layout_source
             && layout_source < layout_moved
             && layout_moved < park_displaced
     );
 
-    // HUD reflects both displays, with Secondary sliding from displaced workspace 6.
+    // HUD reflects both displays, with Secondary sliding from displaced workspace 5.
     let hud = status.hud.unwrap();
     assert_eq!(hud.workspace, WorkspaceId::ONE);
     assert_eq!(hud.displays.len(), 2);
     assert_eq!(hud.displays[0].visible, Some(WorkspaceId::THREE));
     assert_eq!(hud.displays[1].visible, Some(WorkspaceId::ONE));
-    assert_eq!(hud.displays[1].from, Some(WorkspaceId::SIX));
+    assert_eq!(hud.displays[1].from, Some(WorkspaceId::FIVE));
 
     // Option+Tab focuses the workspace focused before workspace 1 (workspace 3
-    // on Main) instead of hiding the moved workspace behind displaced 6.
+    // on Main) instead of hiding the moved workspace behind displaced 5.
     runtime
         .workspace_back_and_forth(outputs(), &cancelled)
         .unwrap();
@@ -93,7 +93,7 @@ fn move_workspace_to_occupied_display_promotes_source_previous_and_parks_displac
         runtime.workspaces.active_for(&DisplaySelector::Secondary),
         Some(WorkspaceId::ONE)
     );
-    assert!(runtime.parked.contains_key(&w6));
+    assert!(runtime.parked.contains_key(&w5));
     assert!(!runtime.parked.contains_key(&w1));
 
     // A second press bounces back to the moved workspace on Secondary.
@@ -217,7 +217,7 @@ fn move_workspace_to_empty_display_and_three_display_wrap_around() {
     let cancelled = AtomicBool::new(false);
     let three = three_outputs();
 
-    // Main -> Secondary (empty workspace 6 displaced).
+    // Main -> Secondary (empty workspace 5 displaced).
     runtime
         .move_workspace_to_display(DisplayTarget::Next, three.clone(), &cancelled)
         .unwrap();
@@ -422,7 +422,7 @@ fn move_workspace_replaces_unplugged_assignment_and_rolls_back_on_error() {
     assert_eq!(runtime.backend.frames[&w1], outputs().main().frame);
 
     // Part 2: config save failure rolls back both displays completely.
-    let w6 = window(30);
+    let w5 = window(30);
     let w2 = window(40);
     let w2_normal = frame(80);
     let mut backend = FakeBackend {
@@ -436,11 +436,11 @@ fn move_workspace_replaces_unplugged_assignment_and_rolls_back_on_error() {
         .insert(w2.clone(), main_parked_frame(w2_normal));
     backend
         .frames
-        .insert(w6.clone(), outputs().secondary().unwrap().frame);
+        .insert(w5.clone(), outputs().secondary().unwrap().frame);
     let mut runtime = runtime_with_parked(backend, [(w2.clone(), w2_normal)]);
     bind(&mut runtime, WorkspaceId::ONE, &w1);
     bind(&mut runtime, WorkspaceId::TWO, &w2);
-    bind(&mut runtime, WorkspaceId::SIX, &w6);
+    bind(&mut runtime, WorkspaceId::FIVE, &w5);
 
     assert!(
         runtime
@@ -457,14 +457,14 @@ fn move_workspace_replaces_unplugged_assignment_and_rolls_back_on_error() {
     );
     assert_eq!(
         runtime.workspaces.active_for(&DisplaySelector::Secondary),
-        Some(WorkspaceId::SIX)
+        Some(WorkspaceId::FIVE)
     );
     assert_eq!(runtime.backend.frames[&w1], outputs().main().frame);
     assert_eq!(
-        runtime.backend.frames[&w6],
+        runtime.backend.frames[&w5],
         outputs().secondary().unwrap().frame
     );
-    assert!(!runtime.parked.contains_key(&w6));
+    assert!(!runtime.parked.contains_key(&w5));
     assert_eq!(runtime.parked.get(&w2), Some(&w2_normal));
 }
 

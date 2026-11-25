@@ -15,8 +15,8 @@ the evidence is unambiguous.
 Spaceman currently:
 
 - starts automatic tiling when Accessibility permission and its global hotkeys are available;
-- provides ten default numbered workspaces plus opt-in named workspaces A-Z, with 1-5 on the main
-  display, 6-7 on the secondary display and 8-10 on the tertiary display by default (with two
+- provides ten default numbered workspaces plus opt-in named workspaces A-Z, with 1-4 on the main
+  display, 5-7 on the secondary display and 8-10 on the tertiary display by default (with two
   displays, 8-10 share the secondary display);
 - assigns workspaces to `main`, `secondary`, `tertiary`, a display UUID, or an exact display name,
   falling back to the main display when a preferred display disconnects;

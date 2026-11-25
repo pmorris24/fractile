@@ -188,7 +188,7 @@ fn control_drop_on_other_display_without_previews() {
     drag(&mut rt, 30, &[], (-700, 1300));
     assert_eq!(
         rt.workspaces.workspace_of(&window(30)),
-        Some(WorkspaceId::SIX)
+        Some(WorkspaceId::FIVE)
     );
     assert_eq!(
         layout(&rt),
@@ -203,7 +203,7 @@ fn control_slow_drag_to_other_display() {
     drag(&mut rt, 30, &path, (-700, 1300));
     assert_eq!(
         rt.workspaces.workspace_of(&window(30)),
-        Some(WorkspaceId::SIX)
+        Some(WorkspaceId::FIVE)
     );
     assert_eq!(
         layout(&rt),
@@ -225,7 +225,7 @@ fn drop_on_other_display_after_a_preview_over_a_sibling() {
     drag(&mut rt, 30, &[(640, 735)], (-700, 1300));
     assert_eq!(
         rt.workspaces.workspace_of(&window(30)),
-        Some(WorkspaceId::SIX)
+        Some(WorkspaceId::FIVE)
     );
     assert_eq!(
         layout(&rt),
@@ -530,7 +530,7 @@ outer = 24
     drag_tracked(&mut rt, 10, (1280, 100), &[(4, 100)], (-1, 100));
     assert_eq!(
         rt.workspaces.workspace_of(&window(10)),
-        Some(WorkspaceId::SIX)
+        Some(WorkspaceId::FIVE)
     );
 }
 

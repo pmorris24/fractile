@@ -21,7 +21,7 @@ Your workspaces                                                      // tour.arr
 ├── Suggestion: Web 1, Code/Terminal 2, Chat/Mail 3, Docs/Notes/Design 4, Media 5
 │   ├── At most 2 tiles a workspace on a display <= 1728 pt wide, 3 on a wider one
 │   ├── An app with many windows is split evenly over workspaces (4 browser windows -> 2 + 2)
-│   ├── Two displays: Web and Code on the main (1-2), Chat and Docs on the second (6-7)
+│   ├── Two displays: Web and Code on the main (1-2), Chat and Docs on the second (5-6)
 │   └── Unknown app -> its LSApplicationCategoryType, else the Docs workspace
 ├── Click an icon -> next workspace; drag it -> any other card, or the Floating line
 ├── "Floating: Calculator · Stickies" only when such utilities are open; press a name to tile it

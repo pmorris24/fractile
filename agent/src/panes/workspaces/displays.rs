@@ -6,8 +6,11 @@ use spaceman::macos::DisplayOutputs;
 
 /// The built-in selector for the display macOS marks as main.
 pub(crate) const MAIN: &str = "main";
-/// The built-in selector for the first non-main display.
+/// The built-in selector for the leftmost non-main display.
 pub(crate) const SECONDARY: &str = "secondary";
+/// The built-in selector for the next non-main display. With no such display it falls back to
+/// Secondary, as `DisplayOutputs::resolve` does.
+pub(crate) const TERTIARY: &str = "tertiary";
 /// The longest display name a picker segment shows. A longer one ("Built-in Retina Display")
 /// gets its position in the segment and keeps its name in its card's heading.
 const SEGMENT_NAME_MAX: usize = 16;
@@ -97,6 +100,10 @@ pub(crate) fn index_of(choices: &[Choice], selector: &str) -> Option<usize> {
     {
         return Some(index);
     }
+    if selector == TERTIARY {
+        // No third display: tertiary workspaces show on Secondary.
+        return index_of(choices, SECONDARY);
+    }
     choices
         .iter()
         .enumerate()
@@ -133,16 +140,19 @@ pub(crate) fn choices(displays: &[ConnectedDisplay]) -> Vec<Choice> {
     choices[1].discovery = secondary.and_then(discovery);
     choices[0].caption = match &main {
         Some(display) if !display.name.is_empty() => {
-            format!("{} · Default for 1–5", display.name)
+            format!("{} · Default for 1–4", display.name)
         }
-        _ => "Default for 1–5".to_owned(),
+        _ => "Default for 1–4".to_owned(),
     };
+    // Secondary also hosts 8–10 until a tertiary display is plugged in.
+    let has_tertiary = ordered.iter().any(|display| display.selector == TERTIARY);
+    let secondary_range = if has_tertiary { "5–7" } else { "5–10" };
     choices[1].caption = match &secondary {
         Some(display) if !display.name.is_empty() => {
-            format!("{} · Default for 6–10", display.name)
+            format!("{} · Default for {secondary_range}", display.name)
         }
-        Some(_) => "Default for 6–10".to_owned(),
-        None => "Default for 6–10 · main when unplugged".to_owned(),
+        Some(_) => format!("Default for {secondary_range}"),
+        None => format!("Default for {secondary_range} · main when unplugged"),
     };
     let extras: Vec<&ConnectedDisplay> = ordered
         .iter()
@@ -158,7 +168,11 @@ pub(crate) fn choices(displays: &[ConnectedDisplay]) -> Vec<Choice> {
             title: title.clone(),
             note: title,
             label,
-            caption: format!("Display {position}"),
+            caption: if display.selector == TERTIARY {
+                format!("Display {position} · Default for 8–10")
+            } else {
+                format!("Display {position}")
+            },
             id: Some(display.id.clone()),
             name: Some(display.name.clone()),
             connected: true,
@@ -176,7 +190,7 @@ pub(crate) fn choices(displays: &[ConnectedDisplay]) -> Vec<Choice> {
         let label = extra_label(2, &title, ordered.len());
         // A numbered segment is found by its number, so the card says the number too.
         let role = if label == title { "Secondary" } else { &label };
-        choices[1].caption = format!("{role} · Default for 6–10");
+        choices[1].caption = format!("{role} · Default for {secondary_range}");
         choices[1].label = label;
         choices[1].note = title.clone();
         choices[1].title = title;
@@ -296,7 +310,7 @@ pub(crate) fn fixture_three() -> Vec<ConnectedDisplay> {
         pair[0].clone(),
         pair[1].clone(),
         ConnectedDisplay {
-            selector: THIRD_FIXTURE_ID.to_owned(),
+            selector: TERTIARY.to_owned(),
             id: THIRD_FIXTURE_ID.to_owned(),
             name: "Studio Display".to_owned(),
             frame: Rect {

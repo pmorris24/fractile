@@ -19,7 +19,7 @@ use crate::{
     view::scroll_body,
 };
 
-use displays::{Choice, MAIN, SECONDARY};
+use displays::{Choice, MAIN, SECONDARY, TERTIARY};
 
 /// How often the pane reads the connected displays while it is on screen, in seconds.
 const DISPLAY_REFRESH_SECONDS: f64 = 1.0;
@@ -30,13 +30,14 @@ const UNPLUGGED: &str = "Not connected";
 /// Built-in default display for `workspace` when `config.toml` sets no explicit `monitor`.
 const fn default_monitor(workspace: WorkspaceId) -> &'static str {
     match workspace.number() {
-        Some(n) if n >= 6 => SECONDARY,
+        Some(n) if n >= 8 => TERTIARY,
+        Some(n) if n >= 5 => SECONDARY,
         _ => MAIN,
     }
 }
 
 /// Which display `workspace` currently targets: explicit override from `config.toml`, or its
-/// built-in default (1–5 and named workspaces on Main, 6–10 on Secondary).
+/// built-in default (1–4 and named workspaces on Main, 5–7 on Secondary, 8–10 on Tertiary).
 fn effective_monitor(doc: &Doc, workspace: WorkspaceId) -> String {
     doc.monitor(workspace)
         .unwrap_or_else(|| default_monitor(workspace).to_owned())
@@ -172,8 +173,8 @@ fn override_for(workspace: WorkspaceId, chosen: &str) -> Option<String> {
 
 /// The row's muted caption: the display the row differs from, named as its card and picker do,
 /// or the fallback note for an unplugged one. An unplugged preferred display always falls back to
-/// Main in `DisplayInventory::resolve`, even for workspaces 6–10 whose built-in default is
-/// Secondary.
+/// Main in `DisplayInventory::resolve`, even for workspaces 5–10 whose built-in default is
+/// Secondary or Tertiary.
 ///
 /// `effective` is the row's saved `monitor` text, which may be a UUID or a name, so both it and
 /// the built-in default resolve to displays first: a workspace saved by the Secondary display's
@@ -189,7 +190,9 @@ fn row_description(choices: &[Choice], workspace: WorkspaceId, effective: &str) 
     }
     let name = built_in.map_or_else(
         || {
-            if default == SECONDARY {
+            if default == TERTIARY {
+                "Tertiary"
+            } else if default == SECONDARY {
                 "Secondary"
             } else {
                 "Main"
@@ -266,12 +269,17 @@ mod tests {
     #[test]
     fn workspace_monitor_defaults_split_main_and_secondary() {
         let doc = Doc::parse("version = 1\n");
-        for number in 1..=5 {
+        for number in 1..=4 {
             let ws = WorkspaceId::new(number).unwrap();
             assert_eq!(default_monitor(ws), MAIN);
             assert_eq!(effective_monitor(&doc, ws), MAIN);
         }
-        for number in 6..=10 {
+        for number in 8..=10 {
+            let ws = WorkspaceId::new(number).unwrap();
+            assert_eq!(default_monitor(ws), TERTIARY);
+            assert_eq!(effective_monitor(&doc, ws), TERTIARY);
+        }
+        for number in 5..=7 {
             let ws = WorkspaceId::new(number).unwrap();
             assert_eq!(default_monitor(ws), SECONDARY);
             assert_eq!(effective_monitor(&doc, ws), SECONDARY);
@@ -311,9 +319,10 @@ mod tests {
         // The section captions name the actual displays.
         assert_eq!(
             choices[0].caption,
-            "Built-in Retina Display · Default for 1–5"
+            "Built-in Retina Display · Default for 1–4"
         );
-        assert_eq!(choices[1].caption, "Studio Display · Default for 6–10");
+        // With two displays, Secondary also hosts the tertiary workspaces.
+        assert_eq!(choices[1].caption, "Studio Display · Default for 5–10");
     }
 
     #[test]
@@ -324,7 +333,7 @@ mod tests {
                 .iter()
                 .map(|choice| choice.selector.as_str())
                 .collect::<Vec<_>>(),
-            [MAIN, SECONDARY, THIRD_FIXTURE_ID]
+            [MAIN, SECONDARY, TERTIARY]
         );
         // Two identically named external monitors are told apart by their own names.
         assert_eq!(
@@ -337,21 +346,21 @@ mod tests {
         );
         assert_eq!(picker(&choices, THIRD_FIXTURE_ID).1, 2);
         assert_eq!(choices[1].title, "Studio Display 1");
-        assert_eq!(choices[1].caption, "Secondary · Default for 6–10");
+        assert_eq!(choices[1].caption, "Secondary · Default for 5–7");
         assert_eq!(choices[2].title, "Studio Display 2");
-        assert_eq!(choices[2].caption, "Display 3");
+        assert_eq!(choices[2].caption, "Display 3 · Default for 8–10");
 
-        // Selecting the third display writes its UUID, exactly as Option+Shift+Tab does.
+        // Selecting the third display writes `tertiary`, exactly as Option+Shift+Tab does.
         let mut doc = Doc::parse("version = 1\n");
-        let chosen = choose(&choices, 2, WorkspaceId::new(9).unwrap());
-        doc.set_monitor(WorkspaceId::new(9).unwrap(), chosen.as_deref());
+        let chosen = choose(&choices, 2, WorkspaceId::new(6).unwrap());
+        doc.set_monitor(WorkspaceId::new(6).unwrap(), chosen.as_deref());
         assert_eq!(
-            doc.monitor(WorkspaceId::new(9).unwrap()).as_deref(),
-            Some(THIRD_FIXTURE_ID)
+            doc.monitor(WorkspaceId::new(6).unwrap()).as_deref(),
+            Some(TERTIARY)
         );
-        // Rendering that saved UUID resolves it back to the display's friendly name.
-        let saved = effective_monitor(&doc, WorkspaceId::new(9).unwrap());
-        assert_eq!(saved, THIRD_FIXTURE_ID);
+        // Rendering that saved selector resolves it back to the display's friendly name.
+        let saved = effective_monitor(&doc, WorkspaceId::new(6).unwrap());
+        assert_eq!(saved, TERTIARY);
         assert_eq!(index_of(&choices, &saved), Some(2));
         assert_eq!(picker(&choices, &saved).0[2], "Studio Display 2");
     }
@@ -386,7 +395,7 @@ mod tests {
         // A row's note names the display it differs from by its card, not its numbered segment.
         assert_eq!(
             row_description(&choices, WorkspaceId::new(9).unwrap(), MAIN).as_deref(),
-            Some("Default: Studio Display 1")
+            Some("Default: Studio Display 2")
         );
     }
 
@@ -426,10 +435,10 @@ mod tests {
         let displays = fixture_three();
         let choices = choices(&displays);
         let six = WorkspaceId::new(6).unwrap();
-        let nine = WorkspaceId::new(9).unwrap();
+        let seven = WorkspaceId::new(7).unwrap();
         let mut doc = Doc::parse("version = 1\n");
         doc.set_monitor(six, Some(displays[1].id.as_str()));
-        doc.set_monitor(nine, Some(THIRD_FIXTURE_ID));
+        doc.set_monitor(seven, Some(THIRD_FIXTURE_ID));
 
         // Row 6 sits in the Secondary card and picks it: the UUID resolves to that display, so
         // the row says no default it already is.
@@ -439,16 +448,16 @@ mod tests {
         assert_eq!(labels[selected], "Studio Display 1");
         assert_eq!(row_description(&choices, six, &saved), None);
         assert_eq!(
-            sections(&doc, &choices, vec![six, nine])[1].workspaces,
+            sections(&doc, &choices, vec![six, seven])[1].workspaces,
             [six]
         );
 
-        // Row 9 on the third display keeps its note, which names the display that differs.
-        let saved = effective_monitor(&doc, nine);
+        // Row 7 on the third display keeps its note, which names the display that differs.
+        let saved = effective_monitor(&doc, seven);
         let (labels, selected) = picker(&choices, &saved);
         assert_eq!(labels[selected], "Studio Display 2");
         assert_eq!(
-            row_description(&choices, nine, &saved).as_deref(),
+            row_description(&choices, seven, &saved).as_deref(),
             Some("Default: Studio Display 1")
         );
     }
@@ -469,7 +478,7 @@ mod tests {
         );
         assert_eq!(row_description(&choices, seven, &saved), None);
 
-        // Main's UUID is a workspace 1–5 row's default too, and the other display's is not.
+        // Main's UUID is a workspace 1–4 row's default too, and the other display's is not.
         let two = WorkspaceId::new(2).unwrap();
         let mut doc = Doc::parse("version = 1\n");
         doc.set_monitor(two, Some(displays[0].id.as_str()));
@@ -508,7 +517,7 @@ mod tests {
             [MAIN, SECONDARY]
         );
         assert!(!choices[1].connected);
-        assert_eq!(choices[1].caption, "Default for 6–10 · main when unplugged");
+        assert_eq!(choices[1].caption, "Default for 5–10 · main when unplugged");
         assert_eq!(
             picker(&choices, SECONDARY).0,
             ["Main".to_owned(), "Secondary".to_owned()]
@@ -534,15 +543,19 @@ mod tests {
         assert_eq!(
             seen,
             [
-                ("Main display", "Main", "Studio Display · Default for 1–5"),
+                ("Main display", "Main", "Studio Display · Default for 1–4"),
                 // Control: a name that fits keeps its segment.
                 (
                     "LG UltraFine 5K",
                     "LG UltraFine 5K",
-                    "Secondary · Default for 6–10"
+                    "Secondary · Default for 5–7"
                 ),
                 // The caption ties the numbered segment to the card that names the screen.
-                ("Built-in Retina Display", "Display 3", "Display 3"),
+                (
+                    "Built-in Retina Display",
+                    "Display 3",
+                    "Display 3 · Default for 8–10"
+                ),
             ]
         );
         // A row that differs from this display names it, as its card does.
@@ -553,11 +566,11 @@ mod tests {
         let choices = super::displays::choices(&swapped);
         assert_eq!(choices[1].title, "Built-in Retina Display");
         assert_eq!(choices[1].label, "Display 2");
-        assert_eq!(choices[1].caption, "Display 2 · Default for 6–10");
+        assert_eq!(choices[1].caption, "Display 2 · Default for 5–7");
         assert_eq!(choices[2].title, "Studio Display");
         assert_eq!(choices[2].label, "Studio Display");
         assert_eq!(
-            row_description(&choices, WorkspaceId::new(9).unwrap(), MAIN).as_deref(),
+            row_description(&choices, WorkspaceId::new(6).unwrap(), MAIN).as_deref(),
             Some("Default: Built-in Retina Display")
         );
         // A saved UUID or name still resolves to the display whatever its segment says.
@@ -588,7 +601,7 @@ mod tests {
 
         // Control: four displays number every segment past Main and keep every name.
         let quad = choices(&fixture_quad());
-        assert_eq!(quad[1].caption, "Display 2 · Default for 6–10");
+        assert_eq!(quad[1].caption, "Display 2 · Default for 5–7");
         assert_eq!(quad[3].title, "LG UltraFine 5K");
         assert_eq!(quad[3].label, "Display 4");
     }
@@ -666,14 +679,14 @@ mod tests {
             titles,
             ["Main display", "Studio Display 1", "Studio Display 2"]
         );
-        assert_eq!(sections[0].workspaces.len(), 5);
-        assert_eq!(sections[1].workspaces.len(), 4);
+        assert_eq!(sections[0].workspaces.len(), 4);
+        assert_eq!(sections[1].workspaces.len(), 3);
         assert_eq!(
             sections[2].workspaces,
-            [WorkspaceId::new(9).unwrap()],
-            "workspace 9 sits on the third display"
+            [8, 9, 10].map(|n| WorkspaceId::new(n).unwrap()),
+            "workspaces 8-10 sit on the third display"
         );
-        assert_eq!(sections[2].caption, "Display 3");
+        assert_eq!(sections[2].caption, "Display 3 · Default for 8–10");
     }
 
     #[test]
@@ -761,15 +774,19 @@ mod tests {
         assert_eq!(labels, ["Main", "Display 2", "Display 3", "Display 4"]);
 
         let three_sections = cards(&doc, fixture_three());
-        assert!(three_sections[2].workspaces.is_empty());
-        assert_eq!(three_sections[2].caption, "Display 3");
+        let tertiary = [8, 9, 10].map(|n| WorkspaceId::new(n).unwrap());
+        assert_eq!(three_sections[2].workspaces, tertiary);
+        assert_eq!(three_sections[2].caption, "Display 3 · Default for 8–10");
 
-        // Assigning workspace 9 to the third display and moving it back leaves the card in place.
-        let nine = WorkspaceId::new(9).unwrap();
+        // Assigning workspace 6 to the third display and moving it back leaves the card in place.
+        let six = WorkspaceId::new(6).unwrap();
         let mut moved = Doc::parse("version = 1\n");
-        moved.set_monitor(nine, Some(THIRD_FIXTURE_ID));
-        assert_eq!(cards(&moved, fixture_three())[2].workspaces, [nine]);
-        moved.set_monitor(nine, None);
+        moved.set_monitor(six, Some(THIRD_FIXTURE_ID));
+        assert_eq!(
+            cards(&moved, fixture_three())[2].workspaces,
+            [6, 8, 9, 10].map(|n| WorkspaceId::new(n).unwrap())
+        );
+        moved.set_monitor(six, None);
         let after_move = cards(&moved, fixture_three());
         assert_eq!(
             after_move
@@ -778,7 +795,7 @@ mod tests {
                 .collect::<Vec<_>>(),
             ["Main display", "Studio Display 1", "Studio Display 2"]
         );
-        assert!(after_move[2].workspaces.is_empty());
+        assert_eq!(after_move[2].workspaces, tertiary);
 
         // Control: a disconnected third display with no saved workspaces gets no card.
         assert_eq!(

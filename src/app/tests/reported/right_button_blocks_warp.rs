@@ -23,7 +23,7 @@ fn no_pointer_warp_while_any_mouse_button_is_held() {
         };
         let mut rt = runtime_with_config(backend, config.clone());
         bind(&mut rt, WorkspaceId::ONE, &main_tile);
-        bind(&mut rt, WorkspaceId::SIX, &side_tile);
+        bind(&mut rt, WorkspaceId::FIVE, &side_tile);
         let Some(WorkerResult::Status { result, .. }) = rt.execute(
             WorkerCommand::Action(WorkerAction::Focus(Direction::Right), outputs()),
             &AtomicBool::new(false),

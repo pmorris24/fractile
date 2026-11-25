@@ -208,7 +208,7 @@ fn following_focus_to_a_hidden_workspace_keeps_the_window_that_took_it() {
         let status = runtime.cycle(outputs(), &AtomicBool::new(false)).unwrap();
 
         let case = format!("fullscreen {fullscreen}, floating {floating}");
-        assert_eq!(status.active, vec![target, WorkspaceId::SIX], "{case}");
+        assert_eq!(status.active, vec![target, WorkspaceId::FIVE], "{case}");
         assert_eq!(runtime.backend.focused, Some(notified), "{case}");
         assert!(
             !focus_calls(&runtime).contains(&remembered.window_id),
@@ -258,7 +258,7 @@ fn a_follow_cancelled_by_the_activation_it_answers_follows_on_the_next_cycle() {
     assert_eq!(runtime.focus.guarded_window().cloned(), None);
 
     let status = runtime.cycle(outputs(), &AtomicBool::new(false)).unwrap();
-    assert_eq!(status.active, vec![target, WorkspaceId::SIX]);
+    assert_eq!(status.active, vec![target, WorkspaceId::FIVE]);
     assert_eq!(runtime.backend.focused, Some(notified));
 }
 
@@ -378,8 +378,8 @@ fn mouse_follows_focus_display_warps_across_displays_and_skips_same_display() {
     );
     bind(&mut runtime, WorkspaceId::ONE, &main_left);
     bind(&mut runtime, WorkspaceId::ONE, &main_right);
-    bind(&mut runtime, WorkspaceId::SIX, &sec_left);
-    bind(&mut runtime, WorkspaceId::SIX, &sec_right);
+    bind(&mut runtime, WorkspaceId::FIVE, &sec_left);
+    bind(&mut runtime, WorkspaceId::FIVE, &sec_right);
 
     let cancelled = AtomicBool::new(false);
     // Same display: pointer is already on main (0..1000) -> no warp.
@@ -398,7 +398,7 @@ fn mouse_follows_focus_display_warps_across_displays_and_skips_same_display() {
     assert_eq!(warp_calls(&runtime), vec![(1250, 400)]);
 
     // Explicit switch back to workspace 1 (main) warps to main's focused tile center.
-    runtime.record_focused_workspace(WorkspaceId::SIX);
+    runtime.record_focused_workspace(WorkspaceId::FIVE);
     runtime
         .execute(
             WorkerCommand::Action(WorkerAction::SwitchWorkspace(WorkspaceId::ONE), outputs()),
@@ -407,7 +407,7 @@ fn mouse_follows_focus_display_warps_across_displays_and_skips_same_display() {
         .unwrap();
     assert_eq!(warp_calls(&runtime), vec![(1250, 400), (250, 400)]);
 
-    // Option+Tab back to visible workspace 6 on secondary warps back to secondary.
+    // Option+Tab back to visible workspace 5 on secondary warps back to secondary.
     runtime
         .execute(
             WorkerCommand::Action(WorkerAction::WorkspaceBackAndForth, outputs()),
@@ -826,7 +826,7 @@ fn swipe_in_secondary_menu_bar_or_dock_targets_secondary_display() {
         ])
         .unwrap();
         let mut rt = runtime(FakeBackend::default());
-        for (id, workspace, x) in [(10, 1, 50), (11, 2, 450), (12, 6, 1050), (13, 7, 1450)] {
+        for (id, workspace, x) in [(10, 1, 50), (11, 2, 450), (12, 5, 1050), (13, 7, 1450)] {
             let win = window(id);
             rt.backend.frames.insert(win.clone(), rect(x, 50, 400, 300));
             bind(&mut rt, WorkspaceId::new(workspace).unwrap(), &win);
@@ -851,14 +851,14 @@ fn swipe_in_secondary_menu_bar_or_dock_targets_secondary_display() {
     };
 
     let seven = WorkspaceId::new(7).unwrap();
-    // Secondary visible area, menu bar, and Dock all advance secondary 6 -> 7.
+    // Secondary visible area, menu bar, and Dock all advance secondary 5 -> 7.
     assert_eq!(swipe_state((1500, 400), 775), [WorkspaceId::ONE, seven]);
     assert_eq!(swipe_state((1500, 10), 775), [WorkspaceId::ONE, seven]);
     assert_eq!(swipe_state((1500, 790), 750), [WorkspaceId::ONE, seven]);
-    // Main menu bar advances main 1 -> 2 and leaves secondary on 6.
+    // Main menu bar advances main 1 -> 2 and leaves secondary on 5.
     assert_eq!(
         swipe_state((500, 10), 775),
-        [WorkspaceId::TWO, WorkspaceId::SIX]
+        [WorkspaceId::TWO, WorkspaceId::FIVE]
     );
 }
 

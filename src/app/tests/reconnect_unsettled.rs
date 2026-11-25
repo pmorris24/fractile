@@ -28,8 +28,8 @@ fn tile_frame_after_reconnect(case: Case) -> crate::Rect {
         },
         window_id,
     };
-    let (one, six) = (window_of(1, 10), window_of(6, 60));
-    let focused = if case.focus_secondary { &six } else { &one };
+    let (one, five) = (window_of(1, 10), window_of(5, 50));
+    let focused = if case.focus_secondary { &five } else { &one };
     let alone = macos::DisplayOutputs::new(vec![outputs().displays()[0].clone()]).unwrap();
     let mut backend = FakeBackend {
         focused: Some(focused.clone()),
@@ -37,7 +37,7 @@ fn tile_frame_after_reconnect(case: Case) -> crate::Rect {
         ..FakeBackend::default()
     };
     backend.frames.insert(one.clone(), frame(100));
-    backend.frames.insert(six.clone(), frame(1100));
+    backend.frames.insert(five.clone(), frame(1100));
     let mut rt = runtime(backend);
     let cancelled = AtomicBool::new(false);
     let retile = |rt: &mut WorkspaceRuntime<FakeBackend>, displays: macos::DisplayOutputs| {
@@ -48,9 +48,9 @@ fn tile_frame_after_reconnect(case: Case) -> crate::Rect {
         );
         all.applications.extend(
             observation_for_windows(
-                "com.example.Six",
-                &six,
-                &[(six.clone(), rt.backend.frames[&six])],
+                "com.example.Five",
+                &five,
+                &[(five.clone(), rt.backend.frames[&five])],
             )
             .applications,
         );
@@ -68,7 +68,7 @@ fn tile_frame_after_reconnect(case: Case) -> crate::Rect {
         retile(&mut rt, outputs());
     }
     // macOS moves the window onto main when Secondary disconnects.
-    rt.backend.frames.insert(six.clone(), frame(200));
+    rt.backend.frames.insert(five.clone(), frame(200));
     for _ in 0..3 {
         retile(&mut rt, alone.clone());
     }
@@ -77,14 +77,14 @@ fn tile_frame_after_reconnect(case: Case) -> crate::Rect {
         retile(&mut rt, outputs());
     }
     if case.switch_away {
-        for n in [7, 6] {
+        for n in [7, 5] {
             let switch = WorkerAction::SwitchWorkspace(WorkspaceId::new(n).unwrap());
             rt.execute(WorkerCommand::Action(switch, outputs()), &cancelled);
         }
     }
-    assert_eq!(rt.workspaces.workspace_of(&six), Some(WorkspaceId::SIX));
-    assert!(rt.is_visible(WorkspaceId::SIX, &outputs()));
-    rt.backend.frames[&six]
+    assert_eq!(rt.workspaces.workspace_of(&five), Some(WorkspaceId::FIVE));
+    assert!(rt.is_visible(WorkspaceId::FIVE, &outputs()));
+    rt.backend.frames[&five]
 }
 
 fn secondary_tile() -> crate::Rect {

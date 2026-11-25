@@ -32,7 +32,7 @@ fn new_ghostty_window_opens_on_its_current_display_active_workspace() {
     );
     assert_eq!(
         runtime.workspaces.workspace_of(&created),
-        Some(WorkspaceId::SIX)
+        Some(WorkspaceId::FIVE)
     );
     assert!(runtime.backend.frames[&created].x >= 1000);
 }
@@ -132,7 +132,7 @@ fn title_route_rule_routes_matching_secondary_window() {
     backend.frames.insert(existing.clone(), frame(50));
     backend.frames.insert(created.clone(), frame(100));
     let config = Config::parse(
-        "version = 1\n[[rules]]\nbundle_id = 'com.example.Test'\ntitle = 'Huddle'\naction = 'route'\nworkspace = 6",
+        "version = 1\n[[rules]]\nbundle_id = 'com.example.Test'\ntitle = 'Huddle'\naction = 'route'\nworkspace = 5",
     )
     .unwrap();
     let mut runtime = runtime_with_config(backend, config);
@@ -146,12 +146,12 @@ fn title_route_rule_routes_matching_secondary_window() {
     );
     assert_eq!(
         runtime.workspaces.workspace_of(&created),
-        Some(WorkspaceId::SIX)
+        Some(WorkspaceId::FIVE)
     );
     assert!(runtime.backend.frames[&created].x >= 1000);
 }
 
-/// Routes a new `Huddle` window from the main display into visible workspace 6 (Columns),
+/// Routes a new `Huddle` window from the main display into visible workspace 5 (Columns),
 /// which already tiles `tiled` and is first arranged by `arrange`. Returns the routed window.
 fn route_huddle_into_columns(
     tiled: &[crate::PhysicalWindowId],
@@ -178,12 +178,12 @@ fn route_huddle_into_columns(
     };
     backend.frames.extend(windows);
     let config = Config::parse(
-        "version = 1\n[settings]\nlayout = 'columns'\n[[rules]]\nbundle_id = 'com.example.Test'\ntitle = 'Huddle'\naction = 'route'\nworkspace = 6",
+        "version = 1\n[settings]\nlayout = 'columns'\n[[rules]]\nbundle_id = 'com.example.Test'\ntitle = 'Huddle'\naction = 'route'\nworkspace = 5",
     )
     .unwrap();
     let mut runtime = runtime_with_config(backend, config);
     for window in tiled {
-        bind(&mut runtime, WorkspaceId::SIX, window);
+        bind(&mut runtime, WorkspaceId::FIVE, window);
     }
     arrange(&mut runtime);
 
@@ -191,7 +191,7 @@ fn route_huddle_into_columns(
 
     assert_eq!(
         runtime.workspaces.workspace_of(&created),
-        Some(WorkspaceId::SIX)
+        Some(WorkspaceId::FIVE)
     );
     (runtime, created)
 }
@@ -201,7 +201,7 @@ fn columns_route_into_a_visible_workspace_joins_its_focused_tile_split() {
     let (left, right) = (window(30), window(31));
     let (runtime, created) = route_huddle_into_columns(&[left.clone(), right.clone()], |rt| {
         rt.workspaces
-            .engine_mut(WorkspaceId::SIX)
+            .engine_mut(WorkspaceId::FIVE)
             .remember_insertion_focus(&left);
     });
 
@@ -216,7 +216,7 @@ fn columns_route_joins_a_nested_focused_split_and_keeps_the_other_column() {
     let (top, right, below) = (window(30), window(31), window(32));
     let tiled = [top.clone(), right.clone(), below.clone()];
     let (runtime, created) = route_huddle_into_columns(&tiled, |rt| {
-        let engine = rt.workspaces.engine_mut(WorkspaceId::SIX);
+        let engine = rt.workspaces.engine_mut(WorkspaceId::FIVE);
         // (top / below) | right, with `below` focused.
         assert!(engine.move_window_relative(&below, &top, crate::Direction::Down));
         engine.remember_insertion_focus(&below);
@@ -265,7 +265,7 @@ fn floating_rule_converts_existing_and_new_windows_to_floating_ownership() {
     assert_eq!(runtime.workspaces.workspace_of(&created), None);
     assert_eq!(
         runtime.workspaces.floating_workspace_of(&created),
-        Some(WorkspaceId::SIX)
+        Some(WorkspaceId::FIVE)
     );
 }
 
@@ -320,13 +320,13 @@ fn app_spanning_workspaces_keeps_current_display_routing() {
     backend.frames.insert(created.clone(), frame(1100));
     let mut runtime = runtime(backend);
     bind(&mut runtime, WorkspaceId::ONE, &main);
-    bind(&mut runtime, WorkspaceId::SIX, &secondary);
+    bind(&mut runtime, WorkspaceId::FIVE, &secondary);
 
     runtime.cycle(outputs(), &AtomicBool::new(false)).unwrap();
 
     assert_eq!(
         runtime.workspaces.workspace_of(&created),
-        Some(WorkspaceId::SIX)
+        Some(WorkspaceId::FIVE)
     );
 }
 
@@ -357,11 +357,11 @@ fn simultaneous_new_windows_stay_on_their_display_active_workspace() {
 
     assert_eq!(
         runtime.workspaces.workspace_of(&first),
-        Some(WorkspaceId::SIX)
+        Some(WorkspaceId::FIVE)
     );
     assert_eq!(
         runtime.workspaces.workspace_of(&second),
-        Some(WorkspaceId::SIX)
+        Some(WorkspaceId::FIVE)
     );
     assert!(runtime.backend.frames[&first].x >= 1000);
     assert!(runtime.backend.frames[&second].x >= 1000);
@@ -392,7 +392,7 @@ fn new_window_opens_on_active_workspace_even_when_app_has_window_on_inactive_wor
 
     assert_eq!(
         runtime.workspaces.workspace_of(&created),
-        Some(WorkspaceId::SIX)
+        Some(WorkspaceId::FIVE)
     );
     assert!(!runtime.parked.contains_key(&created));
     assert!(
@@ -724,7 +724,7 @@ fn cross_display_route_survives_later_reconciliation_in_same_cycle() {
     };
     backend.frames.insert(window.clone(), normal);
     let config = Config::parse(
-        "version = 1\n[[rules]]\nbundle_id = 'com.example.Test'\naction = 'route'\nworkspace = 6",
+        "version = 1\n[[rules]]\nbundle_id = 'com.example.Test'\naction = 'route'\nworkspace = 5",
     )
     .unwrap();
     let mut runtime = runtime_with_config(backend, config);
@@ -733,7 +733,7 @@ fn cross_display_route_survives_later_reconciliation_in_same_cycle() {
 
     assert_eq!(
         runtime.workspaces.workspace_of(&window),
-        Some(WorkspaceId::SIX)
+        Some(WorkspaceId::FIVE)
     );
     assert!(runtime.backend.frames[&window].x >= 1000);
 }
@@ -779,11 +779,11 @@ fn startup_splash_window_does_not_suppress_bundle_route_for_main_window() {
         height: 700,
     };
     let config = Config::parse(
-        "version = 1\n[[rules]]\nbundle_id = 'com.example.Discord'\naction = 'route'\nworkspace = 6",
+        "version = 1\n[[rules]]\nbundle_id = 'com.example.Discord'\naction = 'route'\nworkspace = 5",
     )
     .unwrap();
 
-    // Start focused on workspace 2 (main display); workspace 6 is active on secondary.
+    // Start focused on workspace 2 (main display); workspace 5 is active on secondary.
     let mut splash_obs = observation_for_windows(
         "com.example.Discord",
         &splash,
@@ -805,12 +805,12 @@ fn startup_splash_window_does_not_suppress_bundle_route_for_main_window() {
     rt.cycle(outputs(), &cancel).unwrap();
     assert_eq!(
         rt.workspaces.floating_workspace_of(&splash),
-        Some(WorkspaceId::SIX),
+        Some(WorkspaceId::FIVE),
         "startup splash window follows the app's route rule"
     );
 
     // Main resizable window opens while the splash is still alive: it must still
-    // route to workspace 6 instead of tiling on active workspace 2.
+    // route to workspace 5 instead of tiling on active workspace 2.
     let mut both_obs = observation_for_windows(
         "com.example.Discord",
         &main_window,
@@ -829,7 +829,7 @@ fn startup_splash_window_does_not_suppress_bundle_route_for_main_window() {
     rt.cycle(outputs(), &cancel).unwrap();
     assert_eq!(
         rt.workspaces.workspace_of(&main_window),
-        Some(WorkspaceId::SIX),
+        Some(WorkspaceId::FIVE),
         "main window must follow the bundle route rule even while splash is alive"
     );
 

@@ -59,8 +59,8 @@ fn new_rig(
     minimum: impl Fn(u32) -> i32,
 ) -> WorkspaceRuntime<FakeBackend> {
     let output = match side {
-        6 => LEFT,
-        9 => RIGHT,
+        5 => LEFT,
+        8 => RIGHT,
         _ => CENTER,
     };
     let initial = crate::Rect {
@@ -88,7 +88,7 @@ fn new_rig(
         ..FakeBackend::default()
     };
     let config = Config::parse(&format!(
-        "version = 1\n[settings]\nlayout = '{layout}'\n[settings.gaps]\ninner = {gap}\n[[workspaces]]\nworkspace = 6\nmonitor = 'left'\n[[workspaces]]\nworkspace = 9\nmonitor = 'right'\n"
+        "version = 1\n[settings]\nlayout = '{layout}'\n[settings.gaps]\ninner = {gap}\n[[workspaces]]\nworkspace = 5\nmonitor = 'left'\n[[workspaces]]\nworkspace = 8\nmonitor = 'right'\n"
     )).unwrap();
     let mut runtime = runtime_with_config(backend, config);
     assert_eq!(command(&mut runtime, WorkerAction::Retile).failed, 0);
@@ -103,7 +103,7 @@ fn research_resize_with_gap_clamps_to_50_point_window_frames() {
     let mut controls = Vec::new();
     for gap in [0, 10, 48] {
         for points in [1, 750, 16384] {
-            let mut runtime = new_rig("columns", gap, 6, 2, |_| 0);
+            let mut runtime = new_rig("columns", gap, 5, 2, |_| 0);
             let status = command(
                 &mut runtime,
                 WorkerAction::ResizeTo(crate::Axis::Horizontal, points),

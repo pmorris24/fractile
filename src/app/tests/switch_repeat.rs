@@ -398,7 +398,7 @@ fn cross_display_focus_then_move_workspace_targets_pending_workspace_during_lag(
         };
         let mut rt = runtime(backend);
         bind(&mut rt, WorkspaceId::ONE, &first);
-        bind(&mut rt, WorkspaceId::SIX, &second);
+        bind(&mut rt, WorkspaceId::FIVE, &second);
         press(&mut rt, WorkerAction::Focus(Direction::Right));
         assert_eq!(rt.backend.focused, Some(second.clone()));
         assert_eq!(rt.focus.in_flight(rt.backend.now()).unwrap().target, second);
@@ -413,15 +413,15 @@ fn cross_display_focus_then_move_workspace_targets_pending_workspace_during_lag(
         );
         assert_eq!(
             rt.backend.persisted_monitors.first().map(|entry| entry.0),
-            Some(WorkspaceId::SIX)
+            Some(WorkspaceId::FIVE)
         );
         assert_eq!(
             rt.workspaces.active_for(&DisplaySelector::Main),
-            Some(WorkspaceId::SIX)
+            Some(WorkspaceId::FIVE)
         );
         assert_eq!(
             rt.workspaces.active_for(&DisplaySelector::Secondary),
-            Some(WorkspaceId::new(7).unwrap())
+            Some(WorkspaceId::SIX)
         );
         assert!(!rt.parked.contains_key(&second));
         if stale {

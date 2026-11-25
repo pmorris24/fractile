@@ -478,8 +478,12 @@ fn outward_move_from_temporarily_stacked_pair_crosses_displays() {
                     );
                 }
                 if occupied {
-                    bind(&mut rt, WorkspaceId::SIX, &window(20));
-                    rt.layout_workspace(WorkspaceId::SIX, displays.displays()[1].frame, &cancelled);
+                    bind(&mut rt, WorkspaceId::FIVE, &window(20));
+                    rt.layout_workspace(
+                        WorkspaceId::FIVE,
+                        displays.displays()[1].frame,
+                        &cancelled,
+                    );
                 }
                 for _ in 0..2 {
                     rt.layout_workspace(WorkspaceId::ONE, main, &cancelled);
@@ -503,7 +507,7 @@ fn outward_move_from_temporarily_stacked_pair_crosses_displays() {
                 assert_eq!(result.unwrap().failed, 0);
                 assert_eq!(
                     rt.workspaces.workspace_of(focused),
-                    Some(WorkspaceId::SIX),
+                    Some(WorkspaceId::FIVE),
                     "{mode:?} {direction:?} occupied={occupied} should cross displays on first press"
                 );
                 assert_eq!(rt.backend.focused, Some(focused.clone()));

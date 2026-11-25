@@ -71,12 +71,12 @@ fn native_pointer_follow_uses_the_focused_windows_accepted_frame() {
                 };
                 let mut rt = runtime_with_config(backend, config);
                 bind(&mut rt, WorkspaceId::ONE, &origin);
-                bind(&mut rt, WorkspaceId::SIX, &target);
+                bind(&mut rt, WorkspaceId::FIVE, &target);
                 bind(&mut rt, right_ws, &far);
                 let cancelled = AtomicBool::new(false);
                 for (workspace, frame) in [
                     (WorkspaceId::ONE, main),
-                    (WorkspaceId::SIX, left),
+                    (WorkspaceId::FIVE, left),
                     (right_ws, right),
                 ] {
                     rt.layout_workspace(workspace, frame, &cancelled);

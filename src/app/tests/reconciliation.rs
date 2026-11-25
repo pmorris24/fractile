@@ -88,7 +88,7 @@ fn configured_third_display_has_an_independent_visible_workspace() {
             .iter()
             .filter_map(|resolved| resolved.workspace.number())
             .collect::<Vec<_>>(),
-        vec![1, 6, 2]
+        vec![1, 5, 2]
     );
 }
 
@@ -105,7 +105,7 @@ fn missing_preferred_display_falls_back_without_double_visibility() {
             .iter()
             .filter_map(|resolved| resolved.workspace.number())
             .collect::<Vec<_>>(),
-        vec![1, 6]
+        vec![1, 5]
     );
 }
 
@@ -125,7 +125,7 @@ fn active_preferred_workspace_falls_back_and_returns_after_hotplug() {
             .iter()
             .filter_map(|resolved| resolved.workspace.number())
             .collect::<Vec<_>>(),
-        vec![2, 6]
+        vec![2, 5]
     );
 
     runtime
@@ -137,7 +137,7 @@ fn active_preferred_workspace_falls_back_and_returns_after_hotplug() {
             .iter()
             .filter_map(|resolved| resolved.workspace.number())
             .collect::<Vec<_>>(),
-        vec![1, 6, 2]
+        vec![1, 5, 2]
     );
 }
 

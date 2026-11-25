@@ -28,7 +28,7 @@ fn native_hud_move_worker_rows_follow_the_empty_workspace() {
             .iter()
             .map(|row| row.visible)
             .collect::<Vec<_>>(),
-        [Some(ws), Some(WorkspaceId::SIX), WorkspaceId::new(8).ok()]
+        [Some(ws), Some(WorkspaceId::FIVE), WorkspaceId::new(8).ok()]
     );
     let after = execute(
         &mut rt,

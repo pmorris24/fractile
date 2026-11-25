@@ -59,8 +59,8 @@ fn new_rig_with_status(
     minimum: impl Fn(u32) -> i32,
 ) -> (WorkspaceRuntime<FakeBackend>, usize) {
     let output = match side {
-        6 => LEFT,
-        9 => RIGHT,
+        5 => LEFT,
+        8 => RIGHT,
         _ => CENTER,
     };
     let initial = crate::Rect {
@@ -88,7 +88,7 @@ fn new_rig_with_status(
         ..FakeBackend::default()
     };
     let config = Config::parse(&format!(
-        "version = 1\n[settings]\nlayout = '{layout}'\n[settings.gaps]\ninner = {gap}\n[[workspaces]]\nworkspace = 6\nmonitor = 'left'\n[[workspaces]]\nworkspace = 9\nmonitor = 'right'\n"
+        "version = 1\n[settings]\nlayout = '{layout}'\n[settings.gaps]\ninner = {gap}\n[[workspaces]]\nworkspace = 5\nmonitor = 'left'\n[[workspaces]]\nworkspace = 8\nmonitor = 'right'\n"
     )).unwrap();
     let mut runtime = runtime_with_config(backend, config);
     let failed = command(&mut runtime, WorkerAction::Retile).failed;
@@ -103,7 +103,7 @@ fn research_retile_learns_minimums_revealed_on_the_last_refit() {
     let mut overlap = 0;
     for fourth_minimum in [0, 137] {
         let minimums = [650, 235, 155, fourth_minimum, 0, 0];
-        let mut runtime = new_rig_with_status("columns", 0, 6, 6, |id| minimums[id as usize - 1]);
+        let mut runtime = new_rig_with_status("columns", 0, 5, 6, |id| minimums[id as usize - 1]);
         for pass in 0..4 {
             let failures = if pass == 0 {
                 runtime.1

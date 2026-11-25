@@ -455,9 +455,9 @@ fn the_board_lays_out_one_display_two_displays_and_one_window() {
         .iter()
         .filter_map(|card| card.caption.map(|_| card.workspace))
         .collect();
-    assert_eq!(captions, [WorkspaceId::ONE, WorkspaceId::SIX]);
+    assert_eq!(captions, [WorkspaceId::ONE, WorkspaceId::FIVE]);
     assert_eq!(tiles_on(&dual, WorkspaceId::ONE), [SAFARI, SAFARI]);
-    assert_eq!(tiles_on(&dual, WorkspaceId::SIX).len(), 2);
+    assert_eq!(tiles_on(&dual, WorkspaceId::FIVE).len(), 2);
 
     // One window: the starter line shows, and only once the windows were read.
     assert!(Board::fixture_single().nothing_to_arrange());

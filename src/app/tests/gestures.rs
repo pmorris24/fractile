@@ -201,7 +201,7 @@ fn dropping_a_tiled_window_on_another_display_moves_it() {
     backend.frames.insert(target.clone(), frame(1050));
     let mut runtime = runtime(backend);
     bind(&mut runtime, WorkspaceId::ONE, &moving);
-    bind(&mut runtime, WorkspaceId::SIX, &target);
+    bind(&mut runtime, WorkspaceId::FIVE, &target);
 
     runtime
         .drop_window(
@@ -215,7 +215,7 @@ fn dropping_a_tiled_window_on_another_display_moves_it() {
 
     assert_eq!(
         runtime.workspaces.workspace_of(&moving),
-        Some(WorkspaceId::SIX)
+        Some(WorkspaceId::FIVE)
     );
 }
 
