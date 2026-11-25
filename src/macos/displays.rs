@@ -114,9 +114,23 @@ impl DisplayOutputs {
         &self.displays[self.main_index]
     }
 
+    /// The non-main displays left to right, then top to bottom, ties broken by ID.
+    fn others(&self) -> impl Iterator<Item = &DisplayOutput> {
+        self.ordered()
+            .into_iter()
+            .filter(|display| !display.is_main)
+    }
+
+    /// The leftmost non-main display.
     #[must_use]
     pub fn secondary(&self) -> Option<&DisplayOutput> {
-        self.displays.iter().find(|display| !display.is_main)
+        self.others().next()
+    }
+
+    /// The second non-main display from the left.
+    #[must_use]
+    pub fn tertiary(&self) -> Option<&DisplayOutput> {
+        self.others().nth(1)
     }
 
     #[must_use]
@@ -124,6 +138,7 @@ impl DisplayOutputs {
         match selector {
             DisplaySelector::Main => Some(self.main()),
             DisplaySelector::Secondary => self.secondary(),
+            DisplaySelector::Tertiary => self.tertiary(),
             DisplaySelector::Preferred(preferred) => self
                 .displays
                 .iter()
@@ -133,11 +148,18 @@ impl DisplayOutputs {
 
     #[must_use]
     pub fn resolve(&self, selector: &DisplaySelector) -> &DisplayOutput {
-        self.resolve_exact(selector).unwrap_or_else(|| self.main())
+        self.resolve_exact(selector)
+            .or_else(|| match selector {
+                // With two displays, the tertiary workspaces share the secondary display.
+                DisplaySelector::Tertiary => self.secondary(),
+                _ => None,
+            })
+            .unwrap_or_else(|| self.main())
     }
 
-    /// The canonical `config.toml` selector for `display`: `main`, `secondary` (the first
-    /// non-main display), or the display's own ID for every display past those two.
+    /// The canonical `config.toml` selector for `display`: `main`, `secondary` (the leftmost
+    /// non-main display), `tertiary` (the next one), or the display's own ID for every
+    /// display past those three.
     #[must_use]
     pub fn selector_for(&self, display: &DisplayOutput) -> DisplaySelector {
         if display.is_main {
@@ -147,6 +169,11 @@ impl DisplayOutputs {
             .is_some_and(|secondary| secondary.id == display.id)
         {
             DisplaySelector::Secondary
+        } else if self
+            .tertiary()
+            .is_some_and(|tertiary| tertiary.id == display.id)
+        {
+            DisplaySelector::Tertiary
         } else {
             DisplaySelector::Preferred(display.id.clone())
         }
@@ -470,13 +497,50 @@ mod tests {
 
     #[test]
     fn selector_for_names_main_secondary_and_every_further_display_by_id() {
-        let outputs = three_displays();
+        let outputs = DisplayOutputs::new(vec![
+            display("built-in", "Built-in Retina Display", 0, true),
+            display("studio-a", "Studio Display", 100, false),
+            display("studio-b", "Studio Display", -100, false),
+            display("studio-c", "Studio Display", 200, false),
+        ])
+        .unwrap();
         let selectors: Vec<String> = outputs
             .displays()
             .iter()
             .map(|display| outputs.selector_for(display).as_str().to_owned())
             .collect();
-        assert_eq!(selectors, ["main", "secondary", "studio-b"]);
+        assert_eq!(selectors, ["main", "tertiary", "secondary", "studio-c"]);
+    }
+
+    #[test]
+    fn secondary_and_tertiary_are_the_non_main_displays_left_to_right() {
+        let right = display("right", "Right", 200, false);
+        let left = display("left", "Left", -100, false);
+        let main = display("main", "Main", 0, true);
+        for order in [
+            vec![main.clone(), right.clone(), left.clone()],
+            vec![right.clone(), left.clone(), main.clone()],
+            vec![left.clone(), main.clone(), right.clone()],
+        ] {
+            let outputs = DisplayOutputs::new(order).unwrap();
+            assert_eq!(outputs.secondary().unwrap().id, "left");
+            assert_eq!(outputs.tertiary().unwrap().id, "right");
+            assert_eq!(outputs.resolve(&DisplaySelector::Tertiary).id, "right");
+        }
+    }
+
+    #[test]
+    fn tertiary_falls_back_to_secondary_with_two_displays() {
+        let outputs = DisplayOutputs::new(vec![
+            display("main", "Main", 0, true),
+            display("side", "Side", 100, false),
+        ])
+        .unwrap();
+        assert!(outputs.tertiary().is_none());
+        assert!(outputs.resolve_exact(&DisplaySelector::Tertiary).is_none());
+        assert_eq!(outputs.resolve(&DisplaySelector::Tertiary).id, "side");
+        let single = DisplayOutputs::new(vec![display("main", "Main", 0, true)]).unwrap();
+        assert_eq!(single.resolve(&DisplaySelector::Tertiary).id, "main");
     }
 
     #[test]

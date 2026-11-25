@@ -877,7 +877,7 @@ fn rules_rejects_invalid_inputs() {
 fn workspaces_list_assign_and_clear_round_trip() {
     let temp = TempConfig::new("workspaces");
 
-    // Default list has 1..=10 (1-5 main, 6-10 secondary)
+    // Default list has 1..=10 (1-5 main, 6-7 secondary, 8-10 tertiary)
     let initial: Value = serde_json::from_str(
         temp.run(&["workspaces", "list", "--json"])
             .stdout
@@ -893,6 +893,8 @@ fn workspaces_list_assign_and_clear_round_trip() {
     assert_eq!(entries[5]["workspace"], 6);
     assert_eq!(entries[5]["monitor"], "secondary");
     assert_eq!(entries[5]["configured"], false);
+    assert_eq!(entries[7]["workspace"], 8);
+    assert_eq!(entries[7]["monitor"], "tertiary");
 
     // Assign workspace 9 to main and workspace D to a named display
     let assign_9 = temp.run(&["workspaces", "assign", "9", "main", "--json"]);
@@ -938,7 +940,7 @@ fn workspaces_list_assign_and_clear_round_trip() {
     assert_eq!(clear_9.exit_code, 0);
     let clear_9_json: Value = serde_json::from_str(&clear_9.stdout.unwrap()).unwrap();
     assert_eq!(clear_9_json["cleared"], true);
-    assert_eq!(clear_9_json["monitor"], "secondary");
+    assert_eq!(clear_9_json["monitor"], "tertiary");
 
     // Clearing again is idempotent
     let clear_9_again = temp.run(&["workspaces", "clear", "9", "--json"]);

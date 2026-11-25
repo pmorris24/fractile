@@ -136,7 +136,7 @@ const KNOWN_SETTINGS: Record<string, BounceMeta> = {
     heading: "Workspaces",
     ogTitle: "Workspaces — Spaceman Settings",
     description:
-      "Route workspaces 1–10 and named workspaces A–Z to your main, secondary, or preferred display.",
+      "Route workspaces 1–10 and named workspaces A–Z to your main, secondary, tertiary, or preferred display.",
     demo: "workspaces",
   },
   shortcuts: {

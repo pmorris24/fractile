@@ -54,7 +54,7 @@ fn setup(layout: &str, tiles: &[(u32, WorkspaceId, crate::Rect)]) -> WorkspaceRu
         frontmost: Some(moved.app),
         ..FakeBackend::default()
     };
-    let config = Config::parse(&format!("version = 1\n[settings]\nlayout = '{layout}'\nmouse_follows_focus = 'display'\n[[workspaces]]\nworkspace = 9\nmonitor = 'right'\n")).unwrap();
+    let config = Config::parse(&format!("version = 1\n[settings]\nlayout = '{layout}'\nmouse_follows_focus = 'display'\n[[workspaces]]\nworkspace = 8\nmonitor = 'right'\n")).unwrap();
     let mut rt = runtime_with_config(backend, config);
     for &(id, ws, _) in tiles {
         bind(&mut rt, ws, &window(id));
@@ -94,7 +94,7 @@ fn drag(rt: &mut WorkspaceRuntime<FakeBackend>, from: (i32, i32), to: (i32, i32)
 #[test]
 fn fullscreen_tile_cross_drop() {
     let main = WorkspaceId::ONE;
-    let right = WorkspaceId::new(9).unwrap();
+    let right = WorkspaceId::new(8).unwrap();
     let mut found = vec![];
     for fullscreen in [false, true] {
         let mut rt = setup(
@@ -133,7 +133,7 @@ fn fullscreen_tile_cross_drop() {
 #[test]
 fn external_move_is_not_an_apply_bounce() {
     let main = WorkspaceId::ONE;
-    let right = WorkspaceId::new(9).unwrap();
+    let right = WorkspaceId::new(8).unwrap();
     let mut found = vec![];
     for recent_write in [false, true] {
         let moved = window(10);

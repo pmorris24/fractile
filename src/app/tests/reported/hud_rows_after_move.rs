@@ -7,7 +7,7 @@ use super::super::*;
 fn native_hud_move_worker_rows_follow_the_empty_workspace() {
     let outputs = three_outputs();
     let config =
-        Config::parse("version = 1\n[[workspaces]]\nworkspace = 9\nmonitor = 'third-id'\n")
+        Config::parse("version = 1\n[[workspaces]]\nworkspace = 8\nmonitor = 'third-id'\n")
             .unwrap();
     let mut rt = runtime_with_config(FakeBackend::default(), config);
     let cancelled = AtomicBool::new(false);
@@ -28,7 +28,7 @@ fn native_hud_move_worker_rows_follow_the_empty_workspace() {
             .iter()
             .map(|row| row.visible)
             .collect::<Vec<_>>(),
-        [Some(ws), Some(WorkspaceId::SIX), WorkspaceId::new(9).ok()]
+        [Some(ws), Some(WorkspaceId::SIX), WorkspaceId::new(8).ok()]
     );
     let after = execute(
         &mut rt,
@@ -41,7 +41,7 @@ fn native_hud_move_worker_rows_follow_the_empty_workspace() {
             .iter()
             .map(|row| row.visible)
             .collect::<Vec<_>>(),
-        [Some(WorkspaceId::ONE), Some(ws), WorkspaceId::new(9).ok()]
+        [Some(WorkspaceId::ONE), Some(ws), WorkspaceId::new(8).ok()]
     );
     assert!(
         !after.displays[0]

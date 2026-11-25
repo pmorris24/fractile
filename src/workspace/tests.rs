@@ -70,6 +70,27 @@ fn workspace_range_and_default_assignment_match_aerospace() {
     );
 }
 
+/// 1-5 on the main display, 6-7 on the secondary, 8-10 on the tertiary.
+#[test]
+fn default_assignment_splits_numbered_workspaces_across_three_displays() {
+    let expected = [
+        (5, DisplaySelector::Main),
+        (6, DisplaySelector::Secondary),
+        (7, DisplaySelector::Secondary),
+        (8, DisplaySelector::Tertiary),
+        (10, DisplaySelector::Tertiary),
+    ];
+    for (number, selector) in expected {
+        let workspace = WorkspaceId::new(number).unwrap();
+        assert_eq!(Workspaces::default_assignment(workspace), selector);
+        assert_eq!(Workspaces::default().assignment(workspace), &selector);
+    }
+    assert_eq!(
+        Workspaces::default().active_for(&DisplaySelector::Tertiary),
+        Some(WorkspaceId::new(8).unwrap())
+    );
+}
+
 #[test]
 fn workspace_identity_serializes_numbers_compatibly_and_names_as_letters() {
     assert_eq!(
@@ -131,7 +152,7 @@ fn unconfigured_named_workspaces_are_not_display_fallbacks() {
 fn per_display_previous_history_is_independent_for_moves() {
     let mut workspaces = Workspaces::default();
     let main_target = WorkspaceId::new(3).unwrap();
-    let secondary_target = WorkspaceId::new(8).unwrap();
+    let secondary_target = WorkspaceId::new(7).unwrap();
 
     workspaces.switch(main_target);
     workspaces.switch(secondary_target);

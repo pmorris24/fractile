@@ -134,7 +134,7 @@ fn run_assign(args: &[&str], path_override: Option<&Path>) -> Result<String, Str
     let (json, positional) = split_json_flag(args)?;
     let [raw_workspace, raw_monitor] = positional.as_slice() else {
         return Err(
-            "usage: spaceman workspaces assign <ws> <main|secondary|display-name-or-uuid> [--json]"
+            "usage: spaceman workspaces assign <ws> <main|secondary|tertiary|display-name-or-uuid> [--json]"
                 .into(),
         );
     };

@@ -657,6 +657,7 @@ pub(crate) fn default_monitor_for(workspace: WorkspaceId) -> &'static str {
     match Workspaces::default().assignment(workspace) {
         DisplaySelector::Main => "main",
         DisplaySelector::Secondary => "secondary",
+        DisplaySelector::Tertiary => "tertiary",
         DisplaySelector::Preferred(_) => "main",
     }
 }

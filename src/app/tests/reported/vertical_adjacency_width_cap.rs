@@ -59,7 +59,7 @@ fn setup(
     focus: u32,
 ) -> WorkspaceRuntime<FakeBackend> {
     let config = Config::parse(&format!(
-        "version = 1\n[settings]\nlayout = 'columns'\n{settings}\n[[workspaces]]\nworkspace = 9\nmonitor = 'third-id'\n"
+        "version = 1\n[settings]\nlayout = 'columns'\n{settings}\n[[workspaces]]\nworkspace = 8\nmonitor = 'third-id'\n"
     ))
     .unwrap();
     let mut rt = runtime_with_config(FakeBackend::default(), config);
@@ -68,7 +68,7 @@ fn setup(
         let window = win(id);
         let output = match workspace {
             6 => displays.displays()[1].frame,
-            9 => displays.displays()[2].frame,
+            8 => displays.displays()[2].frame,
             _ => displays.main().frame,
         };
         let frame = rect(output.x + 20, output.y + 20, 400, 300);
@@ -100,7 +100,7 @@ fn vertical_adjacency_width_cap() {
             WorkerAction::Focus(Direction::Down),
             WorkerAction::Reorder(Direction::Down),
         ] {
-            let mut rt = setup(&displays, settings, &[(10, 1), (60, 6), (90, 9)], 10);
+            let mut rt = setup(&displays, settings, &[(10, 1), (60, 6), (90, 8)], 10);
             let before = [10, 60, 90].map(|id| rt.backend.frames[&win(id)]);
             execute(&mut rt, &displays, action.clone());
             let selected = if matches!(action, WorkerAction::Focus(_)) {
@@ -113,5 +113,5 @@ fn vertical_adjacency_width_cap() {
             results.push(selected);
         }
     }
-    assert_eq!(results, [Some(ws(9)); 4]);
+    assert_eq!(results, [Some(ws(8)); 4]);
 }

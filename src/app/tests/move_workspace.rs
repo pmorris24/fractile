@@ -227,13 +227,13 @@ fn move_workspace_to_empty_display_and_three_display_wrap_around() {
     );
     assert_eq!(runtime.backend.frames[&w1], three.displays()[1].frame);
 
-    // Secondary -> Third (no workspace homed there yet; UUID selector).
+    // Secondary -> Third (empty workspace 8 displaced; the third display is `tertiary`).
     runtime
         .move_workspace_to_display(DisplayTarget::Next, three.clone(), &cancelled)
         .unwrap();
     assert_eq!(
         runtime.workspaces.assignment(WorkspaceId::ONE),
-        &DisplaySelector::Preferred("third-id".into())
+        &DisplaySelector::Tertiary
     );
     assert_eq!(runtime.backend.frames[&w1], three.displays()[2].frame);
 
@@ -253,7 +253,7 @@ fn move_workspace_to_empty_display_and_three_display_wrap_around() {
         .unwrap();
     assert_eq!(
         runtime.workspaces.assignment(WorkspaceId::ONE),
-        &DisplaySelector::Preferred("third-id".into())
+        &DisplaySelector::Tertiary
     );
     runtime
         .move_workspace_to_display(

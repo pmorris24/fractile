@@ -61,7 +61,7 @@ fn new_rig(
 ) -> WorkspaceRuntime<FakeBackend> {
     let output = match side {
         6 => LEFT,
-        9 => RIGHT,
+        8 => RIGHT,
         _ => CENTER,
     };
     let initial = crate::Rect {
@@ -89,7 +89,7 @@ fn new_rig(
         ..FakeBackend::default()
     };
     let config = Config::parse(&format!(
-        "version = 1\n[settings]\nlayout = '{layout}'\n[settings.gaps]\ninner = {gap}\n[[workspaces]]\nworkspace = 6\nmonitor = 'left'\n[[workspaces]]\nworkspace = 9\nmonitor = 'right'\n"
+        "version = 1\n[settings]\nlayout = '{layout}'\n[settings.gaps]\ninner = {gap}\n[[workspaces]]\nworkspace = 6\nmonitor = 'left'\n[[workspaces]]\nworkspace = 8\nmonitor = 'right'\n"
     )).unwrap();
     let mut runtime = runtime_with_config(backend, config);
     assert_eq!(command(&mut runtime, WorkerAction::Retile).failed, 0);
@@ -101,13 +101,16 @@ fn new_rig(
 
 #[test]
 fn an_absolute_resize_lands_when_a_sibling_first_reveals_its_minimum() {
-    let mut runtime = new_rig("columns", 7, 9, 3, |id| if id == 3 { 460 } else { 0 });
+    let mut runtime = new_rig("columns", 7, 8, 3, |id| if id == 3 { 460 } else { 0 });
     let before = [window(1), window(2), window(3)].map(|w| runtime.backend.frames[&w].width);
     // The last window has never had to refuse its width, so its minimum is still unknown.
     assert!(before[2] >= 460, "{before:?}");
     assert!(runtime.minimum_sizes.is_empty());
 
-    let status = command(&mut runtime, WorkerAction::ResizeTo(crate::Axis::Horizontal, 700));
+    let status = command(
+        &mut runtime,
+        WorkerAction::ResizeTo(crate::Axis::Horizontal, 700),
+    );
 
     assert_eq!(status.failed, 0);
     let after = [window(1), window(2), window(3)].map(|w| runtime.backend.frames[&w].width);

@@ -98,8 +98,10 @@ bundle_id = "ai.opencode.desktop"
 action = "route"
 workspace = "D"
 
-# Workspace assignments are optional. monitor accepts "main", "secondary", a
-# display UUID, or an exact display name from `spaceman displays`.
+# Workspace assignments are optional. monitor accepts "main", "secondary",
+# "tertiary", a display UUID, or an exact display name from `spaceman displays`.
+# Defaults: 1-5 main, 6-7 secondary, 8-10 tertiary. Secondary and tertiary are the
+# non-main displays left to right; with two displays, tertiary uses the secondary one.
 [[workspaces]]
 workspace = 9
 monitor = "main"

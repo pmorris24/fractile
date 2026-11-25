@@ -244,12 +244,14 @@ pub(crate) fn workspaces_help(executable: &str) -> String {
         "Usage:",
         &format!("  {executable} workspaces list [--json]"),
         &format!(
-            "  {executable} workspaces assign <ws> <main|secondary|display-name-or-uuid> [--json]"
+            "  {executable} workspaces assign <ws> <main|secondary|tertiary|display-name-or-uuid> [--json]"
         ),
         &format!("  {executable} workspaces clear <ws> [--json]"),
         "",
         "Notes:",
-        "  - Workspaces 1-5 default to 'main'; workspaces 6-10 default to 'secondary'.",
+        "  - Workspaces 1-5 default to 'main', 6-7 to 'secondary', 8-10 to 'tertiary'.",
+        "  - 'secondary' and 'tertiary' are the non-main displays, left to right. With two",
+        "    displays, 'tertiary' workspaces show on the secondary display.",
         "  - Named workspaces A-Z are opt-in and default to 'main'.",
         "  - Use 'spaceman displays' to inspect display names and UUIDs.",
     ]

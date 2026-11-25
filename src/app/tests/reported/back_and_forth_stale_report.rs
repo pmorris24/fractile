@@ -67,7 +67,7 @@ fn setup(
     focus: u32,
 ) -> WorkspaceRuntime<FakeBackend> {
     let config = Config::parse(&format!(
-        "version = 1\n[settings]\nlayout = 'columns'\n{settings}\n[[workspaces]]\nworkspace = 9\nmonitor = 'third-id'\n"
+        "version = 1\n[settings]\nlayout = 'columns'\n{settings}\n[[workspaces]]\nworkspace = 8\nmonitor = 'third-id'\n"
     ))
     .unwrap();
     let mut rt = runtime_with_config(FakeBackend::default(), config);
@@ -76,7 +76,7 @@ fn setup(
         let window = win(id);
         let output = match workspace {
             6 => displays.displays()[1].frame,
-            9 => displays.displays()[2].frame,
+            8 => displays.displays()[2].frame,
             _ => displays.main().frame,
         };
         let frame = rect(output.x + 20, output.y + 20, 400, 300);
@@ -100,7 +100,7 @@ fn back_and_forth_stale_report() {
     let displays = side_by_side();
     let mut result = Vec::new();
     for case in ["settled", "intermediate", "refresh"] {
-        let mut rt = setup(&displays, "", &[(10, 1), (60, 6), (90, 9)], 60);
+        let mut rt = setup(&displays, "", &[(10, 1), (60, 6), (90, 8)], 60);
         execute(&mut rt, &displays, WorkerAction::Focus(Direction::Right));
         assert_eq!(rt.backend.focused, Some(win(10)));
         report(&mut rt, 60);

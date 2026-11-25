@@ -159,22 +159,25 @@ enum ManagementScope {
     Both,
     Main,
     Secondary,
+    Tertiary,
 }
 
 impl ManagementScope {
     fn initial_workspaces(self) -> &'static [WorkspaceId] {
         match self {
-            Self::Both => &[WorkspaceId::ONE, WorkspaceId::SIX],
+            Self::Both => &[WorkspaceId::ONE, WorkspaceId::SIX, WorkspaceId::EIGHT],
             Self::Main => &[WorkspaceId::ONE],
             Self::Secondary => &[WorkspaceId::SIX],
+            Self::Tertiary => &[WorkspaceId::EIGHT],
         }
     }
 
     fn automatic_status(self) -> &'static str {
         match self {
-            Self::Both => "Automatic tiling enabled · Workspaces 1 / 6",
+            Self::Both => "Automatic tiling enabled · Workspaces 1 / 6 / 8",
             Self::Main => "Automatic tiling enabled · Workspace 1",
             Self::Secondary => "Automatic tiling enabled · Workspace 6",
+            Self::Tertiary => "Automatic tiling enabled · Workspace 8",
         }
     }
 
@@ -189,9 +192,10 @@ impl ManagementScope {
         match value {
             "main" => Ok(Self::Main),
             "secondary" => Ok(Self::Secondary),
+            "tertiary" => Ok(Self::Tertiary),
             "both" => Ok(Self::Both),
             _ => Err(format!(
-                "SPACEMAN_MANAGED_DISPLAY must be main, secondary, or both; got {value:?}"
+                "SPACEMAN_MANAGED_DISPLAY must be main, secondary, tertiary, or both; got {value:?}"
             )),
         }
     }
@@ -202,6 +206,7 @@ impl ManagementScope {
             (Self::Both, _)
                 | (Self::Main, DisplaySelector::Main)
                 | (Self::Secondary, DisplaySelector::Secondary)
+                | (Self::Tertiary, DisplaySelector::Tertiary)
         )
     }
 }

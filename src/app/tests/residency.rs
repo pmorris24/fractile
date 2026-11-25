@@ -104,7 +104,7 @@ fn act(rt: &mut WorkspaceRuntime<FakeBackend>, action: WorkerAction) {
 
 fn fixture(rules: &str, windows: &[(u32, crate::Rect)]) -> WorkspaceRuntime<FakeBackend> {
     let config = Config::parse(&format!(
-        "version = 1\n[settings]\nlayout = 'columns'\nmouse_follows_focus = 'display'\n[labs]\nscratchpad = true\n[[workspaces]]\nworkspace = 9\nmonitor = 'right'\n[[workspaces]]\nworkspace = 10\nmonitor = 'right'\n{rules}"
+        "version = 1\n[settings]\nlayout = 'columns'\nmouse_follows_focus = 'display'\n[labs]\nscratchpad = true\n[[workspaces]]\nworkspace = 8\nmonitor = 'right'\n[[workspaces]]\nworkspace = 9\nmonitor = 'right'\n{rules}"
     ))
     .unwrap();
     let mut rt = runtime_with_config(
@@ -136,7 +136,7 @@ fn scratchpad_mark_keeps_current_workspace() {
     use crate::scratchpad::ScratchpadCommand::{Mark, Toggle};
     for routed in [false, true] {
         let rules = if routed {
-            "[[rules]]\nbundle_id = 'com.example.Fixture91'\naction = 'route'\nworkspace = 9\n"
+            "[[rules]]\nbundle_id = 'com.example.Fixture91'\naction = 'route'\nworkspace = 8\n"
         } else {
             ""
         };
@@ -182,14 +182,14 @@ fn detached_floating_tab_reaches_visible_display() {
         act(
             &mut rt,
             WorkerAction::MoveTab {
-                target: ws(9),
+                target: ws(8),
                 follow: false,
             },
         );
-        assert_eq!(rt.workspaces.workspace_of_any(&tab), Some(ws(9)));
+        assert_eq!(rt.workspaces.workspace_of_any(&tab), Some(ws(8)));
         assert_eq!(
             rt.workspaces.floating_workspace_of(&tab),
-            floating.then_some(ws(9))
+            floating.then_some(ws(8))
         );
         assert_eq!(rt.backend.focused.as_ref(), Some(&source));
         let immediate = rt.backend.frames[&tab];
@@ -213,7 +213,7 @@ fn recalled_float_returns_to_remembered_display() {
         assert!(memory.record(
             "com.example.Fixture51",
             vec![RememberedWindow {
-                workspace: ws(9),
+                workspace: ws(8),
                 frame: inset(RIGHT),
                 floating,
                 document: None,
@@ -225,15 +225,15 @@ fn recalled_float_returns_to_remembered_display() {
         open(&mut rt, &reopened, inset(CENTER));
         act(&mut rt, WorkerAction::Retile);
         act(&mut rt, WorkerAction::Retile);
-        assert_eq!(rt.workspaces.workspace_of_any(&reopened), Some(ws(9)));
+        assert_eq!(rt.workspaces.workspace_of_any(&reopened), Some(ws(8)));
         assert_eq!(
             rt.workspaces.floating_workspace_of(&reopened),
-            floating.then_some(ws(9))
+            floating.then_some(ws(8))
         );
         let initial = rt.backend.frames[&reopened];
-        act(&mut rt, WorkerAction::SwitchWorkspace(ws(10)));
-        assert!(rt.parked.contains_key(&reopened));
         act(&mut rt, WorkerAction::SwitchWorkspace(ws(9)));
+        assert!(rt.parked.contains_key(&reopened));
+        act(&mut rt, WorkerAction::SwitchWorkspace(ws(8)));
         assert!(!rt.parked.contains_key(&reopened));
         let restored = rt.backend.frames[&reopened];
         assert!(

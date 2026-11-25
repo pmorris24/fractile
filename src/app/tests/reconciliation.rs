@@ -76,8 +76,9 @@ fn closing_the_only_window_of_a_running_app_reflows_surviving_windows() {
 
 #[test]
 fn configured_third_display_has_an_independent_visible_workspace() {
+    // Workspace 2 outranks the default tertiary lane (8) on the display it is pinned to.
     let config =
-        Config::parse("version = 1\n[[workspaces]]\nworkspace = 9\nmonitor = 'third-id'").unwrap();
+        Config::parse("version = 1\n[[workspaces]]\nworkspace = 2\nmonitor = 'third-id'").unwrap();
     let runtime = runtime_with_config(benchmark_backend(0), config);
 
     let visible = runtime.visible_workspaces(&three_outputs());
@@ -87,7 +88,7 @@ fn configured_third_display_has_an_independent_visible_workspace() {
             .iter()
             .filter_map(|resolved| resolved.workspace.number())
             .collect::<Vec<_>>(),
-        vec![1, 6, 9]
+        vec![1, 6, 2]
     );
 }
 
@@ -111,7 +112,7 @@ fn missing_preferred_display_falls_back_without_double_visibility() {
 #[test]
 fn active_preferred_workspace_falls_back_and_returns_after_hotplug() {
     let config =
-        Config::parse("version = 1\n[[workspaces]]\nworkspace = 9\nmonitor = 'third-id'").unwrap();
+        Config::parse("version = 1\n[[workspaces]]\nworkspace = 2\nmonitor = 'third-id'").unwrap();
     let mut runtime = runtime_with_config(benchmark_backend(0), config);
 
     runtime
@@ -124,7 +125,7 @@ fn active_preferred_workspace_falls_back_and_returns_after_hotplug() {
             .iter()
             .filter_map(|resolved| resolved.workspace.number())
             .collect::<Vec<_>>(),
-        vec![9, 6]
+        vec![2, 6]
     );
 
     runtime
@@ -136,7 +137,7 @@ fn active_preferred_workspace_falls_back_and_returns_after_hotplug() {
             .iter()
             .filter_map(|resolved| resolved.workspace.number())
             .collect::<Vec<_>>(),
-        vec![1, 6, 9]
+        vec![1, 6, 2]
     );
 }
 

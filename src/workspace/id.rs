@@ -13,6 +13,7 @@ impl WorkspaceId {
     pub const THREE: Self = Self(3);
     pub const FOUR: Self = Self(4);
     pub const SIX: Self = Self(6);
+    pub const EIGHT: Self = Self(8);
 
     pub fn new(value: u8) -> Result<Self, String> {
         (1..=Self::NUMBERED_COUNT as u8)

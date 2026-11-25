@@ -98,7 +98,7 @@ fn configured_rig(
 
 fn original_config() -> Config {
     Config::parse(
-        "version = 1\n[[workspaces]]\nworkspace = 9\nmonitor = 'third-id'\n[[workspaces]]\nworkspace = 'Z'\nmonitor = 'third-id'\n",
+        "version = 1\n[[workspaces]]\nworkspace = 8\nmonitor = 'third-id'\n[[workspaces]]\nworkspace = 'Z'\nmonitor = 'third-id'\n",
     )
     .unwrap()
 }
@@ -107,10 +107,10 @@ fn original_config() -> Config {
 fn config_research_removed_named() {
     let displays = portrait_displays();
     let removed =
-        Config::parse("version = 1\n[[workspaces]]\nworkspace = 9\nmonitor = 'third-id'\n")
+        Config::parse("version = 1\n[[workspaces]]\nworkspace = 8\nmonitor = 'third-id'\n")
             .unwrap();
     let original = original_config();
-    let tiles = [(1, 10, 0), (6, 60, 1), (9, 90, 2)];
+    let tiles = [(1, 10, 0), (6, 60, 1), (8, 90, 2)];
     let z = WorkspaceId::named('Z').unwrap();
     let mut rt = configured_rig(original, &displays, &tiles);
     assert!(!rt.workspaces.state().named_workspaces_in_use().contains(&z));
@@ -119,7 +119,7 @@ fn config_research_removed_named() {
     let error = execute(&mut rt, WorkerAction::SwitchWorkspace(z), &displays).unwrap_err();
     assert!(error.contains("Workspace Z is not configured"), "{error}");
     let status = execute(&mut rt, WorkerAction::Retile, &displays).unwrap();
-    assert_eq!(status["active_workspaces"], serde_json::json!([1, 6, 9]));
+    assert_eq!(status["active_workspaces"], serde_json::json!([1, 6, 8]));
     assert!(!rt.parked.contains_key(&window(10)));
     let mut fresh = configured_rig(removed, &displays, &tiles);
     let error = execute(&mut fresh, WorkerAction::SwitchWorkspace(z), &displays).unwrap_err();

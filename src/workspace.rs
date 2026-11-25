@@ -20,6 +20,8 @@ pub(crate) use state::{SavedSlot, WorkspaceState};
 pub enum DisplaySelector {
     Main,
     Secondary,
+    /// The second non-main display, left to right. Falls back to `Secondary`, then `Main`.
+    Tertiary,
     Preferred(String),
 }
 
@@ -77,6 +79,7 @@ impl DisplaySelector {
         match value {
             "main" => Self::Main,
             "secondary" => Self::Secondary,
+            "tertiary" => Self::Tertiary,
             value => Self::Preferred(value.to_owned()),
         }
     }
@@ -86,6 +89,7 @@ impl DisplaySelector {
         match self {
             Self::Main => "main",
             Self::Secondary => "secondary",
+            Self::Tertiary => "tertiary",
             Self::Preferred(value) => value.as_str(),
         }
     }
@@ -115,6 +119,7 @@ impl Default for Workspaces {
             displays: DisplayMap::new([
                 (DisplaySelector::Main, WorkspaceId::ONE),
                 (DisplaySelector::Secondary, WorkspaceId::SIX),
+                (DisplaySelector::Tertiary, WorkspaceId::EIGHT),
             ]),
             residency: residency::WindowTable::default(),
             enabled: WorkspaceId::numbered().collect(),
@@ -252,6 +257,7 @@ impl Workspaces {
     #[must_use]
     pub fn default_assignment(workspace: WorkspaceId) -> DisplaySelector {
         match workspace.number() {
+            Some(number) if number >= 8 => DisplaySelector::Tertiary,
             Some(number) if number >= 6 => DisplaySelector::Secondary,
             _ => DisplaySelector::Main,
         }

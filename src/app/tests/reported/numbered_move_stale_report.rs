@@ -67,7 +67,7 @@ fn setup(
     focus: u32,
 ) -> WorkspaceRuntime<FakeBackend> {
     let config = Config::parse(&format!(
-        "version = 1\n[settings]\nlayout = 'columns'\n{settings}\n[[workspaces]]\nworkspace = 9\nmonitor = 'third-id'\n"
+        "version = 1\n[settings]\nlayout = 'columns'\n{settings}\n[[workspaces]]\nworkspace = 8\nmonitor = 'third-id'\n"
     ))
     .unwrap();
     let mut rt = runtime_with_config(FakeBackend::default(), config);
@@ -76,7 +76,7 @@ fn setup(
         let window = win(id);
         let output = match workspace {
             6 => displays.displays()[1].frame,
-            9 => displays.displays()[2].frame,
+            8 => displays.displays()[2].frame,
             _ => displays.main().frame,
         };
         let frame = rect(output.x + 20, output.y + 20, 400, 300);
@@ -101,11 +101,11 @@ fn numbered_move_stale_report() {
     let mut result = Vec::new();
     for lag in [false, true] {
         for action in [
-            WorkerAction::MoveFocused(ws(9)),
-            WorkerAction::MoveFocusedFollow(ws(9)),
+            WorkerAction::MoveFocused(ws(8)),
+            WorkerAction::MoveFocusedFollow(ws(8)),
             WorkerAction::Reorder(Direction::Right),
         ] {
-            let mut rt = setup(&displays, "", &[(10, 1), (60, 6), (90, 9)], 60);
+            let mut rt = setup(&displays, "", &[(10, 1), (60, 6), (90, 8)], 60);
             execute(&mut rt, &displays, WorkerAction::Focus(Direction::Right));
             assert_eq!(rt.backend.focused, Some(win(10)));
             if lag {
@@ -113,10 +113,10 @@ fn numbered_move_stale_report() {
                 assert!(rt.focus.in_flight(rt.backend.now()).is_some());
             }
             execute(&mut rt, &displays, action.clone());
-            let windows = rt.workspaces.engine(ws(9)).bound_windows();
+            let windows = rt.workspaces.engine(ws(8)).bound_windows();
             let ids: Vec<_> = windows.iter().map(|window| window.window_id).collect();
             let focused = rt.backend.focused.as_ref().map(|window| window.window_id);
-            println!("lag={lag} {action:?} workspace 9={ids:?} focused={focused:?}");
+            println!("lag={lag} {action:?} workspace 8={ids:?} focused={focused:?}");
             result.push((ids, focused));
         }
     }

@@ -591,10 +591,12 @@ each of 128 applications, evicting the least recently changed application.
 
 ## Display Assignments
 
-Defaults assign workspaces 1-5 to `main` and 6-10 to `secondary`. `monitor` accepts:
+Defaults assign workspaces 1-5 to `main`, 6-7 to `secondary`, and 8-10 to `tertiary`. `monitor`
+accepts:
 
 - `main`, the display macOS marks as main;
-- `secondary`, the first attached non-main display;
+- `secondary`, the leftmost attached non-main display;
+- `tertiary`, the next non-main display to the right of `secondary`;
 - an exact display UUID from `spaceman displays`;
 - an exact display name from `spaceman displays`. When two displays share that name, the first
   one `spaceman displays` lists is used, and Settings › Workspaces shows the workspace under that
@@ -604,7 +606,8 @@ Defaults assign workspaces 1-5 to `main` and 6-10 to `secondary`. `monitor` acce
 spaceman displays
 ```
 
-A missing `secondary`, UUID, or name falls back to the main display. Spaceman retains the preferred
+A missing `tertiary` falls back to `secondary`, so with two displays workspaces 6-10 all show on
+the secondary display. A missing `secondary`, UUID, or name falls back to the main display. Spaceman retains the preferred
 assignment as its own active lane; reconnecting that display makes its assigned active workspace
 visible again.
 
@@ -613,8 +616,8 @@ and `Secondary`; with three or more, Main stays `Main` and every other display i
 itself, numbered when two share a name (`Studio Display 1`, `Studio Display 2`). A display's card
 always carries its own name. Its picker segment says `Display 3` instead, by its position, when the
 name is longer than 16 characters (`Built-in Retina Display`) or four or more displays share the
-picker, and the card's caption repeats that number. Assigning a
-display past Secondary writes its UUID (the same selector `Option+Shift+Tab` persists), and a
+picker, and the card's caption repeats that number. Assigning the third display writes
+`tertiary`; assigning a display past that writes its UUID (the same selector `Option+Shift+Tab` persists), and a
 saved UUID renders back as that display's name, in the same words as its picker segment and
 card. A row set to a display other than its built-in default says which default it differs
 from (`Default: Studio Display 1`); a row already on its default says nothing, including one
@@ -645,9 +648,9 @@ workspace_order = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, "Q", "W", "E", "R", "T", "Y", 
 ## Process Scope
 
 `SPACEMAN_MANAGED_DISPLAY` is an internal process-scope override used by isolated tests. It accepts
-`main`, `secondary`, or `both` (the default). It is not a TOML field, and the installed app does not
+`main`, `secondary`, `tertiary`, or `both` (the default). It is not a TOML field, and the installed app does not
 provide a UI for setting it. A scoped process registers only workspace hotkeys assigned to its managed
-main/secondary selectors; normal users should leave it unset.
+main/secondary/tertiary selectors; normal users should leave it unset.
 
 `SPACEMAN_APPLICATION_SUPPORT` is another internal test override. It replaces the Application Support
 directory for the default config path, state, logs, and control files so live harnesses cannot touch
