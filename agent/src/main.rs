@@ -65,6 +65,8 @@ pub struct Ui {
     frame_remembered: bool,
     pub tour: Option<onboarding::Tour>,
     pub drag: Option<map::Drag>,
+    /// A workspace card on Settings › Screens' arrangement, mid-drag to another screen.
+    pub screen_drag: Option<map::ScreenDrag>,
     pub menu: Option<Menu>,
     pub sheet: Option<Sheet>,
     /// The width cards have in the pane on screen, as last laid out.
@@ -116,6 +118,7 @@ impl Ui {
             frame_remembered: false,
             tour: None,
             drag: None,
+            screen_drag: None,
             menu: None,
             sheet: None,
             card_w: controls::WINDOW.card_w(controls::WINDOW.size.0),
@@ -472,6 +475,7 @@ impl Ui {
             self.menu = None;
             self.sheet = None;
             self.drag = None;
+            self.screen_drag = None;
         }
     }
 
@@ -556,8 +560,9 @@ fn on_key(ui: &mut Ui, event: &KeyEvent, _tx: &mut Tx) -> bool {
             ui.close_sheet();
             return true;
         }
-        if ui.drag.is_some() || ui.menu.is_some() {
+        if ui.drag.is_some() || ui.screen_drag.is_some() || ui.menu.is_some() {
             ui.drag = None;
+            ui.screen_drag = None;
             ui.menu = None;
             ui.flush_pending_reload();
             return true;
@@ -588,6 +593,7 @@ fn on_key(ui: &mut Ui, event: &KeyEvent, _tx: &mut Tx) -> bool {
 
 fn on_close(ui: &mut Ui, _tx: &mut Tx) {
     ui.drag = None;
+    ui.screen_drag = None;
     ui.menu = None;
     ui.sheet = None;
     ui.flush_pending_reload();

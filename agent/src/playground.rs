@@ -97,6 +97,7 @@ pub(crate) fn reset_fixture(ui: &mut Ui, pane: Pane) {
     ui.doc = Doc::parse(include_str!("../fixtures/config.toml"));
     ui.menu = None;
     ui.drag = None;
+    ui.screen_drag = None;
     ui.error = None;
     ui.title_filter = rune::TextEdit::default();
     ui.default_floats = map::fixture_default_floats();

@@ -576,22 +576,143 @@ fn two_screens_draw_their_arrangement_above_the_cards_and_shift_its_targets() {
     let one = Layout::new(&doc, WIDTH);
     let displays = crate::panes::workspaces::fixture_three();
     let three = Layout::with_running(&doc, WIDTH, &displays, &[], &[]);
-    assert!(one.arrangement.is_empty());
-    assert_eq!(three.arrangement.len(), 3);
-    // Each panel screen carries its card's workspaces.
-    let main = three.arrangement.iter().find(|s| s.is_main).unwrap();
-    assert_eq!(main.workspaces[0], WorkspaceId::ONE);
+    let panel = &three.grid.panel;
+    assert!(one.grid.panel.is_empty());
+    assert_eq!(panel.monitors.len(), 3);
+    // Each screen in the panel holds a card per workspace its section lists.
+    let main = panel.monitors.iter().find(|m| m.is_main).unwrap();
+    assert_eq!(main.cards[0].0, WorkspaceId::ONE);
     // The tiles move down by the panel, and still hit-test where they are drawn.
     let shift = three.grid.tile_origin(0).1 - one.grid.tile_origin(0).1;
-    assert!((shift - (HEAD_GAP + arrangement::HEIGHT)).abs() < 0.01);
+    assert!((shift - (HEAD_GAP + panel.height)).abs() < 0.01);
     let (x, y) = three.grid.tile_origin(0);
     assert_eq!(
         three.grid.target_at(x + 5.0, y + 5.0),
         Some(Place::Workspace(three.grid.tiles[0]))
     );
-    // The panel itself is no drop target.
+    // A card in the panel is a drop target for an app; the panel around it is not.
+    let (_, (cx, cy, side, _)) = main.cards[1];
     assert_eq!(
-        three.grid.target_at(WIDTH / 2.0, HEAD_H + HEAD_GAP + 20.0),
-        None
+        three
+            .grid
+            .target_at(cx + side / 2.0, cy + side / 2.0 + arrangement::TOP),
+        Some(Place::Workspace(main.cards[1].0))
+    );
+    assert_eq!(three.grid.target_at(2.0, arrangement::TOP + 2.0), None);
+}
+
+#[test]
+fn dragging_a_workspace_card_to_another_screen_moves_the_workspace_there() {
+    let mut ui = rules_ui();
+    ui.displays = arrangement::fixture_desk();
+    let layout = Layout::with_running(&ui.doc, WIDTH, &ui.displays, &[], &[]);
+    let panel = layout.grid.panel.clone();
+    let main = panel.monitors.iter().position(|m| m.is_main).unwrap();
+    let (workspace, (x, y, side, _)) = panel.monitors[main].cards[0];
+    let to = (0..panel.monitors.len()).find(|i| *i != main).unwrap();
+    let (tx, ty, tw, th) = panel.monitors[to].frame;
+    let origin = (x, y + arrangement::TOP);
+    let grab = (side / 2.0, side / 2.0);
+    let delta = (tx + tw / 2.0 - x - grab.0, ty + th / 2.0 - y - grab.1);
+    let step = |ui: &mut Ui, phase, delta, cancelled| {
+        arrangement::screen_drag_step(
+            ui, phase, grab, delta, cancelled, workspace, origin, side, &panel,
+        );
+    };
+
+    // A cancelled drag changes nothing.
+    step(&mut ui, rune::Phase::Down, (0.0, 0.0), false);
+    step(&mut ui, rune::Phase::Move, delta, false);
+    assert_eq!(ui.screen_drag.as_ref().unwrap().target, Some(to));
+    step(&mut ui, rune::Phase::Up, delta, true);
+    assert!(ui.screen_drag.is_none());
+    assert_eq!(ui.doc.monitor(workspace), None);
+
+    // Dropped on the other screen, the workspace shows there.
+    step(&mut ui, rune::Phase::Down, (0.0, 0.0), false);
+    step(&mut ui, rune::Phase::Move, delta, false);
+    step(&mut ui, rune::Phase::Up, delta, false);
+    assert_eq!(ui.error, None);
+    let after = Layout::with_running(&ui.doc, WIDTH, &ui.displays, &[], &[]);
+    assert_eq!(after.grid.panel.monitor_of(workspace), Some(to));
+    assert_eq!(
+        after.grid.panel.monitors[to].selector,
+        crate::panes::workspaces::effective_monitor(&ui.doc, workspace)
+    );
+
+    // Dropped back on Main, its default, the override goes away.
+    let back = after.grid.panel.monitors[to]
+        .cards
+        .iter()
+        .find(|(ws, _)| *ws == workspace)
+        .map(|(_, frame)| *frame)
+        .unwrap();
+    let (mx, my, mw, mh) = after.grid.panel.monitors[main].frame;
+    let origin = (back.0, back.1 + arrangement::TOP);
+    let delta = (
+        mx + mw / 2.0 - back.0 - grab.0,
+        my + mh / 2.0 - back.1 - grab.1,
+    );
+    let panel = after.grid.panel.clone();
+    for (phase, d) in [
+        (rune::Phase::Down, (0.0, 0.0)),
+        (rune::Phase::Move, delta),
+        (rune::Phase::Up, delta),
+    ] {
+        arrangement::screen_drag_step(
+            &mut ui, phase, grab, d, false, workspace, origin, back.2, &panel,
+        );
+    }
+    assert_eq!(ui.doc.monitor(workspace), None);
+}
+
+#[test]
+fn an_app_dropped_on_a_workspace_card_in_the_panel_opens_there() {
+    let mut ui = rules_ui();
+    ui.displays = arrangement::fixture_desk();
+    let layout = Layout::with_running(&ui.doc, WIDTH, &ui.displays, &[], &[]);
+    let rule = ui
+        .doc
+        .rules()
+        .into_iter()
+        .find(|rule| rule.place == Place::Workspace(WorkspaceId::ONE))
+        .unwrap();
+    let (origin, size) = layout.spot(&rule).unwrap();
+    // Workspace 2's card on Main, in the panel.
+    let (_, (cx, cy, side, _)) = layout
+        .grid
+        .panel
+        .monitors
+        .iter()
+        .flat_map(|m| &m.cards)
+        .find(|(ws, _)| *ws == WorkspaceId::TWO)
+        .copied()
+        .unwrap();
+    let grab = (size.0 / 2.0, size.1 / 2.0);
+    let delta = (
+        cx + side / 2.0 - origin.0 - grab.0,
+        cy + side / 2.0 + arrangement::TOP - origin.1 - grab.1,
+    );
+    for (phase, d) in [
+        (rune::Phase::Down, (0.0, 0.0)),
+        (rune::Phase::Move, delta),
+        (rune::Phase::Up, delta),
+    ] {
+        drag_step(
+            &mut ui,
+            phase,
+            grab,
+            d,
+            false,
+            &rule,
+            origin,
+            size,
+            |x, y| layout.grid.target_at(x, y),
+        );
+    }
+    assert_eq!(ui.error, None);
+    assert_eq!(
+        ui.doc.rules()[rule.index].place,
+        Place::Workspace(WorkspaceId::TWO)
     );
 }

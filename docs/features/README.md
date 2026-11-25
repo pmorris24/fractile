@@ -46,6 +46,7 @@ secondary-display workspaces ships in the notarized preview at
 | Secondary-display workspaces 5-7 | Require a second display; with one display they fall back to `main` |
 | Tertiary-display workspaces 8-10 | Show on the third display; with two displays they fall back to `secondary` |
 | Four or more displays | Assign workspaces in Settings › Workspaces (each display past `tertiary` by UUID) or with `[[workspaces]] monitor = "<uuid>"` |
+| Display arrangement (Settings › Screens) | With two or more displays, a panel draws each screen at its real size and position, as System Settings › Displays › Arrange does, holding a card per workspace with the apps routed there. Dragging a card to another screen writes that workspace's `monitor` (removing it when the screen is the built-in default); dragging an app onto any card rewrites its route rule. Covered by `agent/src/map/arrangement.rs` and `agent/src/map/tests.rs`; scenes `rules-arrangement` and `rules-arrangement-drag`; no live harness |
 
 ## Common Prerequisites
 

@@ -21,6 +21,7 @@ use rune::{Cursor, El, PointerPress, Tx, el, row, text};
 use rune_kit::{Menu as KitMenu, MenuItem, Placement};
 use spaceman::{WorkspaceId, config::LabFeature};
 
+pub use arrangement::ScreenDrag;
 pub use defaults::{fixture_default_floats, poll as poll_default_floats};
 pub use drag::Drag;
 pub use filter::{FilterDraft, sheet as filter_sheet};
@@ -107,6 +108,12 @@ pub(crate) const SCENES: &[Scene] = &[
         fixture(ui);
         ui.displays = arrangement::fixture_desk();
     }),
+    // Workspace 2's card mid-drag from Main to the portrait screen.
+    ("rules-arrangement-drag", |ui| {
+        fixture(ui);
+        ui.displays = arrangement::fixture_desk();
+        ui.screen_drag = arrangement::fixture_drag(ui);
+    }),
     // A workspace number's menu: the screens it can show on.
     ("rules-screen-menu", |ui| {
         fixture(ui);
@@ -142,8 +149,6 @@ struct Layout {
     floating: Vec<Rule>,
     /// The built-in floats shown under the float box.
     defaults: Vec<DefaultFloat>,
-    /// The connected screens as they are arranged, drawn over the cards with two or more.
-    arrangement: Vec<arrangement::Screen>,
 }
 
 impl Layout {
@@ -171,7 +176,7 @@ impl Layout {
             &choices,
             doc.workspaces_with_referenced(WorkspaceId::numbered()),
         );
-        let arrangement = arrangement::screens(&sections, &choices, displays);
+        let panel = arrangement::Panel::new(&sections, &choices, displays, width);
         let tiles: Vec<WorkspaceId> = sections
             .iter()
             .flat_map(|section| section.workspaces.iter().copied())
@@ -209,11 +214,7 @@ impl Layout {
         Layout {
             grid: DropGrid {
                 width,
-                arrange_h: if arrangement.is_empty() {
-                    0.0
-                } else {
-                    HEAD_GAP + arrangement::HEIGHT
-                },
+                panel,
                 tiles,
                 screens,
                 floating_len: floating.len(),
@@ -222,7 +223,6 @@ impl Layout {
             routed,
             floating,
             defaults,
-            arrangement,
         }
     }
 
@@ -266,8 +266,8 @@ struct Screen {
 struct DropGrid {
     /// The map's width: the pane's card width.
     width: f32,
-    /// The arrangement panel under the map's heading, and the gap above it; 0 without one.
-    arrange_h: f32,
+    /// The screens as they are arranged, under the map's heading; empty with one screen.
+    panel: arrangement::Panel,
     /// Every screen's tiles, screen after screen.
     tiles: Vec<WorkspaceId>,
     screens: Vec<Screen>,
@@ -277,7 +277,11 @@ struct DropGrid {
 impl DropGrid {
     /// The first screen's heading: under the map's own, and the arrangement panel if any.
     fn grid_top(&self) -> f32 {
-        GRID_TOP + self.arrange_h
+        if self.panel.is_empty() {
+            GRID_TOP
+        } else {
+            GRID_TOP + HEAD_GAP + self.panel.height
+        }
     }
 
     /// A workspace tile's width: the map's, shared between the columns.
@@ -385,6 +389,9 @@ impl DropGrid {
         if !(0.0..=self.width).contains(&x) {
             return None;
         }
+        if let Some(workspace) = self.panel.card_at(x, y - arrangement::TOP) {
+            return Some(Place::Workspace(workspace));
+        }
         for ((top, start), screen) in self.screen_tops().into_iter().zip(&self.screens) {
             let tiles_top = top + HEAD_H + HEAD_GAP;
             let rows = Self::screen_rows(screen);
@@ -451,11 +458,8 @@ pub fn pane(ui: &Ui, p: Paint, layer: &mut Vec<El>) -> El {
             Some(controls::caption(p, INTRO)),
             0.0,
         ));
-    if !layout.arrangement.is_empty() {
-        map = map.child(
-            arrangement::view(p, &layout.arrangement, width, view.active)
-                .absolute(0.0, HEAD_H + HEAD_GAP),
-        );
+    if !layout.grid.panel.is_empty() {
+        map = map.child(view.arrangement().absolute(0.0, arrangement::TOP));
     }
     for ((top, _), screen) in layout
         .grid
@@ -493,6 +497,9 @@ pub fn pane(ui: &Ui, p: Paint, layer: &mut Vec<El>) -> El {
         .child(view.float_box(layer));
     if let Some(drag) = ui.drag.as_ref().filter(|drag| drag.moved) {
         map = map.children(view.ghost(drag));
+    }
+    if let Some(drag) = &ui.screen_drag {
+        map = map.children(view.card_ghost(drag));
     }
     // Drag positions are in map coordinates, so scrolling the body doesn't move drop targets.
     // The built-in floats flow under the map: they are no drop target and take no rule.
@@ -810,7 +817,7 @@ impl MapView<'_> {
         let item = if drag.size.1 == CHIP_H {
             self.chip(rule)
         } else {
-            self.app_icon(rule, ICON)
+            self.app_icon(rule, drag.size.0)
         };
         let mut ghost = item
             .key("ghost")
