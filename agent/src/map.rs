@@ -31,7 +31,7 @@ use crate::{
     Menu, Pane, Ui,
     apps::{self, App},
     controls::{self, METRICS, Paint},
-    panes::workspaces::{self as screens, Choice, ConnectedDisplay},
+    panes::workspaces::{self as screens, Choice, ConnectedDisplay, Section},
     playground::{Scene, reset_fixture},
     rules::{Doc, Place, Rule},
     view::scroll_body,
@@ -144,7 +144,9 @@ struct Layout {
     grid: DropGrid,
     /// Every display a workspace can show on, as a tile's screen menu offers them.
     choices: Vec<Choice>,
-    /// Rules by tile, in file order.
+    /// Every workspace on the map, in the panel or in a section below.
+    workspaces: Vec<WorkspaceId>,
+    /// Rules by workspace, parallel to `workspaces`, in file order.
     routed: Vec<Vec<Rule>>,
     floating: Vec<Rule>,
     /// The built-in floats shown under the float box.
@@ -177,11 +179,21 @@ impl Layout {
             doc.workspaces_with_referenced(WorkspaceId::numbered()),
         );
         let panel = arrangement::Panel::new(&sections, &choices, displays, width);
-        let tiles: Vec<WorkspaceId> = sections
+        let workspaces: Vec<WorkspaceId> = sections
             .iter()
             .flat_map(|section| section.workspaces.iter().copied())
             .collect();
-        let screens: Vec<Screen> = sections
+        // The panel shows every connected screen's workspaces; the sections below keep only
+        // what it can't place, the workspaces saved for an unplugged display.
+        let below: Vec<Section> = sections
+            .into_iter()
+            .filter(|section| !panel.monitors.iter().any(|m| m.key == section.key))
+            .collect();
+        let tiles: Vec<WorkspaceId> = below
+            .iter()
+            .flat_map(|section| section.workspaces.iter().copied())
+            .collect();
+        let screens: Vec<Screen> = below
             .into_iter()
             .map(|section| Screen {
                 tile_h: if section.workspaces.iter().any(|ws| live.contains(ws)) {
@@ -195,12 +207,12 @@ impl Layout {
                 len: section.workspaces.len(),
             })
             .collect();
-        let mut routed = vec![Vec::new(); tiles.len()];
+        let mut routed = vec![Vec::new(); workspaces.len()];
         let mut floating = Vec::new();
         for rule in rules {
             match rule.place {
                 Place::Workspace(workspace) => {
-                    if let Some(index) = tiles.iter().position(|tile| *tile == workspace) {
+                    if let Some(index) = workspaces.iter().position(|ws| *ws == workspace) {
                         routed[index].push(rule);
                     }
                 }
@@ -220,6 +232,7 @@ impl Layout {
                 floating_len: floating.len(),
             },
             choices,
+            workspaces,
             routed,
             floating,
             defaults,
@@ -240,12 +253,31 @@ impl Layout {
         if let Some(slot) = self.floating.iter().position(|r| r.index == rule.index) {
             return Some((self.grid.chip_origin(slot), (self.grid.chip_w(), CHIP_H)));
         }
-        self.routed.iter().enumerate().find_map(|(tile, rules)| {
+        self.routed.iter().enumerate().find_map(|(index, rules)| {
             let slot = rules.iter().position(|r| r.index == rule.index)?;
-            let (x, y) = self.grid.tile_origin(tile);
-            let (dx, dy) = Self::icon_offset(slot);
-            Some(((x + dx, y + dy), (ICON, ICON)))
+            let workspace = self.workspaces[index];
+            if let Some(tile) = self.grid.tiles.iter().position(|ws| *ws == workspace) {
+                let (x, y) = self.grid.tile_origin(tile);
+                let (dx, dy) = Self::icon_offset(slot);
+                return Some(((x + dx, y + dy), (ICON, ICON)));
+            }
+            let (x, y, w, _) = self.grid.panel.card(workspace)?;
+            (slot < arrangement::rule_room(w)).then(|| {
+                let (dx, dy) = arrangement::rule_offset(slot);
+                (
+                    (x + dx, y + dy + arrangement::TOP),
+                    (arrangement::RULE_ICON, arrangement::RULE_ICON),
+                )
+            })
         })
+    }
+
+    /// The rules that send new windows to `workspace`, in file order.
+    fn rules_for(&self, workspace: WorkspaceId) -> &[Rule] {
+        self.workspaces
+            .iter()
+            .position(|ws| *ws == workspace)
+            .map_or(&[], |index| self.routed[index].as_slice())
     }
 }
 
@@ -275,6 +307,15 @@ struct DropGrid {
 }
 
 impl DropGrid {
+    /// Under the arrangement panel, or the map's heading without one.
+    fn panel_bottom(&self) -> f32 {
+        if self.panel.is_empty() {
+            GRID_TOP
+        } else {
+            arrangement::TOP + self.panel.height
+        }
+    }
+
     /// The first screen's heading: under the map's own, and the arrangement panel if any.
     fn grid_top(&self) -> f32 {
         if self.panel.is_empty() {
@@ -324,7 +365,7 @@ impl DropGrid {
         self.screen_tops()
             .last()
             .zip(self.screens.last())
-            .map_or(self.grid_top(), |((top, _), screen)| {
+            .map_or(self.panel_bottom(), |((top, _), screen)| {
                 top + HEAD_H + HEAD_GAP + Self::rows_h(screen)
             })
     }
@@ -459,7 +500,7 @@ pub fn pane(ui: &Ui, p: Paint, layer: &mut Vec<El>) -> El {
             0.0,
         ));
     if !layout.grid.panel.is_empty() {
-        map = map.child(view.arrangement().absolute(0.0, arrangement::TOP));
+        map = map.child(view.arrangement(layer).absolute(0.0, arrangement::TOP));
     }
     for ((top, _), screen) in layout
         .grid
@@ -522,7 +563,7 @@ struct MapView<'a> {
 impl MapView<'_> {
     fn tile(self, index: usize, workspace: WorkspaceId, layer: &mut Vec<El>) -> El {
         let c = &self.p.k.c;
-        let rules = &self.layout.routed[index];
+        let rules = self.layout.rules_for(workspace);
         let active = self.active.contains(&workspace);
         let target = self.target == Some(Place::Workspace(workspace));
         let border = if target {

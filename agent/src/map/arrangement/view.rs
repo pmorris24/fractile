@@ -1,34 +1,33 @@
-//! Drawing the arrangement panel, and dragging a workspace card to another screen. Apps in the
-//! cards drag with the map's own app drag (`super::super::drag`), so they drop on any workspace
-//! card, here or in the screens' sections below, or on the float box.
+//! Drawing the arrangement panel, and dragging a workspace card to another screen. A card is a
+//! small screen: its number, the apps whose new windows open there, Add, and under them the
+//! windows open on it now. Its apps drag with the map's own app drag (`crate::map::drag`) and
+//! take the same right-click menu, so they drop on any workspace card or on the float box.
 
 use rune::{Cursor, El, Tx, el, text};
 use spaceman::WorkspaceId;
 
-use super::{CARD_GAP, Frame, INSET, MENU_BAR, Monitor, NAME_H, PAD_BOTTOM, Panel};
+use super::{
+    CARD_PAD, Frame, INSET, MENU_BAR, Monitor, NAME_H, PAD_BOTTOM, Panel, RULE_ICON, preview_top,
+    rule_offset, rule_room,
+};
 use crate::{
     Ui,
-    map::{HEAD_GAP, HEAD_H, MapView, SLOP, drag},
+    map::{HEAD_GAP, HEAD_H, MapView, SLOP, live},
     panes::workspaces as screens,
-    rules::{Place, Rule},
+    rules::Place,
 };
 
 /// The panel's top in the map: under the map's heading.
 pub(in crate::map) const TOP: f32 = HEAD_H + HEAD_GAP;
-/// Inside a card: its number's line, and its app icons' size and spacing.
-const NUMBER_H: f32 = 18.0;
-const CARD_PAD: f32 = 5.0;
-const CARD_ICON: f32 = 16.0;
-const CARD_ICON_GAP: f32 = 3.0;
 const HINT: &str = "Drag a workspace to another screen, or an app onto a workspace";
 
 /// A workspace card being dragged to another screen.
 #[derive(Clone, Debug, PartialEq)]
 pub struct ScreenDrag {
     pub(in crate::map) workspace: WorkspaceId,
-    /// The card's top-left in the map, and its side.
+    /// The card's top-left in the map, and its size.
     origin: (f32, f32),
-    side: f32,
+    size: (f32, f32),
     grab: (f32, f32),
     delta: (f32, f32),
     moved: bool,
@@ -45,7 +44,7 @@ pub(in crate::map) fn screen_drag_step(
     cancelled: bool,
     workspace: WorkspaceId,
     origin: (f32, f32),
-    side: f32,
+    size: (f32, f32),
     panel: &Panel,
 ) {
     match phase {
@@ -54,7 +53,7 @@ pub(in crate::map) fn screen_drag_step(
             ui.screen_drag = Some(ScreenDrag {
                 workspace,
                 origin,
-                side,
+                size,
                 grab: start,
                 delta: (0.0, 0.0),
                 moved: false,
@@ -102,20 +101,15 @@ pub(in crate::map) fn screen_drag_step(
 pub(in crate::map) fn fixture_drag(ui: &Ui) -> Option<ScreenDrag> {
     let layout = crate::map::Layout::with_running(&ui.doc, ui.card_w, &ui.displays, &[], &[]);
     let panel = &layout.grid.panel;
-    let (_, (x, y, side, _)) = panel
-        .monitors
-        .iter()
-        .flat_map(|m| &m.cards)
-        .find(|(ws, _)| *ws == WorkspaceId::TWO)
-        .copied()?;
+    let (x, y, w, h) = panel.card(WorkspaceId::TWO)?;
     let to = panel.monitors.iter().position(|m| !m.is_main)?;
     let (tx, ty, tw, th) = panel.monitors[to].frame;
     Some(ScreenDrag {
         workspace: WorkspaceId::TWO,
         origin: (x, y + TOP),
-        side,
-        grab: (side / 2.0, side / 2.0),
-        delta: (tx + tw / 2.0 - x - side, ty + th / 2.0 - y - side),
+        size: (w, h),
+        grab: (w / 2.0, h / 2.0),
+        delta: (tx + tw / 2.0 - x - w, ty + th / 2.0 - y - h),
         moved: true,
         target: Some(to),
     })
@@ -123,7 +117,7 @@ pub(in crate::map) fn fixture_drag(ui: &Ui) -> Option<ScreenDrag> {
 
 impl MapView<'_> {
     /// The panel: every screen where it sits, its workspace cards, and the hint under them.
-    pub(in crate::map) fn arrangement(self) -> El {
+    pub(in crate::map) fn arrangement(self, layer: &mut Vec<El>) -> El {
         let c = &self.p.k.c;
         let panel = &self.layout.grid.panel;
         let mut out = el()
@@ -135,18 +129,18 @@ impl MapView<'_> {
             .fill(c.layer_01)
             .border(self.p.hair, c.border_weak);
         for (index, monitor) in panel.monitors.iter().enumerate() {
-            out = out.child(self.monitor(index, monitor));
+            out = out.child(self.monitor(index, monitor, layer));
         }
         out.child(
             text(HINT)
                 .key("hint")
                 .font(self.p.meta())
                 .color(self.p.faint())
-                .absolute(INSET + CARD_GAP, panel.height - PAD_BOTTOM / 2.0 - 7.0),
+                .absolute(INSET + CARD_PAD, panel.height - PAD_BOTTOM / 2.0 - 7.0),
         )
     }
 
-    fn monitor(self, index: usize, monitor: &Monitor) -> El {
+    fn monitor(self, index: usize, monitor: &Monitor, layer: &mut Vec<El>) -> El {
         let c = &self.p.k.c;
         let (x, y, w, h) = monitor.frame;
         let target = self
@@ -155,11 +149,8 @@ impl MapView<'_> {
             .as_ref()
             .filter(|drag| drag.moved)
             .is_some_and(|drag| drag.target == Some(index));
-        let on_view = monitor.cards.iter().any(|(ws, _)| self.active.contains(ws));
         let border = if target {
             (2.0, c.border_focus)
-        } else if on_view {
-            (1.5, c.border_strong)
         } else {
             (self.p.hair, c.border_base)
         };
@@ -167,7 +158,6 @@ impl MapView<'_> {
             .key(format!("arrange-{}", monitor.key))
             .role("group")
             .label(format!("{}: {}", monitor.title, monitor.caption))
-            .help(format!("{} · {}", monitor.title, monitor.caption))
             .size(w, h)
             .radius(self.p.k.radius.md)
             .fill(if target { c.layer_03 } else { c.layer_02 })
@@ -187,6 +177,7 @@ impl MapView<'_> {
             out = out.child(
                 text(monitor.title.clone())
                     .key("name")
+                    .help(format!("{} · {}", monitor.title, monitor.caption))
                     .font(self.p.meta())
                     .color(self.p.muted())
                     .truncate()
@@ -207,14 +198,17 @@ impl MapView<'_> {
         }
         for (workspace, frame) in &monitor.cards {
             let local = (frame.0 - x, frame.1 - y);
-            out = out.child(self.card(*workspace, *frame).absolute(local.0, local.1));
+            out = out.child(
+                self.card(*workspace, *frame, layer)
+                    .absolute(local.0, local.1),
+            );
         }
         out
     }
 
-    /// A workspace's card: its number and the apps whose new windows open there. Dragged by
-    /// its body it moves the workspace to another screen; its apps drag on their own.
-    fn card(self, workspace: WorkspaceId, (fx, fy, side, _): Frame) -> El {
+    /// A workspace's card. Dragged by its body it moves the workspace to another screen; its
+    /// apps drag on their own and Add adds one.
+    fn card(self, workspace: WorkspaceId, (fx, fy, w, h): Frame, layer: &mut Vec<El>) -> El {
         let c = &self.p.k.c;
         let origin = (fx, fy + TOP);
         let dragging = self
@@ -232,15 +226,16 @@ impl MapView<'_> {
             (self.p.hair, c.border_weak)
         };
         let panel = self.layout.grid.panel.clone();
-        let card = self
-            .card_face(workspace, side, active)
+        let mut card = self
+            .card_face((w, h))
             .key(format!("card-{workspace}"))
-            .role("button")
-            .label(format!("Workspace {workspace}: drag to another screen"))
+            .role("group")
+            .label(format!("Workspace {workspace}"))
             .help("Drag to another screen")
             .fill(if app_target { c.layer_03 } else { c.layer_01 })
             .border(border.0, border.1)
             .cursor(Cursor::Grab)
+            .hover_group()
             .opacity(if dragging { 0.3 } else { 1.0 })
             .on_drag(move |ui: &mut Ui, d: &mut rune::Drag, _: &mut Tx| {
                 screen_drag_step(
@@ -251,51 +246,64 @@ impl MapView<'_> {
                     d.cancelled(),
                     workspace,
                     origin,
-                    side,
+                    (w, h),
                     &panel,
                 );
-            });
-        self.card_apps(card, workspace, side, Some(origin))
+            })
+            .child(
+                self.screen_menu(workspace, active, layer)
+                    .absolute(1.0, 1.0),
+            )
+            .child(
+                self.add_button(Place::Workspace(workspace), layer)
+                    .absolute(w - 24.0, 2.0),
+            );
+        card = self.card_apps(card, workspace, w, Some(layer));
+        self.card_preview(card, workspace, (w, h))
     }
 
-    /// The apps whose new windows open on `workspace`, in a card `side` wide. With the card's
-    /// `origin` in the map they drag; without one (the card following the pointer) they are
-    /// only drawn.
+    /// The windows open on `workspace` now, filling the card under its apps.
+    fn card_preview(self, card: El, workspace: WorkspaceId, (w, h): (f32, f32)) -> El {
+        let Some(entry) = live::windows(self.ui, workspace) else {
+            return card;
+        };
+        let top = preview_top(!self.layout.rules_for(workspace).is_empty());
+        let size = (w - 2.0 * CARD_PAD, h - top - CARD_PAD);
+        if size.0 < RULE_ICON || size.1 < RULE_ICON {
+            return card;
+        }
+        card.child(live::preview(self.ui, self.p, entry, size).absolute(CARD_PAD, top))
+    }
+
+    /// The apps whose new windows open on `workspace`, along the top of a card `width` wide.
+    /// With the menu `layer` they drag and take their menu; without it (the card following
+    /// the pointer) they are only drawn.
     fn card_apps(
         self,
         mut card: El,
         workspace: WorkspaceId,
-        side: f32,
-        origin: Option<(f32, f32)>,
+        width: f32,
+        mut layer: Option<&mut Vec<El>>,
     ) -> El {
         let c = &self.p.k.c;
-        let rules = self
-            .layout
-            .grid
-            .tiles
-            .iter()
-            .position(|tile| *tile == workspace)
-            .map_or(&[][..], |index| self.layout.routed[index].as_slice());
-        let per_row = (((side - 2.0 * CARD_PAD + CARD_ICON_GAP) / (CARD_ICON + CARD_ICON_GAP))
-            .floor() as usize)
-            .max(1);
-        let rows = (((side - NUMBER_H - CARD_PAD + CARD_ICON_GAP) / (CARD_ICON + CARD_ICON_GAP))
-            .floor() as usize)
-            .max(1);
-        let room = per_row * rows;
+        let rules = self.layout.rules_for(workspace);
+        let room = rule_room(width);
         for (slot, rule) in rules.iter().enumerate() {
-            let (col, row) = (slot % per_row, slot / per_row);
-            let at = (
-                CARD_PAD + col as f32 * (CARD_ICON + CARD_ICON_GAP),
-                NUMBER_H + row as f32 * (CARD_ICON + CARD_ICON_GAP),
-            );
+            let at = rule_offset(slot);
             if rules.len() > room && slot == room - 1 {
                 card = card.child(
                     el().key("more")
-                        .size(CARD_ICON, CARD_ICON)
+                        .size(RULE_ICON, RULE_ICON)
                         .radius(self.p.k.radius.sm)
                         .fill(c.layer_03)
                         .center()
+                        .help(
+                            rules[slot..]
+                                .iter()
+                                .map(|rule| self.rule_label(rule))
+                                .collect::<Vec<_>>()
+                                .join(", "),
+                        )
                         .child(
                             text(format!("+{}", rules.len() - slot))
                                 .font(self.p.tabular(self.p.tag()))
@@ -305,51 +313,19 @@ impl MapView<'_> {
                 );
                 break;
             }
-            let icon = match origin {
-                Some(origin) => self.card_icon(rule, (origin.0 + at.0, origin.1 + at.1)),
-                None => self.app_icon(rule, CARD_ICON),
+            let icon = self.app_icon(rule, RULE_ICON);
+            let icon = match layer.as_deref_mut() {
+                Some(layer) => self.draggable(rule, icon, layer),
+                None => icon,
             };
             card = card.child(icon.absolute(at.0, at.1));
         }
         card
     }
 
-    /// A card's shape and number, shared by the card and the one following the pointer.
-    fn card_face(self, workspace: WorkspaceId, side: f32, active: bool) -> El {
-        el().size(side, side).radius(self.p.k.radius.md).child(
-            text(workspace.to_string())
-                .key("number")
-                .font(self.p.tabular(self.p.tag()))
-                .color(if active {
-                    self.p.text()
-                } else {
-                    self.p.muted()
-                })
-                .absolute(CARD_PAD + 1.0, 3.0),
-        )
-    }
-
-    /// An app in a card: dragged like any app on the map. Its menu lives on the app's icon in
-    /// the sections below, so one rule never opens two.
-    fn card_icon(self, rule: &Rule, origin: (f32, f32)) -> El {
-        let grid = self.layout.grid.clone();
-        let drag_rule = rule.clone();
-        let dragging = self
-            .ui
-            .drag
-            .as_ref()
-            .is_some_and(|drag| drag.rule == rule.index && drag.moved);
-        let size = (CARD_ICON, CARD_ICON);
-        self.app_icon(rule, CARD_ICON)
-            .key(format!("card-rule-{}", rule.index))
-            .role("button")
-            .label(self.rule_name(rule))
-            .help(self.rule_help(rule))
-            .cursor(Cursor::Grab)
-            .opacity(if dragging { 0.3 } else { 1.0 })
-            .on_drag(move |ui: &mut Ui, d: &mut rune::Drag, _: &mut Tx| {
-                drag::drag(ui, d, &drag_rule, origin, size, |x, y| grid.target_at(x, y));
-            })
+    /// A card's shape, shared by the card and the one following the pointer.
+    fn card_face(self, (w, h): (f32, f32)) -> El {
+        el().size(w, h).radius(self.p.k.radius.md)
     }
 
     /// The dragged workspace card, following the pointer.
@@ -359,13 +335,20 @@ impl MapView<'_> {
         }
         let c = &self.p.k.c;
         let mut ghost = self
-            .card_face(drag.workspace, drag.side, true)
+            .card_face(drag.size)
             .key("card-ghost")
             .fill(c.layer_02)
             .border(1.5, c.border_focus)
             .cursor(Cursor::Grabbing)
+            .child(
+                text(drag.workspace.to_string())
+                    .font(self.p.tabular(self.p.strong()))
+                    .color(self.p.text())
+                    .absolute(CARD_PAD + 2.0, 4.0),
+            )
             .absolute(drag.origin.0 + drag.delta.0, drag.origin.1 + drag.delta.1);
-        ghost = self.card_apps(ghost, drag.workspace, drag.side, None);
+        ghost = self.card_apps(ghost, drag.workspace, drag.size.0, None);
+        ghost = self.card_preview(ghost, drag.workspace, drag.size);
         for shadow in &self.p.k.elevation.floating {
             ghost = ghost.box_shadow(*shadow);
         }

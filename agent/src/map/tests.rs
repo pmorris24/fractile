@@ -582,20 +582,24 @@ fn two_screens_draw_their_arrangement_above_the_cards_and_shift_its_targets() {
     // Each screen in the panel holds a card per workspace its section lists.
     let main = panel.monitors.iter().find(|m| m.is_main).unwrap();
     assert_eq!(main.cards[0].0, WorkspaceId::ONE);
-    // The tiles move down by the panel, and still hit-test where they are drawn.
-    let shift = three.grid.tile_origin(0).1 - one.grid.tile_origin(0).1;
-    assert!((shift - (HEAD_GAP + panel.height)).abs() < 0.01);
-    let (x, y) = three.grid.tile_origin(0);
-    assert_eq!(
-        three.grid.target_at(x + 5.0, y + 5.0),
-        Some(Place::Workspace(three.grid.tiles[0]))
-    );
+    // The panel is the one view of a connected screen's workspaces: no section repeats them,
+    // and the float box follows the panel.
+    assert!(three.grid.tiles.is_empty());
+    assert!(three.grid.screens.is_empty());
+    assert!(three.grid.float_head_top() > arrangement::TOP + panel.height);
+    assert!(three.grid.float_head_top() < arrangement::TOP + panel.height + 2.0 * SECTION_GAP);
+    // Every workspace's rules still have a home, and an icon a spot, on its card.
+    for rule in doc.rules() {
+        if matches!(rule.place, Place::Workspace(_)) {
+            assert!(three.spot(&rule).is_some(), "{rule:?}");
+        }
+    }
     // A card in the panel is a drop target for an app; the panel around it is not.
-    let (_, (cx, cy, side, _)) = main.cards[1];
+    let (_, (cx, cy, cw, ch)) = main.cards[1];
     assert_eq!(
         three
             .grid
-            .target_at(cx + side / 2.0, cy + side / 2.0 + arrangement::TOP),
+            .target_at(cx + cw / 2.0, cy + ch / 2.0 + arrangement::TOP),
         Some(Place::Workspace(main.cards[1].0))
     );
     assert_eq!(three.grid.target_at(2.0, arrangement::TOP + 2.0), None);
@@ -608,15 +612,23 @@ fn dragging_a_workspace_card_to_another_screen_moves_the_workspace_there() {
     let layout = Layout::with_running(&ui.doc, WIDTH, &ui.displays, &[], &[]);
     let panel = layout.grid.panel.clone();
     let main = panel.monitors.iter().position(|m| m.is_main).unwrap();
-    let (workspace, (x, y, side, _)) = panel.monitors[main].cards[0];
+    let (workspace, (x, y, side, side_h)) = panel.monitors[main].cards[0];
     let to = (0..panel.monitors.len()).find(|i| *i != main).unwrap();
     let (tx, ty, tw, th) = panel.monitors[to].frame;
     let origin = (x, y + arrangement::TOP);
-    let grab = (side / 2.0, side / 2.0);
+    let grab = (side / 2.0, side_h / 2.0);
     let delta = (tx + tw / 2.0 - x - grab.0, ty + th / 2.0 - y - grab.1);
     let step = |ui: &mut Ui, phase, delta, cancelled| {
         arrangement::screen_drag_step(
-            ui, phase, grab, delta, cancelled, workspace, origin, side, &panel,
+            ui,
+            phase,
+            grab,
+            delta,
+            cancelled,
+            workspace,
+            origin,
+            (side, side_h),
+            &panel,
         );
     };
 
@@ -660,7 +672,15 @@ fn dragging_a_workspace_card_to_another_screen_moves_the_workspace_there() {
         (rune::Phase::Up, delta),
     ] {
         arrangement::screen_drag_step(
-            &mut ui, phase, grab, d, false, workspace, origin, back.2, &panel,
+            &mut ui,
+            phase,
+            grab,
+            d,
+            false,
+            workspace,
+            origin,
+            (back.2, back.3),
+            &panel,
         );
     }
     assert_eq!(ui.doc.monitor(workspace), None);
@@ -679,7 +699,7 @@ fn an_app_dropped_on_a_workspace_card_in_the_panel_opens_there() {
         .unwrap();
     let (origin, size) = layout.spot(&rule).unwrap();
     // Workspace 2's card on Main, in the panel.
-    let (_, (cx, cy, side, _)) = layout
+    let (_, (cx, cy, cw, ch)) = layout
         .grid
         .panel
         .monitors
@@ -690,8 +710,8 @@ fn an_app_dropped_on_a_workspace_card_in_the_panel_opens_there() {
         .unwrap();
     let grab = (size.0 / 2.0, size.1 / 2.0);
     let delta = (
-        cx + side / 2.0 - origin.0 - grab.0,
-        cy + side / 2.0 + arrangement::TOP - origin.1 - grab.1,
+        cx + cw / 2.0 - origin.0 - grab.0,
+        cy + ch / 2.0 + arrangement::TOP - origin.1 - grab.1,
     );
     for (phase, d) in [
         (rune::Phase::Down, (0.0, 0.0)),
