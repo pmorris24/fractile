@@ -393,6 +393,23 @@ impl Ui {
         for bundle_id in &self.default_floats {
             self.apps.get(bundle_id);
         }
+        // And every app with an open window Settings › Screens previews.
+        let live: Vec<String> = self
+            .agent
+            .iter()
+            .flat_map(|agent| &agent.windows)
+            .flat_map(|entry| {
+                let windows = &entry.windows;
+                windows
+                    .tiles
+                    .iter()
+                    .filter_map(|tile| tile.bundle.clone())
+                    .chain(windows.floating.iter().cloned())
+            })
+            .collect();
+        for bundle_id in &live {
+            self.apps.get(bundle_id);
+        }
     }
 
     /// Applies `edit` and saves against the latest file on disk under the config lock.
@@ -505,6 +522,7 @@ fn poll(ui: &mut Ui, clock: f64, tx: &mut Tx) -> bool {
             driver.set_enabled(snapshot.hud);
         }
         ui.agent = Some(snapshot);
+        ui.look_up_apps();
         changed = true;
         if ui.tour.is_some() {
             changed |= onboarding::poll(ui, tx);

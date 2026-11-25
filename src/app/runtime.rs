@@ -10,6 +10,8 @@ pub(super) struct CycleStatus {
     pub(super) active: Vec<WorkspaceId>,
     pub(super) layouts: Vec<status_item::WorkspaceLayout>,
     pub(super) menu: Vec<status_item::DisplayWorkspaces>,
+    /// Every workspace holding windows, previewed for Settings.
+    pub(super) windows: Vec<UiWorkspaceWindows>,
     pub(super) failed: usize,
     pub(super) hud: Option<UiHudEvent>,
 }
@@ -708,6 +710,7 @@ impl<B: WorkspaceBackend> WorkspaceRuntime<B> {
             close_recheck: None,
             layouts: self.status_layouts(visible, outputs),
             menu: self.workspace_menu(visible, outputs),
+            windows: self.workspace_windows(outputs),
             active,
             failed,
             hud: None,

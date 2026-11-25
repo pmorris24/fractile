@@ -146,6 +146,31 @@ impl<B: WorkspaceBackend> WorkspaceRuntime<B> {
         }
     }
 
+    /// Every enabled, managed workspace holding windows, previewed in the shape of the screen it
+    /// shows on: what Settings › Screens draws in each workspace's tile.
+    pub(super) fn workspace_windows(
+        &self,
+        outputs: &macos::DisplayOutputs,
+    ) -> Vec<UiWorkspaceWindows> {
+        self.config
+            .ordered_workspaces()
+            .filter(|workspace| {
+                let selector = self.workspaces.assignment(*workspace);
+                self.workspaces.is_enabled(*workspace)
+                    && self.scope.manages_selector(selector)
+                    && !self.workspaces.windows(*workspace).is_empty()
+            })
+            .map(|workspace| {
+                let frame = outputs.resolve(self.workspaces.assignment(workspace)).frame;
+                let portrait = frame.height > frame.width;
+                UiWorkspaceWindows {
+                    windows: self.hud_workspace(workspace, hud_preview_rect(portrait)),
+                    portrait,
+                }
+            })
+            .collect()
+    }
+
     /// `workspace` for the HUD, its tiles in `preview` space.
     fn hud_workspace(&self, workspace: WorkspaceId, preview: crate::Rect) -> UiHudWorkspace {
         let fullscreen = self.workspaces.deck(workspace).is_monocle();

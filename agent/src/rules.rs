@@ -36,6 +36,9 @@ pub struct Rule {
     /// A case-insensitive title substring the rule requires, as written in config.toml.
     pub title_contains: Option<String>,
     pub place: Place,
+    /// `windows = "all"`: a route rule sends every new window of its app, not only the first.
+    /// The engine reads it only with `[labs] route_all_windows` on.
+    pub all_windows: bool,
 }
 
 impl Rule {
@@ -188,6 +191,39 @@ impl Doc {
                 .to_owned()
         })?;
         self.place(index, place);
+        Ok(())
+    }
+
+    /// Makes the route rule matching `expected` send every new window of its app (`all`), or
+    /// only the first. Every window needs `[labs] route_all_windows`, so this turns it on.
+    pub fn set_all_windows_matching(&mut self, expected: &Rule, all: bool) -> Result<(), String> {
+        let index = self.resolve_rule_index(expected).ok_or_else(|| {
+            "config.toml changed externally while editing this rule; reloaded current settings"
+                .to_owned()
+        })?;
+        let set = |table: &mut dyn TableLike| {
+            if all {
+                set_table_item(table, "windows", value("all"));
+            } else {
+                table.remove("windows");
+            }
+        };
+        match self.doc.get_mut("rules") {
+            Some(Item::ArrayOfTables(rules)) => {
+                if let Some(table) = rules.get_mut(index) {
+                    set(table);
+                }
+            }
+            Some(Item::Value(Value::Array(rules))) => {
+                if let Some(table) = rules.get_mut(index).and_then(Value::as_inline_table_mut) {
+                    set(table);
+                }
+            }
+            _ => {}
+        }
+        if all {
+            self.set_lab(LabFeature::RouteAllWindows, true);
+        }
         Ok(())
     }
 
@@ -511,6 +547,8 @@ fn read_rule(index: usize, table: &dyn TableLike) -> Option<Rule> {
         bundle_id: string(table, "bundle_id"),
         title: string(table, "title"),
         title_contains: string(table, "title_contains"),
+        all_windows: matches!(place, Place::Workspace(_))
+            && table.get("windows").and_then(Item::as_str) == Some("all"),
         place,
     })
 }

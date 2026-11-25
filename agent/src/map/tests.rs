@@ -462,14 +462,14 @@ fn built_in_floats_are_default_chips_and_take_a_tile_or_pin_override() {
         .map(str::to_owned)
         .into();
     let chips = |ui: &Ui| -> Vec<(&'static str, bool)> {
-        Layout::with_running(&ui.doc, WIDTH, &ui.displays, &ui.default_floats)
+        Layout::with_running(&ui.doc, WIDTH, &ui.displays, &[], &ui.default_floats)
             .defaults
             .iter()
             .map(|item| (item.bundle_id, item.tiled))
             .collect()
     };
     let on_map = |ui: &Ui, bundle_id: &str| {
-        Layout::with_running(&ui.doc, WIDTH, &ui.displays, &ui.default_floats)
+        Layout::with_running(&ui.doc, WIDTH, &ui.displays, &[], &ui.default_floats)
             .floating
             .iter()
             .find(|rule| rule.bundle_id.as_deref() == Some(bundle_id))
@@ -489,7 +489,7 @@ fn built_in_floats_are_default_chips_and_take_a_tile_or_pin_override() {
     assert_eq!(disposition(&ui.doc, STICKIES), WindowDisposition::Floating);
     // The chips sit under the map and change none of its drop targets.
     let (with, without) = (
-        Layout::with_running(&ui.doc, WIDTH, &ui.displays, &ui.default_floats).grid,
+        Layout::with_running(&ui.doc, WIDTH, &ui.displays, &[], &ui.default_floats).grid,
         Layout::new(&ui.doc, WIDTH).grid,
     );
     assert_eq!(with.height(), without.height());
@@ -542,4 +542,30 @@ fn every_rules_scene_builds_at_both_widths_and_themes() {
             }
         }
     }
+}
+
+#[test]
+fn a_screen_with_open_windows_gets_taller_tiles_that_still_hit_test() {
+    let doc = Doc::parse("version = 1\n");
+    let five = WorkspaceId::FIVE;
+    let layout = Layout::with_running(&doc, WIDTH, &[], &[five], &[]);
+    let grid = &layout.grid;
+    // Main (1–4) has no open window; Secondary (5–10) has one on 5.
+    assert_eq!(grid.screens[0].tile_h, TILE_H);
+    assert_eq!(grid.screens[1].tile_h, LIVE_TILE_H);
+    let index = grid.tiles.iter().position(|tile| *tile == five).unwrap();
+    let (x, y) = grid.tile_origin(index);
+    assert_eq!(grid.tile_h(index), LIVE_TILE_H);
+    // The preview's bottom edge still drops onto workspace 5.
+    assert_eq!(
+        grid.target_at(x + 10.0, y + LIVE_TILE_H - 5.0),
+        Some(Place::Workspace(five))
+    );
+    let below = grid.tiles[index + COLS];
+    let (_, next_row) = grid.tile_origin(index + COLS);
+    assert!((next_row - (y + LIVE_TILE_H + GAP)).abs() < 0.01);
+    assert_eq!(
+        grid.target_at(x + 10.0, next_row + 5.0),
+        Some(Place::Workspace(below))
+    );
 }

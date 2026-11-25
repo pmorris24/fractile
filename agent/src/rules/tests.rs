@@ -1187,3 +1187,38 @@ fn edits_keep_the_comments_around_outer() {
     });
     assert_eq!(doc.source(), unedited.replace("1440", "1680"));
 }
+
+#[test]
+fn all_new_windows_writes_windows_all_and_turns_its_lab_on() {
+    let mut doc = Doc::parse(
+        "version = 1\n\n[[rules]]\nbundle_id = \"org.mozilla.firefox\"\naction = \"route\"\nworkspace = 2\n",
+    );
+    let rule = doc.rules().remove(0);
+    assert!(!rule.all_windows);
+
+    doc.set_all_windows_matching(&rule, true).unwrap();
+    let source = doc.source();
+    assert!(source.contains("windows = \"all\""), "{source}");
+    assert!(doc.lab(LabFeature::RouteAllWindows), "{source}");
+    let config = spaceman::config::Config::parse(&source).unwrap();
+    assert!(config.labs().route_all_windows);
+    let rule = doc.rules().remove(0);
+    assert!(rule.all_windows);
+
+    // Back to the first window only; the Lab stays on for the app's other rules.
+    doc.set_all_windows_matching(&rule, false).unwrap();
+    assert!(
+        !doc.source().contains("windows = \"all\""),
+        "{}",
+        doc.source()
+    );
+    assert!(!doc.rules()[0].all_windows);
+
+    // Floating the app drops `windows`, which only route rules take.
+    let rule = doc.rules().remove(0);
+    doc.set_all_windows_matching(&rule, true).unwrap();
+    let rule = doc.rules().remove(0);
+    doc.place_matching(&rule, Place::Float).unwrap();
+    assert!(!doc.rules()[0].all_windows);
+    spaceman::config::Config::parse(&doc.source()).unwrap();
+}

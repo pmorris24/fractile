@@ -8,6 +8,8 @@
 
 mod flow;
 mod grow;
+
+pub(crate) use grow::scale_tile_in;
 mod icons;
 mod menu;
 #[cfg(test)]

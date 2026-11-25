@@ -71,7 +71,7 @@ pub use bridge::{
     HUD_MAX_DISPLAYS, HUD_MAX_FLOATING, HUD_MAX_TILES, HUD_PORTRAIT_PREVIEW_RECT, HUD_PREVIEW_RECT,
     UiAction, UiAgentSnapshot, UiBridge, UiHudDisplay, UiHudEvent, UiHudKind, UiHudLayout,
     UiHudTile, UiHudToast, UiHudWorkspace, UiLaunchAtLogin, UiNews, UiUpdateStatus,
-    hud_preview_rect,
+    UiWorkspaceWindows, hud_preview_rect,
 };
 
 pub struct HostCallbacks {

@@ -312,7 +312,19 @@ pub struct UiAgentSnapshot {
     pub launch_at_login: UiLaunchAtLogin,
     pub update: UiUpdateStatus,
     pub active_workspaces: Vec<WorkspaceId>,
+    /// Every workspace holding windows, with a preview of its tiles, for Settings › Screens.
+    pub windows: Vec<UiWorkspaceWindows>,
     pub last_error: Option<String>,
+}
+
+/// A workspace's open windows as Settings › Screens previews them: a tile per window, so an
+/// app with three windows shows three.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct UiWorkspaceWindows {
+    pub windows: UiHudWorkspace,
+    /// Whether the workspace's screen stands taller than it is wide: its tiles are then in
+    /// [`HUD_PORTRAIT_PREVIEW_RECT`] space, else in [`HUD_PREVIEW_RECT`] space.
+    pub portrait: bool,
 }
 
 impl UiAgentSnapshot {
@@ -493,6 +505,7 @@ mod tests {
             launch_at_login: UiLaunchAtLogin::On,
             update: UiUpdateStatus::Idle,
             active_workspaces: vec![WorkspaceId::ONE],
+            windows: Vec::new(),
             last_error: None,
         };
         bridge.publish(initial.clone(), false);
@@ -608,6 +621,7 @@ mod tests {
             launch_at_login: UiLaunchAtLogin::NeedsApproval,
             update: UiUpdateStatus::Checking,
             active_workspaces: vec![WorkspaceId::THREE, WorkspaceId::named('M').unwrap()],
+            windows: Vec::new(),
             last_error: Some("Hotkeys unavailable".into()),
         };
         let value = snapshot.to_settings_json();

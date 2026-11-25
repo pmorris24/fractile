@@ -95,6 +95,8 @@ pub struct MainThreadAgent {
     exit_intent: Option<ExitIntent>,
     next_restore_retry: Option<Instant>,
     active_workspaces: Vec<WorkspaceId>,
+    /// Every workspace holding windows, as the last cycle saw them, for Settings.
+    workspace_windows: Vec<UiWorkspaceWindows>,
     last_error: Option<String>,
     latest_debug: Option<RuntimeDebug>,
     pending_inputs: InputQueue,
@@ -218,6 +220,7 @@ impl MainThreadAgent {
             exit_intent: None,
             next_restore_retry: None,
             active_workspaces: init.scope.initial_workspaces().to_vec(),
+            workspace_windows: Vec::new(),
             last_error: hotkey_error,
             latest_debug: None,
             pending_inputs: InputQueue::default(),
@@ -354,6 +357,7 @@ impl MainThreadAgent {
                                 .flatten()
                                 .min();
                         self.active_workspaces.clone_from(&status.active);
+                        self.workspace_windows.clone_from(&status.windows);
                         if self.hud
                             && let Some(hud) = status.hud.clone()
                         {
@@ -656,6 +660,7 @@ impl MainThreadAgent {
             launch_at_login: self.launch_at_login.clone(),
             update: self.updater.status(),
             active_workspaces: self.active_workspaces.clone(),
+            windows: self.workspace_windows.clone(),
             last_error: self.last_error.clone(),
         }
     }
