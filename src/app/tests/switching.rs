@@ -593,7 +593,7 @@ fn switch_rollback_preserves_original_recovery_frames_and_suppresses_focus_loop(
 }
 
 #[test]
-fn status_menu_lists_each_displays_visible_and_occupied_workspaces() {
+fn status_menu_lists_every_workspace_of_each_display_with_its_apps() {
     let app_window = |pid, window_id| crate::PhysicalWindowId {
         app: AppInstanceId {
             pid,
@@ -615,19 +615,28 @@ fn status_menu_lists_each_displays_visible_and_occupied_workspaces() {
         current,
         apps: apps.to_vec(),
     };
+    let id = |number| WorkspaceId::new(number).unwrap();
+    // Two displays: the tertiary workspaces 8-10 show on the secondary display, so its menu
+    // section lists them too.
     assert_eq!(
         menu,
         vec![
             status_item::DisplayWorkspaces {
+                display_id: "main-id".into(),
                 display: "Main".into(),
                 workspaces: vec![
                     entry(WorkspaceId::ONE, true, &[7, 8]),
+                    entry(id(2), false, &[]),
                     entry(three, false, &[9]),
+                    entry(id(4), false, &[]),
                 ],
             },
             status_item::DisplayWorkspaces {
+                display_id: "secondary-id".into(),
                 display: "Secondary".into(),
-                workspaces: vec![entry(WorkspaceId::FIVE, true, &[])],
+                workspaces: (5..=10)
+                    .map(|number| entry(id(number), number == 5, &[]))
+                    .collect(),
             },
         ]
     );
@@ -639,7 +648,9 @@ fn status_menu_lists_each_displays_visible_and_occupied_workspaces() {
         menu[0].workspaces,
         vec![
             entry(WorkspaceId::ONE, false, &[7, 8]),
+            entry(id(2), false, &[]),
             entry(three, true, &[9]),
+            entry(id(4), false, &[]),
         ]
     );
 }

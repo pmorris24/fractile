@@ -21,8 +21,8 @@ Switch workspace                                           // ws.switch
     └── Menu bar or HUD click on the active workspace -> never cycles, keeps the current focus
 
 Swipe                                                      // ws.swipe
-├── Three-finger swipe left/right -> next/previous workspace in the menu section of the display
-│   under the pointer (visible + occupied, in workspace order), stops at either end
+├── Three-finger swipe left/right -> next/previous workspace of the display under the pointer
+│   (visible + occupied, in workspace order), stops at either end
 ├── Natural scrolling off (Trackpad settings) -> the directions flip, as with macOS Spaces: swipe
 │   right -> next, left -> previous. Read on every swipe
 ├── Suppressed while a pointer button is down or a window drag is active (including macOS
@@ -291,8 +291,10 @@ CLI: spaceman ctl switch | back-and-forth | move-workspace | move | move-tab | m
      (switch next|prev and move next|prev [--follow] with [labs] workspace_steps = true)
 Config: ~/Library/Application Support/Spaceman/config.toml -> [[rules]], [[workspaces]],
         [settings] workspace_order (edits apply when the file changes; new named-workspace shortcuts register on the next app start)
-Menu bar: shows the active workspace glyphs; its menu lists each display's visible workspace (checked)
-          and occupied ones with their apps' icons and Option shortcut -> choose one to switch
+Menu bar: shows the active workspace glyphs; its menu lists every workspace of the display whose menu
+          bar it opens from, the visible one checked, with their apps' icons and Option shortcut
+          -> choose one to switch. One menu bar for all displays ("Displays have separate Spaces"
+          off) or an unknown display -> every display's section
 Mouse: drop a tile on another display -> moves it to that display's active workspace (see tiling.md)
 ```
 

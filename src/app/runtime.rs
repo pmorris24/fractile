@@ -722,6 +722,21 @@ impl<B: WorkspaceBackend> WorkspaceRuntime<B> {
         current: Option<WorkspaceId>,
         outputs: &macos::DisplayOutputs,
     ) -> Vec<WorkspaceId> {
+        self.owned_workspaces(display_id, outputs)
+            .into_iter()
+            .filter(|workspace| {
+                current == Some(*workspace) || !self.workspaces.windows(*workspace).is_empty()
+            })
+            .collect()
+    }
+
+    /// Every enabled, managed workspace that shows on `display_id`, empty ones included, in the
+    /// configured order: the workspaces the status menu offers for that display.
+    pub(super) fn owned_workspaces(
+        &self,
+        display_id: &str,
+        outputs: &macos::DisplayOutputs,
+    ) -> Vec<WorkspaceId> {
         self.config
             .ordered_workspaces()
             .filter(|workspace| {
@@ -729,8 +744,6 @@ impl<B: WorkspaceBackend> WorkspaceRuntime<B> {
                 self.workspaces.is_enabled(*workspace)
                     && self.scope.manages_selector(selector)
                     && outputs.resolve(selector).id == display_id
-                    && (current == Some(*workspace)
-                        || !self.workspaces.windows(*workspace).is_empty())
             })
             .collect()
     }

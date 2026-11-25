@@ -4,7 +4,7 @@
 use super::{bridge::hud_preview_rect, *};
 
 impl<B: WorkspaceBackend> WorkspaceRuntime<B> {
-    /// Per display, its visible workspace and every other workspace holding windows.
+    /// Per display, every workspace that shows on it, empty ones included.
     pub(super) fn workspace_menu(
         &self,
         visible: &[ResolvedWorkspace],
@@ -19,7 +19,7 @@ impl<B: WorkspaceBackend> WorkspaceRuntime<B> {
                     .find(|resolved| resolved.display_id == display.id)
                     .map(|resolved| resolved.workspace);
                 let workspaces = self
-                    .listed_workspaces(&display.id, current, outputs)
+                    .owned_workspaces(&display.id, outputs)
                     .into_iter()
                     .map(|workspace| {
                         let mut apps = Vec::new();
@@ -36,6 +36,7 @@ impl<B: WorkspaceBackend> WorkspaceRuntime<B> {
                     })
                     .collect::<Vec<_>>();
                 (!workspaces.is_empty()).then(|| status_item::DisplayWorkspaces {
+                    display_id: display.id.clone(),
                     display: if physical {
                         outputs.label(display)
                     } else {

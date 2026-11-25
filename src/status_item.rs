@@ -2,11 +2,14 @@ use std::{cell::RefCell, sync::mpsc::Sender};
 
 use block2::RcBlock;
 use objc2::{
-    DefinedClass, MainThreadMarker, MainThreadOnly, msg_send, rc::Retained, runtime::Bool, sel,
+    DefinedClass, MainThreadMarker, MainThreadOnly, msg_send,
+    rc::Retained,
+    runtime::{Bool, ProtocolObject},
+    sel,
 };
 use objc2_app_kit::{
     NSBezierPath, NSColor, NSControlStateValueOff, NSControlStateValueOn, NSImage, NSMenu,
-    NSMenuItem, NSStatusBar, NSStatusBarButton, NSStatusItem, NSStringDrawing,
+    NSMenuDelegate, NSMenuItem, NSStatusBar, NSStatusBarButton, NSStatusItem, NSStringDrawing,
     NSVariableStatusItemLength,
 };
 use objc2_foundation::{NSObject, NSObjectProtocol, NSPoint, NSRect, NSSize, NSString};
@@ -14,7 +17,7 @@ use objc2_foundation::{NSObject, NSObjectProtocol, NSPoint, NSRect, NSSize, NSSt
 use crate::{
     WorkspaceId,
     app::{Action, UiHudLayout, WorkerAction, hud_preview_rect},
-    login_item,
+    login_item, macos,
 };
 
 mod workspaces;
@@ -43,6 +46,14 @@ objc2::define_class!(
     struct Target;
 
     unsafe impl NSObjectProtocol for Target {}
+
+    unsafe impl NSMenuDelegate for Target {
+        /// Shows only the workspaces of the display whose menu bar the menu opens from.
+        #[unsafe(method(menuNeedsUpdate:))]
+        fn menu_needs_update(&self, _menu: &NSMenu) {
+            show_pointer_display_workspaces();
+        }
+    }
 
     impl Target {
         #[unsafe(method(openSetup:))]
@@ -122,7 +133,7 @@ struct Controller {
     button_state: ButtonState,
     rendered_visual: Option<ButtonVisual>,
     workspace_menu: Vec<DisplayWorkspaces>,
-    workspace_items: Vec<Retained<NSMenuItem>>,
+    workspace_items: Vec<workspaces::DisplayItem>,
 }
 
 thread_local! {
@@ -187,6 +198,7 @@ pub fn install(sender: Sender<Action>) -> Result<(), String> {
     let button = item
         .button(marker)
         .ok_or("status item button is unavailable")?;
+    menu.setDelegate(Some(ProtocolObject::from_ref(&*target)));
     item.setMenu(Some(&menu));
 
     CONTROLLER.with(|controller| {
@@ -399,16 +411,44 @@ pub fn set_workspace_menu(displays: &[DisplayWorkspaces]) {
         if controller.workspace_menu == displays {
             return;
         }
-        for item in controller.workspace_items.drain(..) {
+        for (item, _) in controller.workspace_items.drain(..) {
             controller.menu.removeItem(&item);
         }
         let items = workspaces::items(displays, &controller.target, marker);
         let start = controller.menu.indexOfItem(&controller.automatic);
-        for (offset, item) in (start..).zip(&items) {
+        for (offset, (item, _)) in (start..).zip(&items) {
             controller.menu.insertItem_atIndex(item, offset);
         }
         controller.workspace_items = items;
         controller.workspace_menu = displays.to_vec();
+    });
+}
+
+/// Hides every workspace section except the one for the display under the pointer, or shows them
+/// all when that display is unknown or has no section.
+fn show_pointer_display_workspaces() {
+    let pointer = macos::display_under_pointer();
+    CONTROLLER.with(|controller| {
+        let Ok(controller) = controller.try_borrow() else {
+            return;
+        };
+        let Some(controller) = controller.as_ref() else {
+            return;
+        };
+        let shown = workspaces::shown_display(
+            controller
+                .workspace_menu
+                .iter()
+                .map(|display| display.display_id.as_str()),
+            pointer.as_deref(),
+        );
+        for (item, display) in &controller.workspace_items {
+            let hidden = match (display, shown) {
+                (Some(display), Some(shown)) => display != shown,
+                _ => false,
+            };
+            item.setHidden(hidden);
+        }
     });
 }
 

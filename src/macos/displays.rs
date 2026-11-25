@@ -3,7 +3,7 @@
 use std::{collections::HashMap, ptr::NonNull};
 
 use objc2::{MainThreadMarker, rc::autoreleasepool};
-use objc2_app_kit::{NSApplication, NSScreen};
+use objc2_app_kit::{NSApplication, NSEvent, NSScreen};
 use objc2_core_foundation::{CFRetained, CFUUID};
 use objc2_foundation::{NSNumber, ns_string};
 
@@ -385,6 +385,33 @@ pub fn display_ids() -> HashMap<String, u32> {
                 (id, display_id)
             })
             .collect()
+    })
+}
+
+/// The ID `outputs` gives the display under the mouse pointer: the screen whose menu bar a
+/// click on the status item came from. `None` off the main thread, when the pointer is on no
+/// screen, or when macOS shows one menu bar for every display ("Displays have separate Spaces"
+/// off), so the click says nothing about a display.
+#[must_use]
+pub fn display_under_pointer() -> Option<String> {
+    autoreleasepool(|_| {
+        let marker = MainThreadMarker::new()?;
+        if !NSScreen::screensHaveSeparateSpaces(marker) {
+            return None;
+        }
+        let pointer = NSEvent::mouseLocation();
+        let screens = NSScreen::screens(marker);
+        let screen = (0..screens.count())
+            .map(|index| screens.objectAtIndex(index))
+            .find(|screen| {
+                let frame = screen.frame();
+                pointer.x >= frame.origin.x
+                    && pointer.x <= frame.origin.x + frame.size.width
+                    && pointer.y >= frame.origin.y
+                    && pointer.y <= frame.origin.y + frame.size.height
+            })?;
+        let display_id = screen_display_id(&screen)?;
+        Some(display_uuid(display_id).unwrap_or_else(|| display_id.to_string()))
     })
 }
 

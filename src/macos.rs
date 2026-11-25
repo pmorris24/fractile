@@ -40,7 +40,8 @@ pub use ax::{
 };
 pub use display_link::{DisplayFrame, DisplayLink, DisplayLinkError};
 pub use displays::{
-    DisplayOutput, DisplayOutputs, DisplayTopology, display_ids, display_topology, outputs,
+    DisplayOutput, DisplayOutputs, DisplayTopology, display_ids, display_topology,
+    display_under_pointer, outputs,
 };
 pub use events::WindowEventMonitor;
 pub use keys::{KeyMonitor, key_press};

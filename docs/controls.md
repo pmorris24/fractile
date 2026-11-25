@@ -24,8 +24,8 @@ fails after the old registrations are released, it pauses and reports `Hotkeys u
 | `Option+Shift+Space` | Float the focused window above the tiles, or tile it again |
 | Three-finger swipe left/right | Next/previous workspace on the display under the pointer |
 
-A three-finger horizontal swipe steps through the workspaces that the display's menu section lists
-(the visible one and every one holding windows), stopping at either end. The direction follows
+A three-finger horizontal swipe steps through the display's visible workspace and every one of its
+workspaces holding windows, stopping at either end. The direction follows
 macOS Spaces and the Natural scrolling setting in Trackpad settings: with it on (the default),
 swiping left goes to the next one; with it off, swiping right does. The setting is read on every
 swipe, so changing it needs no restart. Spaceman only listens to the trackpad, so macOS still acts on the

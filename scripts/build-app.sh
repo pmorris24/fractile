@@ -107,17 +107,22 @@ cp "$root/target/release/spaceman" "$bundle/Contents/MacOS/spaceman"
 cp "$root/app/Info.plist" "$bundle/Contents/Info.plist"
 rm -rf "$icon_output"
 mkdir -p "$icon_output"
-xcrun actool "$root/app/AppIcon.icon" \
-  --compile "$icon_output" \
-  --platform macosx \
-  --minimum-deployment-target "$deployment_target" \
-  --app-icon AppIcon \
-  --standalone-icon-behavior all \
-  --output-partial-info-plist "$icon_info" \
-  --output-format human-readable-text \
-  --warnings \
-  --notices >&2
-cp "$icon_output/AppIcon.icns" "$icon_output/Assets.car" "$bundle/Contents/Resources/"
+# actool ships only with the full Xcode app. Without it, build with the generic app icon.
+if xcrun --find actool >/dev/null 2>&1; then
+  xcrun actool "$root/app/AppIcon.icon" \
+    --compile "$icon_output" \
+    --platform macosx \
+    --minimum-deployment-target "$deployment_target" \
+    --app-icon AppIcon \
+    --standalone-icon-behavior all \
+    --output-partial-info-plist "$icon_info" \
+    --output-format human-readable-text \
+    --warnings \
+    --notices >&2
+  cp "$icon_output/AppIcon.icns" "$icon_output/Assets.car" "$bundle/Contents/Resources/"
+else
+  echo "warning: actool not found (needs full Xcode); building without the app icon" >&2
+fi
 plutil -lint "$bundle/Contents/Info.plist" >/dev/null
 if [ -n "$unsigned" ]; then
   printf '%s\n' "$bundle"
