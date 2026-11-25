@@ -30,13 +30,23 @@ fn hit_tests_tiles_and_the_float_box() {
     let grid = &layout.grid;
     assert_eq!(grid.tiles.len(), 11, "1–10 and M");
     let ws = |name| Some(Place::Workspace(WorkspaceId::parse(name).unwrap()));
-    assert_eq!(grid.target_at(5.0, GRID_TOP + 5.0), ws("1"));
-    let (x, y) = grid.tile_origin(3);
-    assert_eq!(grid.target_at(x + 50.0, y + 50.0), ws("4"));
-    let (x, y) = grid.tile_origin(9);
-    assert_eq!(grid.target_at(x + 50.0, y + 50.0), ws("10"));
-    let (x, y) = grid.tile_origin(10);
-    assert_eq!(grid.target_at(x + 50.0, y + 50.0), ws("M"));
+    // Tiles sit under their screen's heading, so the map's first line is no target.
+    assert_eq!(grid.target_at(5.0, 5.0), None);
+    let (x, y) = grid.tile_origin(0);
+    assert_eq!(grid.target_at(x + 5.0, y + 5.0), ws("1"));
+    for name in ["4", "M", "5", "10"] {
+        let index = grid
+            .tiles
+            .iter()
+            .position(|tile| Some(Place::Workspace(*tile)) == ws(name))
+            .unwrap();
+        let (x, y) = grid.tile_origin(index);
+        assert_eq!(grid.target_at(x + 50.0, y + 50.0), ws(name), "tile {name}");
+    }
+    // The gap between two screens' cards is no target either.
+    let (_, first_secondary) = grid.screen_tops()[1];
+    let (_, y) = grid.tile_origin(first_secondary);
+    assert_eq!(grid.target_at(20.0, y - HEAD_GAP - HEAD_H / 2.0), None);
     assert_eq!(
         grid.target_at(20.0, grid.box_top() + 10.0),
         Some(Place::Float)
@@ -93,20 +103,26 @@ fn rules_map_includes_workspace_10_by_default_and_once_when_referenced() {
     assert!(after_add.spot(&doc.rules()[0]).is_some());
 
     // Mentioning workspace 10 in [[workspaces]] also keeps workspace 10 once.
-    doc.set_monitor(ws10, Some("main"));
+    doc.set_monitor(ws10, Some("tertiary"));
     assert_eq!(Layout::new(&doc, WIDTH).grid.tiles, expected_numbered);
 
-    // Mentioning a named workspace appends it after workspace 10 and hit-tests it.
+    // A named workspace joins its screen's card, after that screen's numbered ones.
     doc.set_monitor(ws_m, Some("main"));
     let with_named = Layout::new(&doc, WIDTH);
     assert_eq!(with_named.grid.tiles.len(), 11);
-    assert_eq!(with_named.grid.tiles[9], ws10);
-    assert_eq!(with_named.grid.tiles[10], ws_m);
-    let (mx, my) = with_named.grid.tile_origin(10);
+    assert_eq!(with_named.grid.tiles[4], ws_m);
+    assert_eq!(with_named.grid.tiles[10], ws10);
+    let (mx, my) = with_named.grid.tile_origin(4);
     assert_eq!(
         with_named.grid.target_at(mx + 50.0, my + 50.0),
         Some(Place::Workspace(ws_m))
     );
+
+    // Moving a workspace to another screen moves its tile into that screen's card.
+    doc.set_monitor(ws10, Some("main"));
+    let moved = Layout::new(&doc, WIDTH);
+    assert_eq!(moved.grid.screens[0].len, 6, "1–4, 10 and M");
+    assert_eq!(moved.grid.tiles[4], ws10);
 }
 
 #[test]
@@ -446,14 +462,14 @@ fn built_in_floats_are_default_chips_and_take_a_tile_or_pin_override() {
         .map(str::to_owned)
         .into();
     let chips = |ui: &Ui| -> Vec<(&'static str, bool)> {
-        Layout::with_running(&ui.doc, WIDTH, &ui.default_floats)
+        Layout::with_running(&ui.doc, WIDTH, &ui.displays, &ui.default_floats)
             .defaults
             .iter()
             .map(|item| (item.bundle_id, item.tiled))
             .collect()
     };
     let on_map = |ui: &Ui, bundle_id: &str| {
-        Layout::with_running(&ui.doc, WIDTH, &ui.default_floats)
+        Layout::with_running(&ui.doc, WIDTH, &ui.displays, &ui.default_floats)
             .floating
             .iter()
             .find(|rule| rule.bundle_id.as_deref() == Some(bundle_id))
@@ -473,7 +489,7 @@ fn built_in_floats_are_default_chips_and_take_a_tile_or_pin_override() {
     assert_eq!(disposition(&ui.doc, STICKIES), WindowDisposition::Floating);
     // The chips sit under the map and change none of its drop targets.
     let (with, without) = (
-        Layout::with_running(&ui.doc, WIDTH, &ui.default_floats).grid,
+        Layout::with_running(&ui.doc, WIDTH, &ui.displays, &ui.default_floats).grid,
         Layout::new(&ui.doc, WIDTH).grid,
     );
     assert_eq!(with.height(), without.height());

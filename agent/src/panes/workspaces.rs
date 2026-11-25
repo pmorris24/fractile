@@ -3,8 +3,8 @@
 mod displays;
 
 pub(crate) use displays::{
-    ConnectedDisplay, THIRD_FIXTURE_ID, fixture_long_name, fixture_pair, fixture_quad,
-    fixture_three,
+    Choice, ConnectedDisplay, THIRD_FIXTURE_ID, choices, fixture_long_name, fixture_pair,
+    fixture_quad, fixture_three, index_of,
 };
 
 use rune::{El, Tx, text};
@@ -19,7 +19,7 @@ use crate::{
     view::scroll_body,
 };
 
-use displays::{Choice, MAIN, SECONDARY, TERTIARY};
+use displays::{MAIN, SECONDARY, TERTIARY};
 
 /// How often the pane reads the connected displays while it is on screen, in seconds.
 const DISPLAY_REFRESH_SECONDS: f64 = 1.0;
@@ -38,7 +38,7 @@ const fn default_monitor(workspace: WorkspaceId) -> &'static str {
 
 /// Which display `workspace` currently targets: explicit override from `config.toml`, or its
 /// built-in default (1–4 and named workspaces on Main, 5–7 on Secondary, 8–10 on Tertiary).
-fn effective_monitor(doc: &Doc, workspace: WorkspaceId) -> String {
+pub(crate) fn effective_monitor(doc: &Doc, workspace: WorkspaceId) -> String {
     doc.monitor(workspace)
         .unwrap_or_else(|| default_monitor(workspace).to_owned())
 }
@@ -46,7 +46,7 @@ fn effective_monitor(doc: &Doc, workspace: WorkspaceId) -> String {
 /// Reads the connected displays when Settings › Workspaces is on screen, about once a second, so
 /// plugging a display in shows its segment without reopening Settings.
 pub(crate) fn poll_displays(ui: &mut Ui, clock: f64) -> bool {
-    if ui.fixture || ui.pane != Pane::Workspaces {
+    if ui.fixture || !matches!(ui.pane, Pane::Rules | Pane::Workspaces) {
         return false;
     }
     if ui
@@ -79,16 +79,20 @@ fn read_displays() -> Option<Vec<displays::ConnectedDisplay>> {
 }
 
 /// One card: a display and the workspaces assigned to it.
-struct Section {
-    key: String,
-    title: String,
-    caption: String,
-    workspaces: Vec<WorkspaceId>,
+pub(crate) struct Section {
+    pub(crate) key: String,
+    pub(crate) title: String,
+    pub(crate) caption: String,
+    pub(crate) workspaces: Vec<WorkspaceId>,
 }
 
 /// The pane's cards in display order, then the displays a saved selector names but that are not
 /// plugged in, which keep their assignment instead of losing it.
-fn sections(doc: &Doc, choices: &[Choice], workspaces: Vec<WorkspaceId>) -> Vec<Section> {
+pub(crate) fn sections(
+    doc: &Doc,
+    choices: &[Choice],
+    workspaces: Vec<WorkspaceId>,
+) -> Vec<Section> {
     let mut buckets: Vec<Vec<WorkspaceId>> = (0..choices.len()).map(|_| Vec::new()).collect();
     let mut unplugged = Vec::new();
     for workspace in workspaces {
@@ -167,7 +171,7 @@ fn empty_display_row(p: Paint) -> El {
 
 /// The `config.toml` override picking `chosen` writes; `None` clears it, so picking a
 /// workspace's built-in default leaves no redundant entry behind.
-fn override_for(workspace: WorkspaceId, chosen: &str) -> Option<String> {
+pub(crate) fn override_for(workspace: WorkspaceId, chosen: &str) -> Option<String> {
     (chosen != default_monitor(workspace)).then(|| chosen.to_owned())
 }
 

@@ -18,7 +18,6 @@ fn lab_panes_stay_out_of_the_sidebar_until_their_switch_is_on() {
             Pane::General,
             Pane::Layout,
             Pane::Rules,
-            Pane::Workspaces,
             Pane::Shortcuts,
             Pane::Labs,
         ]
@@ -34,7 +33,6 @@ fn lab_panes_stay_out_of_the_sidebar_until_their_switch_is_on() {
         Pane::General,
         Pane::Layout,
         Pane::Rules,
-        Pane::Workspaces,
         Pane::Shortcuts,
         Pane::Labs,
     ] {
@@ -46,21 +44,21 @@ fn lab_panes_stay_out_of_the_sidebar_until_their_switch_is_on() {
 #[test]
 fn command_shortcuts_skip_a_hidden_lab_pane() {
     assert_eq!(
-        Pane::from_shortcut('5', LabsConfig::default()),
+        Pane::from_shortcut('4', LabsConfig::default()),
         Some(Pane::Shortcuts)
     );
     // Labs is always listed, last, so it takes the digit after the last pane shown.
     assert_eq!(
-        Pane::from_shortcut('6', LabsConfig::default()),
+        Pane::from_shortcut('5', LabsConfig::default()),
         Some(Pane::Labs)
     );
-    assert_eq!(Pane::from_shortcut('7', LabsConfig::default()), None);
+    assert_eq!(Pane::from_shortcut('6', LabsConfig::default()), None);
     assert_eq!(
-        Pane::from_shortcut('6', activity_lab()),
+        Pane::from_shortcut('5', activity_lab()),
         Some(Pane::Activity)
     );
-    assert_eq!(Pane::from_shortcut('7', activity_lab()), Some(Pane::Labs));
-    assert_eq!(Pane::from_shortcut('8', activity_lab()), None);
+    assert_eq!(Pane::from_shortcut('6', activity_lab()), Some(Pane::Labs));
+    assert_eq!(Pane::from_shortcut('7', activity_lab()), None);
 }
 
 #[test]

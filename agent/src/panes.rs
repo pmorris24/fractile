@@ -64,11 +64,12 @@ pub enum Pane {
 }
 
 impl Pane {
-    pub const ALL: [Pane; 7] = [
+    /// The sidebar's panes. Workspaces is not listed: Screens holds the display assignments,
+    /// and a link to Workspaces opens Screens.
+    pub const ALL: [Pane; 6] = [
         Pane::General,
         Pane::Layout,
         Pane::Rules,
-        Pane::Workspaces,
         Pane::Shortcuts,
         Pane::Activity,
         Pane::Labs,
@@ -90,7 +91,7 @@ impl Pane {
         match self {
             Pane::General => "General",
             Pane::Layout => "Layout",
-            Pane::Rules => "Rules",
+            Pane::Rules => "Screens",
             Pane::Workspaces => "Workspaces",
             Pane::Shortcuts => "Shortcuts",
             Pane::Activity => "Activity",
@@ -156,7 +157,7 @@ impl Pane {
             spaceman::deep_link::DeepLinkPane::General => Some(Pane::General),
             spaceman::deep_link::DeepLinkPane::Layout => Some(Pane::Layout),
             spaceman::deep_link::DeepLinkPane::Rules => Some(Pane::Rules),
-            spaceman::deep_link::DeepLinkPane::Workspaces => Some(Pane::Workspaces),
+            spaceman::deep_link::DeepLinkPane::Workspaces => Some(Pane::Rules),
             spaceman::deep_link::DeepLinkPane::Shortcuts => Some(Pane::Shortcuts),
             spaceman::deep_link::DeepLinkPane::Activity => Some(Pane::Activity),
             spaceman::deep_link::DeepLinkPane::Labs => Some(Pane::Labs),

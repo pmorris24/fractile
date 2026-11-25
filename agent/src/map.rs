@@ -1,4 +1,5 @@
-//! Rules as a workspace map: a tile per workspace showing the apps whose new windows open there,
+//! Rules as a map of screens: a card per display holding the workspaces that show on it, a tile
+//! per workspace showing the apps whose new windows open there,
 //! the apps that float below, and under those the running apps Spaceman floats with no rule.
 //! Rules are optional: without one a window opens on the workspace in view and can move to any
 //! other. Dragging an app to another tile, or to the float box, rewrites its rule. An app can
@@ -25,6 +26,7 @@ use crate::{
     Menu, Pane, Ui,
     apps::{self, App},
     controls::{self, METRICS, Paint},
+    panes::workspaces::{self as screens, Choice, ConnectedDisplay},
     playground::{Scene, reset_fixture},
     rules::{Doc, Place, Rule},
     view::scroll_body,
@@ -37,7 +39,8 @@ const GAP: f32 = 8.0;
 /// A section label's line and the gap to what it names, as over a card.
 const HEAD_H: f32 = 16.0;
 const HEAD_GAP: f32 = METRICS.label_gap;
-const GRID_TOP: f32 = HEAD_H + HEAD_GAP;
+/// The first screen's heading, under the map's own.
+const GRID_TOP: f32 = HEAD_H + SECTION_GAP;
 const SECTION_GAP: f32 = METRICS.section_gap;
 /// Inside a tile: where its icons start, their size and spacing, and how many fit.
 const TILE_PAD: f32 = 12.0;
@@ -56,8 +59,8 @@ const CHIPS_PER_ROW: usize = 4;
 const SLOP: f32 = 3.0;
 /// The dot a title rule's icon wears.
 const TITLE_DOT: f32 = 8.0;
-/// Beside the map's first label: a rule is a default for new windows, never a fence.
-const OPTIONAL: &str = "Optional. Any window can move to any workspace";
+/// Beside the map's first label: what a workspace is. A rule is a default, never a fence.
+const INTRO: &str = "Each screen shows one of its workspaces at a time";
 
 pub(crate) const SCENES: &[Scene] = &[
     ("rules", fixture),
@@ -85,6 +88,17 @@ pub(crate) const SCENES: &[Scene] = &[
         fixture(ui);
         defaults::fixture_menu(ui);
     }),
+    // Three screens, each with its own card of workspaces.
+    ("rules-three-screens", |ui| {
+        fixture(ui);
+        ui.displays = crate::panes::workspaces::fixture_three();
+    }),
+    // A workspace number's menu: the screens it can show on.
+    ("rules-screen-menu", |ui| {
+        fixture(ui);
+        ui.displays = crate::panes::workspaces::fixture_three();
+        ui.menu = Some(Menu::Screen(WorkspaceId::FIVE));
+    }),
 ];
 
 /// The fixture's rules, and Safari twice: its Work windows on 1 and its Claude windows on 2.
@@ -107,6 +121,8 @@ fn fixture(ui: &mut Ui) {
 /// Where everything in the map goes, from the rules.
 struct Layout {
     grid: DropGrid,
+    /// Every display a workspace can show on, as a tile's screen menu offers them.
+    choices: Vec<Choice>,
     /// Rules by tile, in file order.
     routed: Vec<Vec<Rule>>,
     floating: Vec<Rule>,
@@ -115,16 +131,41 @@ struct Layout {
 }
 
 impl Layout {
-    /// The map for a pane whose cards are `width` wide, with no built-in float running.
+    /// The map for a pane whose cards are `width` wide, with no display read and no built-in
+    /// float running.
     fn new(doc: &Doc, width: f32) -> Layout {
-        Layout::with_running(doc, width, &[])
+        Layout::with_running(doc, width, &[], &[])
     }
 
-    /// The map, with a chip for each of the `running` apps Spaceman floats by default.
-    fn with_running(doc: &Doc, width: f32, running: &[String]) -> Layout {
+    /// The map for the connected `displays`, with a chip for each of the `running` apps
+    /// Spaceman floats by default.
+    fn with_running(
+        doc: &Doc,
+        width: f32,
+        displays: &[ConnectedDisplay],
+        running: &[String],
+    ) -> Layout {
         let rules = doc.rules();
         let defaults = defaults::listed(&rules, running);
-        let tiles = doc.workspaces_with_referenced(WorkspaceId::numbered());
+        let choices = screens::choices(displays);
+        let sections = screens::sections(
+            doc,
+            &choices,
+            doc.workspaces_with_referenced(WorkspaceId::numbered()),
+        );
+        let tiles: Vec<WorkspaceId> = sections
+            .iter()
+            .flat_map(|section| section.workspaces.iter().copied())
+            .collect();
+        let screens: Vec<Screen> = sections
+            .into_iter()
+            .map(|section| Screen {
+                key: section.key,
+                title: section.title,
+                caption: section.caption,
+                len: section.workspaces.len(),
+            })
+            .collect();
         let mut routed = vec![Vec::new(); tiles.len()];
         let mut floating = Vec::new();
         for rule in rules {
@@ -145,8 +186,10 @@ impl Layout {
             grid: DropGrid {
                 width,
                 tiles,
+                screens,
                 floating_len: floating.len(),
             },
+            choices,
             routed,
             floating,
             defaults,
@@ -176,13 +219,24 @@ impl Layout {
     }
 }
 
-/// The map's geometry: the tiles and how many chips the float box holds. Drag handlers keep a
-/// copy to hit-test the pointer.
+/// One screen's card in the map: its heading, and how many of the map's tiles, in order, it holds.
+#[derive(Clone, Debug)]
+struct Screen {
+    key: String,
+    title: String,
+    caption: String,
+    len: usize,
+}
+
+/// The map's geometry: the screens, their tiles, and how many chips the float box holds. Drag
+/// handlers keep a copy to hit-test the pointer.
 #[derive(Clone, Debug)]
 struct DropGrid {
     /// The map's width: the pane's card width.
     width: f32,
+    /// Every screen's tiles, screen after screen.
     tiles: Vec<WorkspaceId>,
+    screens: Vec<Screen>,
     floating_len: usize,
 }
 
@@ -197,17 +251,43 @@ impl DropGrid {
         (self.width - 2.0 * BOX_PAD - (CHIPS_PER_ROW - 1) as f32 * CHIP_GAP) / CHIPS_PER_ROW as f32
     }
 
-    fn grid_rows(&self) -> usize {
-        self.tiles.len().div_ceil(COLS)
+    /// A screen's rows of tiles; a screen with none keeps one row for its empty note.
+    fn screen_rows(screen: &Screen) -> usize {
+        screen.len.div_ceil(COLS).max(1)
     }
 
-    fn grid_h(&self) -> f32 {
-        let rows = self.grid_rows() as f32;
+    fn rows_h(rows: usize) -> f32 {
+        let rows = rows as f32;
         rows * TILE_H + (rows - 1.0).max(0.0) * GAP
     }
 
+    /// Each screen's heading top, then the first tile index it holds.
+    fn screen_tops(&self) -> Vec<(f32, usize)> {
+        let mut top = GRID_TOP;
+        let mut start = 0;
+        self.screens
+            .iter()
+            .map(|screen| {
+                let here = (top, start);
+                top += HEAD_H + HEAD_GAP + Self::rows_h(Self::screen_rows(screen)) + SECTION_GAP;
+                start += screen.len;
+                here
+            })
+            .collect()
+    }
+
+    /// The bottom of the last screen's tiles.
+    fn grid_bottom(&self) -> f32 {
+        self.screen_tops()
+            .last()
+            .zip(self.screens.last())
+            .map_or(GRID_TOP, |((top, _), screen)| {
+                top + HEAD_H + HEAD_GAP + Self::rows_h(Self::screen_rows(screen))
+            })
+    }
+
     fn float_head_top(&self) -> f32 {
-        GRID_TOP + self.grid_h() + SECTION_GAP
+        self.grid_bottom() + SECTION_GAP
     }
 
     fn box_top(&self) -> f32 {
@@ -225,10 +305,17 @@ impl DropGrid {
     }
 
     fn tile_origin(&self, index: usize) -> (f32, f32) {
-        let (col, row) = (index % COLS, index / COLS);
+        let (top, start) = self
+            .screen_tops()
+            .into_iter()
+            .zip(&self.screens)
+            .find(|((_, start), screen)| (*start..start + screen.len).contains(&index))
+            .map_or((GRID_TOP, 0), |(at, _)| at);
+        let local = index - start;
+        let (col, row) = (local % COLS, local / COLS);
         (
             col as f32 * (self.tile_w() + GAP),
-            GRID_TOP + row as f32 * (TILE_H + GAP),
+            top + HEAD_H + HEAD_GAP + row as f32 * (TILE_H + GAP),
         )
     }
 
@@ -242,17 +329,26 @@ impl DropGrid {
 
     /// The place under a point in the map.
     fn target_at(&self, x: f32, y: f32) -> Option<Place> {
-        if (0.0..=self.width).contains(&x)
-            && (GRID_TOP - GAP..=GRID_TOP + self.grid_h() + GAP).contains(&y)
-        {
+        if !(0.0..=self.width).contains(&x) {
+            return None;
+        }
+        for ((top, start), screen) in self.screen_tops().into_iter().zip(&self.screens) {
+            let tiles_top = top + HEAD_H + HEAD_GAP;
+            let rows = Self::screen_rows(screen);
+            if !(tiles_top - GAP..=tiles_top + Self::rows_h(rows) + GAP).contains(&y) {
+                continue;
+            }
             let col = ((x + GAP / 2.0) / (self.tile_w() + GAP))
                 .floor()
                 .clamp(0.0, (COLS - 1) as f32);
-            let row = ((y - GRID_TOP + GAP / 2.0) / (TILE_H + GAP))
+            let row = ((y - tiles_top + GAP / 2.0) / (TILE_H + GAP))
                 .floor()
-                .clamp(0.0, (self.grid_rows() - 1) as f32);
-            let index = row as usize * COLS + col as usize;
-            return self.tiles.get(index).map(|tile| Place::Workspace(*tile));
+                .clamp(0.0, (rows - 1) as f32);
+            let local = row as usize * COLS + col as usize;
+            return (local < screen.len)
+                .then(|| self.tiles.get(start + local))
+                .flatten()
+                .map(|tile| Place::Workspace(*tile));
         }
         let top = self.float_head_top();
         ((0.0..=self.width).contains(&x)
@@ -262,7 +358,7 @@ impl DropGrid {
 }
 
 pub fn pane(ui: &Ui, p: Paint, layer: &mut Vec<El>) -> El {
-    let layout = Layout::with_running(&ui.doc, ui.card_w, &ui.default_floats);
+    let layout = Layout::with_running(&ui.doc, ui.card_w, &ui.displays, &ui.default_floats);
     let width = layout.grid.width;
     let view = MapView {
         ui,
@@ -293,9 +389,31 @@ pub fn pane(ui: &Ui, p: Paint, layer: &mut Vec<El>) -> El {
         .child(heading(
             "where",
             "Where new windows open",
-            Some(controls::caption(p, OPTIONAL)),
+            Some(controls::caption(p, INTRO)),
             0.0,
         ));
+    for ((top, _), screen) in layout
+        .grid
+        .screen_tops()
+        .into_iter()
+        .zip(&layout.grid.screens)
+    {
+        map = map.child(heading(
+            &screen.key,
+            &screen.title,
+            Some(controls::caption(p, &screen.caption)),
+            top,
+        ));
+        if screen.len == 0 {
+            map = map.child(
+                text("No workspaces. Use a workspace number's menu to move one here.")
+                    .key(format!("{}-empty", screen.key))
+                    .font(p.row_title())
+                    .color(p.faint())
+                    .absolute(0.0, top + HEAD_H + HEAD_GAP + 12.0),
+            );
+        }
+    }
     for (index, workspace) in layout.grid.tiles.iter().copied().enumerate() {
         let (x, y) = layout.grid.tile_origin(index);
         map = map.child(view.tile(index, workspace, layer).absolute(x, y));
@@ -352,15 +470,8 @@ impl MapView<'_> {
             .border(border.0, border.1)
             .hover_group()
             .child(
-                text(workspace.to_string())
-                    .key("number")
-                    .font(self.p.tabular(self.p.strong()))
-                    .color(if active {
-                        self.p.text()
-                    } else {
-                        self.p.muted()
-                    })
-                    .absolute(TILE_PAD, 10.0),
+                self.screen_menu(workspace, active, layer)
+                    .absolute(TILE_PAD - 6.0, 6.0),
             )
             .child(
                 self.add_button(Place::Workspace(workspace), layer)
@@ -389,6 +500,64 @@ impl MapView<'_> {
             tile = tile.child(item.absolute(x, y));
         }
         tile
+    }
+
+    /// A tile's number, pressed for the menu that moves the workspace to another screen.
+    fn screen_menu(self, workspace: WorkspaceId, active: bool, layer: &mut Vec<El>) -> El {
+        let c = &self.p.k.c;
+        let open = self.ui.menu == Some(Menu::Screen(workspace));
+        let trigger = row()
+            .key("number")
+            .role("button")
+            .label(format!("Workspace {workspace}: choose its screen"))
+            .help("Choose the screen this workspace shows on")
+            .h(24.0)
+            .px(6.0)
+            .gap(2.0)
+            .center_y()
+            .radius(self.p.k.radius.sm)
+            .hover(c.hover)
+            .press(c.pressed)
+            .on_press(move |ui: &mut Ui| ui.menu = Some(Menu::Screen(workspace)))
+            .child(
+                text(workspace.to_string())
+                    .font(self.p.tabular(self.p.strong()))
+                    .color(if active {
+                        self.p.text()
+                    } else {
+                        self.p.muted()
+                    }),
+            )
+            .child(rune::icon(&rune_theme_opencode::icons::CHEVRON_DOWN, 12.0).color(c.icon_muted));
+        let mut menu = KitMenu::new(format!("screen-{workspace}-menu"))
+            .trigger(trigger)
+            .placement(Placement::BottomStart)
+            .gutter(4.0)
+            .min_width(220.0)
+            .open(open)
+            .on_close(|ui: &mut Ui| ui.menu = None);
+        if open {
+            let current = screens::effective_monitor(&self.ui.doc, workspace);
+            let shown = screens::index_of(&self.layout.choices, &current);
+            menu = menu.group_label(format!("Show workspace {workspace} on"));
+            for (index, choice) in self.layout.choices.iter().enumerate() {
+                if !choice.connected && shown != Some(index) {
+                    continue;
+                }
+                let selector = choice.selector.clone();
+                menu = menu.item(
+                    MenuItem::new(choice.title.clone())
+                        .description(choice.caption.clone())
+                        .checked(shown == Some(index))
+                        .on_select(move |ui: &mut Ui| {
+                            ui.menu = None;
+                            let monitor = screens::override_for(workspace, &selector);
+                            ui.edit(|doc| doc.set_monitor(workspace, monitor.as_deref()));
+                        }),
+                );
+            }
+        }
+        menu.build(self.p.k, layer)
     }
 
     /// The float box: a chip per floating app, then Add.

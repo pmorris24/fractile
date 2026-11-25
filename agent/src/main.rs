@@ -47,6 +47,8 @@ pub enum Menu {
     Rule(usize, PointerPress),
     /// A built-in float's choices, by its place in `spaceman::defaults::FLOATING_BUNDLES`.
     Default(usize),
+    /// The screens a workspace can show on, from its tile's number in Settings › Screens.
+    Screen(spaceman::WorkspaceId),
 }
 
 pub struct Ui {
@@ -178,6 +180,12 @@ impl Ui {
     }
 
     pub fn select_pane(&mut self, pane: Pane) {
+        // Display assignments moved into Settings › Screens, beside the rules.
+        let pane = if pane == Pane::Workspaces {
+            Pane::Rules
+        } else {
+            pane
+        };
         self.pane = pane;
         self.menu = None;
         self.sheet = None;
@@ -185,12 +193,10 @@ impl Ui {
         self.flush_pending_reload();
         self.highlight_lab = None;
         self.highlight_feature = None;
-        if pane == Pane::Workspaces {
-            // Read the displays before the next frame paints them.
-            self.displays_at = None;
-        }
         if pane == Pane::Rules {
-            // And the running built-in floats.
+            // Read the displays and the running built-in floats before the next frame paints
+            // them.
+            self.displays_at = None;
             self.default_floats_at = None;
         }
     }
@@ -753,7 +759,8 @@ mod tests {
             .unwrap()
             .resolve();
         ui.open_target(workspaces);
-        assert_eq!(ui.pane, Pane::Workspaces);
+        // Display assignments live in Settings › Screens now.
+        assert_eq!(ui.pane, Pane::Rules);
         assert_eq!(ui.highlight_lab, None);
         assert_eq!(ui.highlight_feature, None);
 
