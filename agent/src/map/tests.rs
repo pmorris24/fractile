@@ -490,7 +490,7 @@ fn built_in_floats_are_default_chips_and_take_a_tile_or_pin_override() {
     // The chips sit under the map and change none of its drop targets.
     let (with, without) = (
         Layout::with_running(&ui.doc, WIDTH, &ui.displays, &[], &ui.default_floats).grid,
-        Layout::new(&ui.doc, WIDTH).grid,
+        Layout::with_running(&ui.doc, WIDTH, &ui.displays, &[], &[]).grid,
     );
     assert_eq!(with.height(), without.height());
 
@@ -567,5 +567,31 @@ fn a_screen_with_open_windows_gets_taller_tiles_that_still_hit_test() {
     assert_eq!(
         grid.target_at(x + 10.0, next_row + 5.0),
         Some(Place::Workspace(below))
+    );
+}
+
+#[test]
+fn two_screens_draw_their_arrangement_above_the_cards_and_shift_its_targets() {
+    let doc = Doc::parse("version = 1\n");
+    let one = Layout::new(&doc, WIDTH);
+    let displays = crate::panes::workspaces::fixture_three();
+    let three = Layout::with_running(&doc, WIDTH, &displays, &[], &[]);
+    assert!(one.arrangement.is_empty());
+    assert_eq!(three.arrangement.len(), 3);
+    // Each panel screen carries its card's workspaces.
+    let main = three.arrangement.iter().find(|s| s.is_main).unwrap();
+    assert_eq!(main.workspaces[0], WorkspaceId::ONE);
+    // The tiles move down by the panel, and still hit-test where they are drawn.
+    let shift = three.grid.tile_origin(0).1 - one.grid.tile_origin(0).1;
+    assert!((shift - (HEAD_GAP + arrangement::HEIGHT)).abs() < 0.01);
+    let (x, y) = three.grid.tile_origin(0);
+    assert_eq!(
+        three.grid.target_at(x + 5.0, y + 5.0),
+        Some(Place::Workspace(three.grid.tiles[0]))
+    );
+    // The panel itself is no drop target.
+    assert_eq!(
+        three.grid.target_at(WIDTH / 2.0, HEAD_H + HEAD_GAP + 20.0),
+        None
     );
 }

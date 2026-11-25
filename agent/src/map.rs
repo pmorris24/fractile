@@ -8,6 +8,7 @@
 //! The map is as wide as the pane's cards (`Ui::card_w`): its tiles and chips share that width
 //! out, and its labels sit on the page's text rail.
 
+mod arrangement;
 mod defaults;
 mod drag;
 mod filter;
@@ -100,6 +101,12 @@ pub(crate) const SCENES: &[Scene] = &[
         fixture(ui);
         ui.displays = crate::panes::workspaces::fixture_three();
     }),
+    // Screens of different sizes at different heights: a laptop on the left, a portrait
+    // monitor on the right, as the Arrange view draws them.
+    ("rules-arrangement", |ui| {
+        fixture(ui);
+        ui.displays = arrangement::fixture_desk();
+    }),
     // A workspace number's menu: the screens it can show on.
     ("rules-screen-menu", |ui| {
         fixture(ui);
@@ -135,6 +142,8 @@ struct Layout {
     floating: Vec<Rule>,
     /// The built-in floats shown under the float box.
     defaults: Vec<DefaultFloat>,
+    /// The connected screens as they are arranged, drawn over the cards with two or more.
+    arrangement: Vec<arrangement::Screen>,
 }
 
 impl Layout {
@@ -162,6 +171,7 @@ impl Layout {
             &choices,
             doc.workspaces_with_referenced(WorkspaceId::numbered()),
         );
+        let arrangement = arrangement::screens(&sections, &choices, displays);
         let tiles: Vec<WorkspaceId> = sections
             .iter()
             .flat_map(|section| section.workspaces.iter().copied())
@@ -199,6 +209,11 @@ impl Layout {
         Layout {
             grid: DropGrid {
                 width,
+                arrange_h: if arrangement.is_empty() {
+                    0.0
+                } else {
+                    HEAD_GAP + arrangement::HEIGHT
+                },
                 tiles,
                 screens,
                 floating_len: floating.len(),
@@ -207,6 +222,7 @@ impl Layout {
             routed,
             floating,
             defaults,
+            arrangement,
         }
     }
 
@@ -250,6 +266,8 @@ struct Screen {
 struct DropGrid {
     /// The map's width: the pane's card width.
     width: f32,
+    /// The arrangement panel under the map's heading, and the gap above it; 0 without one.
+    arrange_h: f32,
     /// Every screen's tiles, screen after screen.
     tiles: Vec<WorkspaceId>,
     screens: Vec<Screen>,
@@ -257,6 +275,11 @@ struct DropGrid {
 }
 
 impl DropGrid {
+    /// The first screen's heading: under the map's own, and the arrangement panel if any.
+    fn grid_top(&self) -> f32 {
+        GRID_TOP + self.arrange_h
+    }
+
     /// A workspace tile's width: the map's, shared between the columns.
     fn tile_w(&self) -> f32 {
         (self.width - (COLS - 1) as f32 * GAP) / COLS as f32
@@ -279,7 +302,7 @@ impl DropGrid {
 
     /// Each screen's heading top, then the first tile index it holds.
     fn screen_tops(&self) -> Vec<(f32, usize)> {
-        let mut top = GRID_TOP;
+        let mut top = self.grid_top();
         let mut start = 0;
         self.screens
             .iter()
@@ -297,7 +320,7 @@ impl DropGrid {
         self.screen_tops()
             .last()
             .zip(self.screens.last())
-            .map_or(GRID_TOP, |((top, _), screen)| {
+            .map_or(self.grid_top(), |((top, _), screen)| {
                 top + HEAD_H + HEAD_GAP + Self::rows_h(screen)
             })
     }
@@ -326,7 +349,9 @@ impl DropGrid {
             .into_iter()
             .zip(&self.screens)
             .find(|((_, start), screen)| (*start..start + screen.len).contains(&index))
-            .map_or(((GRID_TOP, 0), TILE_H), |(at, screen)| (at, screen.tile_h));
+            .map_or(((self.grid_top(), 0), TILE_H), |(at, screen)| {
+                (at, screen.tile_h)
+            });
         let local = index - start;
         let (col, row) = (local % COLS, local / COLS);
         (
@@ -426,6 +451,12 @@ pub fn pane(ui: &Ui, p: Paint, layer: &mut Vec<El>) -> El {
             Some(controls::caption(p, INTRO)),
             0.0,
         ));
+    if !layout.arrangement.is_empty() {
+        map = map.child(
+            arrangement::view(p, &layout.arrangement, width, view.active)
+                .absolute(0.0, HEAD_H + HEAD_GAP),
+        );
+    }
     for ((top, _), screen) in layout
         .grid
         .screen_tops()
