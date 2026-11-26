@@ -26,7 +26,7 @@ use std::{
 
 use rune::{
     Align, Cx, DisplayTarget, El, KeyPolicy, NativeDisplayId, OverlayHandle, OverlayInput,
-    OverlayOptions, OverlaySpec, ScreenEdge, Tx, row,
+    OverlayOptions, OverlayPlacement, OverlaySpec, ScreenEdge, Tx, row,
 };
 use spaceman::{
     WorkspaceId,
@@ -69,10 +69,18 @@ pub const OVERLAY_MARGIN: f32 = pill::CAPSULE_INSET - pill::SHADOW_REACH;
 #[must_use]
 pub const fn panel_edge(position: HudPosition) -> ScreenEdge {
     match position {
-        HudPosition::Bottom => ScreenEdge::Bottom,
+        // A side's panel is placed by its rect (`HudOverlay::place`); a toast in it shows at
+        // the bottom.
+        HudPosition::Bottom | HudPosition::Left | HudPosition::Right => ScreenEdge::Bottom,
         HudPosition::Top => ScreenEdge::Top,
     }
 }
+
+/// A side's panel: the capsule standing on end with room round it for its shadow, as tall as
+/// the row's panel is wide, or the area windows tile in when that is shorter.
+const SIDE_SIZE: (f32, f32) = (OVERLAY_SIZE.1, OVERLAY_SIZE.0);
+/// How far a side's capsule sits from the area windows tile in when it is not kept on screen.
+const SIDE_GAP: f32 = 12.0;
 /// One panel per display, up to this many displays.
 const PANEL_NAMES: [&str; 4] = [
     "Spaceman HUD",
@@ -154,14 +162,42 @@ impl HudOverlay {
         let Some(handle) = &self.handle else {
             return;
         };
-        let margin = if self.stay {
+        let gap = spaceman::config::HUD_STAY_GAP as f32;
+        if self.position.is_side()
+            && let Some((screen, frame)) = display_rects(self.display)
+        {
+            // Points from the display's top-left: beside the area windows tile in, past a Dock
+            // on that side, and centred down it.
+            let gap = if self.stay { gap } else { SIDE_GAP };
+            let height = SIDE_SIZE.1.min(frame.height as f32);
+            let y = (frame.y - screen.y) as f32 + (frame.height as f32 - height) / 2.0;
+            let x = if self.position == HudPosition::Left {
+                (frame.x - screen.x) as f32 + gap - pill::SHADOW_REACH
+            } else {
+                (frame.x + frame.width - screen.x) as f32
+                    - gap
+                    - pill::PILL_HEIGHT
+                    - pill::SHADOW_REACH
+            };
+            handle.resize((SIDE_SIZE.0, height));
+            handle.set_placement(Some(OverlayPlacement::Rect {
+                x,
+                y,
+                width: SIDE_SIZE.0,
+                height,
+            }));
+            return;
+        }
+        let margin = if self.stay && !self.position.is_side() {
             let bar = self
                 .display
                 .map_or(0.0, |display| bar_inset(display, self.position));
-            bar + spaceman::config::HUD_STAY_GAP as f32 - pill::SHADOW_REACH
+            bar + gap - pill::SHADOW_REACH
         } else {
             OVERLAY_MARGIN
         };
+        handle.set_placement(None);
+        handle.resize(OVERLAY_SIZE);
         handle.place(panel_edge(self.position), margin);
     }
 
@@ -357,11 +393,15 @@ impl HudDriver {
             let icons = icons.clone();
             let names = names.clone();
             panel.handle.update_if(move |overlay, tx| {
-                if overlay.display != display || display.is_none() {
+                let moved = overlay.display != display || display.is_none();
+                if moved {
                     if let Some(handle) = &overlay.handle {
                         handle.set_display(target);
                     }
                     overlay.display = display;
+                }
+                // A side's panel may have shown a toast along the bottom since: place it again.
+                if moved || overlay.position.is_side() {
                     overlay.place();
                 }
                 let now_ms = overlay.now_ms();
@@ -414,6 +454,12 @@ impl HudDriver {
         panel.handle.update_if(move |overlay, tx| {
             if let Some(handle) = &overlay.handle {
                 handle.set_display(DisplayTarget::Primary);
+                if overlay.position.is_side() {
+                    // A toast is a line of text: along the bottom, not down a side.
+                    handle.set_placement(None);
+                    handle.resize(OVERLAY_SIZE);
+                    handle.place(ScreenEdge::Bottom, OVERLAY_MARGIN);
+                }
             }
             overlay.display = None;
             let now_ms = overlay.now_ms();
@@ -596,8 +642,28 @@ fn bar_inset(display: u32, position: HudPosition) -> f32 {
     let inset = match position {
         HudPosition::Bottom => (screen.y + screen.height) - (frame.y + frame.height),
         HudPosition::Top => frame.y - screen.y,
+        HudPosition::Left => frame.x - screen.x,
+        HudPosition::Right => (screen.x + screen.width) - (frame.x + frame.width),
     };
     inset.max(0) as f32
+}
+
+/// `display`'s whole screen and the area windows tile in (Dock and menu bar left out), in
+/// points, y down; the main display's when `display` is `None`.
+#[cfg(target_os = "macos")]
+fn display_rects(display: Option<u32>) -> Option<(spaceman::Rect, spaceman::Rect)> {
+    let outputs = spaceman::macos::outputs().ok()?;
+    let ids = display_ids();
+    let index = outputs.displays().iter().position(|output| match display {
+        Some(display) => ids.get(&output.id) == Some(&display),
+        None => output.is_main,
+    })?;
+    Some((outputs.screens()[index], outputs.displays()[index].frame))
+}
+
+#[cfg(not(target_os = "macos"))]
+fn display_rects(_display: Option<u32>) -> Option<(spaceman::Rect, spaceman::Rect)> {
+    None
 }
 
 #[cfg(not(target_os = "macos"))]
@@ -641,6 +707,7 @@ fn overlay_poll(overlay: &mut HudOverlay, _clock: f64, tx: &mut Tx) -> bool {
             && overlay.flow.trigger(row, now_ms) == HudTransition::Show
             && let Some(handle) = &overlay.handle
         {
+            overlay.place();
             handle.fade_in(REVEAL_FADE);
             overlay.schedule_wake(now_ms, tx);
             return true;

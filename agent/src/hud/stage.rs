@@ -288,9 +288,24 @@ pub fn miniature(
             .cursor(Cursor::Pointer)
             .on_press(move |ui: &mut Ui| ui.set_hud_position(to))
     };
-    let rest = match position {
-        HudPosition::Bottom => height - MINIATURE_EDGE - pill::PILL_HEIGHT,
-        HudPosition::Top => MINIATURE_EDGE,
+    // Where the capsule rests: its top, or on a side its left edge, standing on end.
+    let (x, y, w, h, length) = match position {
+        HudPosition::Bottom => (
+            0.0,
+            height - MINIATURE_EDGE - pill::PILL_HEIGHT,
+            width,
+            pill::PILL_HEIGHT,
+            width,
+        ),
+        HudPosition::Top => (0.0, MINIATURE_EDGE, width, pill::PILL_HEIGHT, width),
+        HudPosition::Left => (MINIATURE_EDGE, 0.0, pill::PILL_HEIGHT, height, height),
+        HudPosition::Right => (
+            width - MINIATURE_EDGE - pill::PILL_HEIGHT,
+            0.0,
+            pill::PILL_HEIGHT,
+            height,
+            height,
+        ),
     };
     display
         .child(half("show-top", "Show at the top", true, HudPosition::Top))
@@ -302,12 +317,13 @@ pub fn miniature(
         ))
         .child(
             el().key("capsule")
-                .absolute(0.0, rest)
-                .w(width)
+                .absolute(x, y)
+                .w(w)
+                .h(h)
                 .motion(pill::ROW)
                 .children(
                     view.as_ref()
-                        .map(|view| pill::slot(view, position, style, &preview.icons, width, p)),
+                        .map(|view| pill::slot(view, position, style, &preview.icons, length, p)),
                 ),
         )
 }

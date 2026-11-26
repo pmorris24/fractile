@@ -27,17 +27,31 @@ fn the_capsule_sits_sixty_points_inside_the_edge_it_picks() {
 }
 
 #[test]
-fn a_top_capsule_drops_into_place_and_a_bottom_one_rises() {
+fn a_top_capsule_drops_into_place_a_bottom_one_rises_and_a_side_one_slides_in() {
     use spaceman::config::HudPosition;
 
     // Away from its resting place, the capsule starts 6 pt outside the display edge it sits on.
-    assert_eq!(pill::enter_offset(HudPosition::Bottom, false, false), 6.0);
-    assert_eq!(pill::enter_offset(HudPosition::Top, false, false), -6.0);
+    assert_eq!(
+        pill::enter_offset(HudPosition::Bottom, false, false),
+        (0.0, 6.0)
+    );
+    assert_eq!(
+        pill::enter_offset(HudPosition::Top, false, false),
+        (0.0, -6.0)
+    );
+    assert_eq!(
+        pill::enter_offset(HudPosition::Left, false, false),
+        (-6.0, 0.0)
+    );
+    assert_eq!(
+        pill::enter_offset(HudPosition::Right, false, false),
+        (6.0, 0.0)
+    );
     // Shown, or under Reduce Motion, it rests exactly where it is drawn.
-    assert_eq!(pill::enter_offset(HudPosition::Top, true, false), 0.0);
-    assert_eq!(pill::enter_offset(HudPosition::Bottom, true, false), 0.0);
-    assert_eq!(pill::enter_offset(HudPosition::Top, false, true), 0.0);
-    assert_eq!(pill::enter_offset(HudPosition::Bottom, false, true), 0.0);
+    for position in [HudPosition::Top, HudPosition::Bottom, HudPosition::Left] {
+        assert_eq!(pill::enter_offset(position, true, false), (0.0, 0.0));
+        assert_eq!(pill::enter_offset(position, false, true), (0.0, 0.0));
+    }
 }
 
 fn id(number: u8) -> WorkspaceId {
@@ -652,4 +666,26 @@ fn a_capsule_kept_on_screen_never_leaves_and_comes_back_after_a_toast() {
         flow.tick(later);
         assert!(later < now + 10_000, "it never left");
     }
+}
+
+#[test]
+fn a_side_column_stacks_each_workspace_s_icons_under_its_number() {
+    use super::pill::Icons;
+    use crate::controls::Paint;
+
+    let entries = vec![
+        workspace(1, &["term", "web", "term"]),
+        workspace(2, &["chat"]),
+    ];
+    let paint = Paint::new(true, 2.0);
+    let row = icons::track_with_mode(&entries, Some(id(1)), &Icons::new(), paint, false, false);
+    let column = icons::track_with_mode(&entries, Some(id(1)), &Icons::new(), paint, false, true);
+    // The marker runs along the row's length, and down the column's.
+    let [_, _, row_w, row_h] = row.marker.unwrap();
+    let [_, _, col_w, col_h] = column.marker.unwrap();
+    assert!(row_w > row_h, "{row_w}x{row_h}");
+    assert!(col_h > col_w, "{col_w}x{col_h}");
+    assert_eq!(col_w, icons::MARKER_H);
+    // Three icons under the number: the group is as long as the number's line and the icons.
+    assert!(col_h >= 16.0 + 3.0 * icons::ICON, "{col_h}");
 }

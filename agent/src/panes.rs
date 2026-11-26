@@ -197,6 +197,10 @@ pub(crate) const SCENES: &[Scene] = &[
         reset_fixture(ui, Pane::General);
         general::fixture_hud_sheet(ui, spaceman::config::HudPosition::Bottom);
     }),
+    ("hud-customize-left", |ui| {
+        reset_fixture(ui, Pane::General);
+        general::fixture_hud_sheet(ui, spaceman::config::HudPosition::Left);
+    }),
     ("hud-customize-top", |ui| {
         reset_fixture(ui, Pane::General);
         general::fixture_hud_sheet(ui, spaceman::config::HudPosition::Top);

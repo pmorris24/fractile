@@ -34,8 +34,12 @@ fn hud_mode_index(enabled: bool, style: HudStyle) -> usize {
         .unwrap_or(1)
 }
 
-const HUD_POSITIONS: [(&str, HudPosition); 2] =
-    [("Bottom", HudPosition::Bottom), ("Top", HudPosition::Top)];
+const HUD_POSITIONS: [(&str, HudPosition); 4] = [
+    ("Bottom", HudPosition::Bottom),
+    ("Top", HudPosition::Top),
+    ("Left", HudPosition::Left),
+    ("Right", HudPosition::Right),
+];
 
 fn hud_position_index(position: HudPosition) -> usize {
     HUD_POSITIONS
@@ -369,7 +373,12 @@ pub fn hud_sheet(
         p,
         "hud-position",
         "Position",
-        None,
+        (position.is_side() && ui.doc.hud_style() == HudStyle::Layouts).then(|| {
+            (
+                "On a side it shows Icons; Layouts runs along the top or bottom".to_owned(),
+                p.muted(),
+            )
+        }),
         SegmentedControl::new(
             &HUD_POSITIONS.map(|(label, _)| label.to_owned()),
             Some(hud_position_index(position)),

@@ -2,7 +2,7 @@
 //! Nothing changes size; a concentric pill marker glides to the active group while inactive
 //! groups sit calmly dimmed.
 
-use rune::{Cursor, El, Spring, TextStyle, Tx, el, row, text};
+use rune::{Cursor, El, Spring, TextStyle, Tx, col, el, row, text};
 use spaceman::{WorkspaceId, app::UiHudWorkspace};
 
 use super::pill::{INNER, Icons, Track, app_icon, presence, rgba, srgb};
@@ -62,6 +62,9 @@ fn group_width(number: f32, apps: usize) -> f32 {
     number + NUMBER_GAP + apps as f32 * ICON + (apps - 1) as f32 * ICON_GAP
 }
 
+/// A number's line, in a side's column, where the icons stack under it.
+const NUMBER_H: f32 = 16.0;
+
 #[cfg(test)]
 pub fn track(
     entries: &[UiHudWorkspace],
@@ -69,7 +72,7 @@ pub fn track(
     icons: &Icons,
     p: Paint,
 ) -> Track {
-    track_with_mode(entries, focus, icons, p, false)
+    track_with_mode(entries, focus, icons, p, false, false)
 }
 
 pub fn track_with_mode(
@@ -78,6 +81,7 @@ pub fn track_with_mode(
     icons: &Icons,
     _p: Paint,
     interactive: bool,
+    column: bool,
 ) -> Track {
     let mut x = EDGE;
     let mut marker = None;
@@ -86,34 +90,42 @@ pub fn track_with_mode(
         let label = entry.workspace.to_string();
         let number = number_width(&label);
         let apps = apps(entry);
-        let width = group_width(number, apps.len());
+        // In a column the number sits on its own line with the icons stacked under it.
+        let width = if column {
+            group_width(NUMBER_H, apps.len())
+        } else {
+            group_width(number, apps.len())
+        };
         let current = Some(entry.workspace) == focus;
         if current {
-            marker = Some([
-                x - PAD,
-                (INNER - MARKER_H) / 2.0,
-                width + 2.0 * PAD,
-                MARKER_H,
-            ]);
+            let across = (INNER - MARKER_H) / 2.0;
+            marker = Some(if column {
+                [across, x - PAD, MARKER_H, width + 2.0 * PAD]
+            } else {
+                [x - PAD, across, width + 2.0 * PAD, MARKER_H]
+            });
         }
+        let cell = group(
+            entry.workspace,
+            &label,
+            number,
+            width,
+            &apps,
+            icons,
+            current,
+            interactive,
+            column,
+        );
+        let cell = if column {
+            cell.absolute(0.0, x).w(INNER).h(width)
+        } else {
+            cell.absolute(x, 0.0).w(width).h(INNER)
+        };
         cells.push(
-            group(
-                entry.workspace,
-                &label,
-                number,
-                width,
-                &apps,
-                icons,
-                current,
-                interactive,
-            )
-            .absolute(x, 0.0)
-            .w(width)
-            .h(INNER)
-            .opacity(if current { 1.0 } else { DIM })
-            .opacity_motion(GROUP)
-            .motion(GROUP)
-            .transition(presence()),
+            cell.opacity(if current { 1.0 } else { DIM })
+                .opacity_motion(GROUP)
+                .motion(GROUP)
+                .transition(presence()),
         );
         x += width + GROUP_GAP;
     }
@@ -140,14 +152,26 @@ fn group(
     icons: &Icons,
     current: bool,
     interactive: bool,
+    column: bool,
 ) -> El {
     let digit_w = if apps.is_empty() { width } else { number };
-    let digits = row().key("number").w(digit_w).h(16.0).center().child(
+    let digits = row().key("number").center().child(
         text(label.to_owned())
             .font(number_style())
             .color(srgb(0xf4f4f6)),
     );
-    let mut group = row().key(format!("ws{workspace}")).center_y();
+    let digits = if column {
+        digits
+            .w(INNER)
+            .h(if apps.is_empty() { width } else { NUMBER_H })
+    } else {
+        digits.w(digit_w).h(16.0)
+    };
+    let mut group = if column {
+        col().key(format!("ws{workspace}")).center_y()
+    } else {
+        row().key(format!("ws{workspace}")).center_y()
+    };
     if interactive {
         group = group
             .role("button")
@@ -162,8 +186,22 @@ fn group(
             })
             .child(
                 el().key("hover")
-                    .absolute(-PAD, (INNER - MARKER_H) / 2.0)
-                    .size(width + 2.0 * PAD, MARKER_H)
+                    .absolute(
+                        if column {
+                            (INNER - MARKER_H) / 2.0
+                        } else {
+                            -PAD
+                        },
+                        if column {
+                            -PAD
+                        } else {
+                            (INNER - MARKER_H) / 2.0
+                        },
+                    )
+                    .size(
+                        if column { MARKER_H } else { width + 2.0 * PAD },
+                        if column { width + 2.0 * PAD } else { MARKER_H },
+                    )
                     .radius(MARKER_RADIUS)
                     .fill(rgba(0xffffff, 0.08))
                     .group_opacity(0.0, if current { 0.0 } else { 1.0 }),
@@ -171,26 +209,26 @@ fn group(
     }
     group = group.child(digits);
     if !apps.is_empty() {
-        group = group.child(
-            row()
-                .key("apps")
-                .pl(NUMBER_GAP)
-                .gap(ICON_GAP)
-                .center_y()
-                .children(apps.iter().enumerate().map(|(index, bundle)| {
-                    // The same app twice: keyed by which of its windows it is.
-                    let nth = apps[..index]
-                        .iter()
-                        .filter(|other| *other == bundle)
-                        .count();
-                    let icon = app_icon(icons, workspace, bundle, ICON, interactive);
-                    if nth == 0 {
-                        icon
-                    } else {
-                        icon.key(format!("app-{bundle}-{nth}"))
-                    }
-                })),
-        );
+        let list = if column {
+            col().key("apps").pt(NUMBER_GAP).center_y()
+        } else {
+            row().key("apps").pl(NUMBER_GAP).center_y()
+        };
+        group = group.child(list.gap(ICON_GAP).children(apps.iter().enumerate().map(
+            |(index, bundle)| {
+                // The same app twice: keyed by which of its windows it is.
+                let nth = apps[..index]
+                    .iter()
+                    .filter(|other| *other == bundle)
+                    .count();
+                let icon = app_icon(icons, workspace, bundle, ICON, interactive);
+                if nth == 0 {
+                    icon
+                } else {
+                    icon.key(format!("app-{bundle}-{nth}"))
+                }
+            },
+        )));
     }
     group
 }

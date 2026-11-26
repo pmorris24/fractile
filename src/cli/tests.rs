@@ -354,7 +354,11 @@ fn config_gets_sets_and_resets_hud_position() {
 
     let bad = temp.run(&["config", "set", "hud_position", "center"]);
     assert_eq!(bad.exit_code, 1);
-    assert!(bad.stderr.unwrap().contains("expected 'bottom' or 'top'"));
+    assert!(
+        bad.stderr
+            .unwrap()
+            .contains("expected 'bottom', 'top', 'left' or 'right'")
+    );
 }
 
 #[test]

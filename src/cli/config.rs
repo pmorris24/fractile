@@ -417,7 +417,7 @@ impl SettingValue {
                 .map(Self::HudPosition)
                 .ok_or_else(|| {
                     format!(
-                        "invalid value for hud_position: expected 'bottom' or 'top', got {raw_value:?}"
+                        "invalid value for hud_position: expected 'bottom', 'top', 'left' or 'right', got {raw_value:?}"
                     )
                 }),
             SettingKey::Layout => LayoutMode::parse(raw_value)

@@ -21,7 +21,7 @@
 
 use std::collections::{BTreeSet, HashMap};
 
-use rune::{Color, El, Pixels, Spring, Transition, el, row, text, tok::motion::pair::SETTLE};
+use rune::{Color, El, Pixels, Spring, Transition, col, el, row, text, tok::motion::pair::SETTLE};
 use spaceman::{
     WorkspaceId,
     app::{UiHudDisplay, UiHudToast, UiHudWorkspace},
@@ -122,8 +122,10 @@ impl HudView<'_> {
     }
 }
 
-/// A style's row: cells laid out from `x = 0`, and where the marker goes.
+/// A style's row: cells laid out from `x = 0` (from `y = 0` in a side's column), and where the
+/// marker goes.
 pub struct Track {
+    /// Its length along the row: its width, or its height in a column.
     pub width: f32,
     /// The marker's left edge, top and size, when the focus is in the row.
     pub marker: Option<[f32; 4]>,
@@ -138,16 +140,19 @@ pub fn max_row_width(panel_width: f32) -> f32 {
     panel_width - 2.0 * SHADOW_SIDE - 2.0
 }
 
-/// Where the capsule starts when it is about to appear: below the bottom edge it rises from,
-/// or above the top edge it drops from. Shown (or still) it rests where it is drawn.
+/// Where the capsule starts when it is about to appear, as an `(x, y)` offset: below the bottom
+/// edge it rises from, above the top edge it drops from, or out past the side it slides in from.
+/// Shown (or still) it rests where it is drawn.
 #[must_use]
-pub const fn enter_offset(position: HudPosition, shown: bool, still: bool) -> f32 {
+pub const fn enter_offset(position: HudPosition, shown: bool, still: bool) -> (f32, f32) {
     if shown || still {
-        return 0.0;
+        return (0.0, 0.0);
     }
     match position {
-        HudPosition::Bottom => DROP,
-        HudPosition::Top => -DROP,
+        HudPosition::Bottom => (0.0, DROP),
+        HudPosition::Top => (0.0, -DROP),
+        HudPosition::Left => (-DROP, 0.0),
+        HudPosition::Right => (DROP, 0.0),
     }
 }
 
@@ -164,7 +169,13 @@ pub fn toast_slot(view: &ToastView<'_>, position: HudPosition, p: Paint) -> El {
     } else {
         REST_SCALE
     };
-    let drop = enter_offset(position, view.shown, view.still);
+    // A toast is a line of text: on a side it shows along the bottom.
+    let position = if position.is_side() {
+        HudPosition::Bottom
+    } else {
+        position
+    };
+    let (_, drop) = enter_offset(position, view.shown, view.still);
     let indicator = if view.toast.paused {
         let bar = |key: &'static str| {
             el().key(key)
@@ -262,10 +273,12 @@ fn render_slot(
     } else {
         REST_SCALE
     };
-    let drop = enter_offset(position, view.shown, view.still);
+    let (dx, dy) = enter_offset(position, view.shown, view.still);
     let entries = view.entries();
+    let side = position.is_side();
     let track = match style {
-        HudStyle::Layouts => grow::track_with_mode(
+        // A side's column draws Icons: Layouts' screens are wider than the column.
+        HudStyle::Layouts if !side => grow::track_with_mode(
             &entries,
             view.focus,
             view.row.portrait,
@@ -273,18 +286,21 @@ fn render_slot(
             p,
             interactive,
         ),
-        HudStyle::Icons => icons::track_with_mode(&entries, view.focus, icons, p, interactive),
+        HudStyle::Layouts | HudStyle::Icons => {
+            icons::track_with_mode(&entries, view.focus, icons, p, interactive, side)
+        }
     };
-    row()
-        .key("hud-slot")
-        .w_full()
-        .h(PILL_HEIGHT)
-        .center()
+    let slot = if side {
+        col().key("hud-slot").h_full().w(PILL_HEIGHT)
+    } else {
+        row().key("hud-slot").w_full().h(PILL_HEIGHT)
+    };
+    slot.center()
         .opacity(opacity)
         .opacity_motion(spring)
         .scale(scale)
         .scale_motion(spring)
-        .offset(0.0, drop)
+        .offset(dx, dy)
         .offset_motion(spring)
         .child(capsule(
             view,
@@ -292,17 +308,36 @@ fn render_slot(
             max_row_width(panel_width),
             p,
             interactive,
+            side,
         ))
 }
 
-fn capsule(view: &HudView, track: Track, max_width: f32, p: Paint, interactive: bool) -> El {
+/// The capsule round the row; `side` stands it on end, a column down a side of the display,
+/// where `max_width` is how tall it may grow.
+fn capsule(
+    view: &HudView,
+    track: Track,
+    max_width: f32,
+    p: Paint,
+    interactive: bool,
+    side: bool,
+) -> El {
     let dark = Paint::new(true, 1.0 / p.hair);
     let width = track.width.min(max_width);
     let overflow = track.width - width;
     // Keep the marker's workspace in the middle of what shows, as far as the row reaches.
-    let scroll = track.marker.map_or(0.0, |[x, _, w, _]| {
-        (x + w / 2.0 - width / 2.0).clamp(0.0, overflow.max(0.0))
+    let scroll = track.marker.map_or(0.0, |[x, y, w, h]| {
+        let (at, length) = if side { (y, h) } else { (x, w) };
+        (at + length / 2.0 - width / 2.0).clamp(0.0, overflow.max(0.0))
     });
+    // Along the row is x, across it y; a column swaps them.
+    let along = |el: El, length: f32, across: f32| {
+        if side {
+            el.w(across).h(length)
+        } else {
+            el.w(length).h(across)
+        }
+    };
     let fade = |clipped: bool| if clipped { CLIPPED_FADE } else { EDGE_FADE };
     let mut content = el()
         .key(match (view.still, view.focus) {
@@ -310,11 +345,13 @@ fn capsule(view: &HudView, track: Track, max_width: f32, p: Paint, interactive: 
             (true, Some(focus)) => format!("hud-row-{focus}"),
             _ => "hud-row".to_owned(),
         })
-        .absolute(-scroll, 0.0)
-        .w(track.width)
-        .h(INNER)
+        .absolute(
+            if side { 0.0 } else { -scroll },
+            if side { -scroll } else { 0.0 },
+        )
         .motion(ROW)
         .transition(Transition::opacity().springs(SETTLE));
+    content = along(content, track.width, INNER);
     if let Some([x, y, w, h]) = track.marker {
         let marker = el()
             .key(match view.still {
@@ -335,17 +372,17 @@ fn capsule(view: &HudView, track: Track, max_width: f32, p: Paint, interactive: 
             .transition(Transition::opacity().springs(SETTLE));
         content = content.child(marker);
     }
-    let viewport = el()
-        .key("hud-view")
-        .w(width)
-        .h(INNER)
+    let (lead, trail) = (fade(scroll > 0.5), fade(scroll < overflow - 0.5));
+    let viewport = along(el().key("hud-view"), width, INNER)
         .motion(ROW)
-        .clip_fade(fade(scroll > 0.5), 0.0, fade(scroll < overflow - 0.5), 0.0)
+        .clip_fade(
+            if side { 0.0 } else { lead },
+            if side { lead } else { 0.0 },
+            if side { 0.0 } else { trail },
+            if side { trail } else { 0.0 },
+        )
         .child(content.children(track.cells));
-    let mut capsule = row()
-        .key("hud-pill")
-        .w(width + 2.0)
-        .h(PILL_HEIGHT)
+    let mut capsule = along(row().key("hud-pill"), width + 2.0, PILL_HEIGHT)
         .center()
         .radius(PILL_HEIGHT / 2.0)
         .fill(srgb(0x161618))

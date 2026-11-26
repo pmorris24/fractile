@@ -34,7 +34,7 @@ version = 1
 [settings]
 hud = true                            # optional (default: true); non-activating Workspace HUD
 hud_style = "icons"                   # optional (default: "icons"); or "layouts"
-hud_position = "bottom"               # optional (default: "bottom"); or "top"
+hud_position = "bottom"               # optional (default: "bottom"); or "top", "left", "right"
 hud_stay = false                      # optional (default: false); keep the HUD on screen, windows tile clear of it
 layout = "dwindle"                    # optional (default: "dwindle"); or "columns"
 update_channel = "stable"             # optional (default: "stable"); or "dev", a build of every merge
@@ -132,12 +132,16 @@ the HUD; only the filter you write lives in `config.toml`.
 `settings.hud_style` picks `"icons"` (each workspace's number and an icon per window, the default) or
 `"layouts"`. `settings.hud_position` puts the capsule on each display's `"bottom"` edge (the
 default, just above the Dock) or its `"top"` edge (just below the menu bar); a top capsule slides
-down into place and back up, and a bottom one rises and settles back down. A file without the key
+down into place and back up, and a bottom one rises and settles back down. `"left"` and
+`"right"` stand the capsule on end down that side, centred, beside the area windows tile in (past
+a Dock on that side): each workspace's number with its window icons stacked under it, for a
+Dock along the bottom. A side always draws the Icons style, and a status toast still shows
+along the bottom. A file without the key
 keeps the bottom position.
 
 `settings.hud_stay = true` (Settings › General › Customize… › Keep on screen) keeps the capsule
 up instead of fading it after each switch. It then sits 8 pt from the area windows tile in
-(above the Dock, below the menu bar) and every display keeps a 60 pt strip at that edge from its
+(above the Dock, below the menu bar, beside a side's Dock) and every display keeps a 60 pt strip at that edge from its
 windows, on top of `gaps`; the capsule redraws as windows open and close. It counts only with
 `settings.hud` on.
 

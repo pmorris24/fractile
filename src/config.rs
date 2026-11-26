@@ -160,6 +160,10 @@ pub enum HudPosition {
     Bottom,
     /// Just below the top of the display, clear of the menu bar.
     Top,
+    /// Down the left edge, a column of workspaces, clear of a Dock on the bottom.
+    Left,
+    /// Down the right edge.
+    Right,
 }
 
 impl HudPosition {
@@ -168,7 +172,16 @@ impl HudPosition {
         match self {
             Self::Bottom => "bottom",
             Self::Top => "top",
+            Self::Left => "left",
+            Self::Right => "right",
         }
+    }
+
+    /// Whether the capsule runs down a side of the display, a column, not along the top or
+    /// bottom.
+    #[must_use]
+    pub const fn is_side(self) -> bool {
+        matches!(self, Self::Left | Self::Right)
     }
 
     #[must_use]
@@ -176,6 +189,8 @@ impl HudPosition {
         match value {
             "bottom" => Some(Self::Bottom),
             "top" => Some(Self::Top),
+            "left" => Some(Self::Left),
+            "right" => Some(Self::Right),
             _ => None,
         }
     }
@@ -597,6 +612,8 @@ impl Config {
             match self.settings.hud_position {
                 HudPosition::Bottom => spacing.bottom += HUD_STAY_RESERVE,
                 HudPosition::Top => spacing.top += HUD_STAY_RESERVE,
+                HudPosition::Left => spacing.left += HUD_STAY_RESERVE,
+                HudPosition::Right => spacing.right += HUD_STAY_RESERVE,
             }
         }
         spacing
@@ -1199,6 +1216,10 @@ monitor = "main"
         assert_eq!((kept.bottom, kept.top), (8 + HUD_STAY_RESERVE, 4));
         let top = spacing("hud_stay = true\nhud_position = \"top\"\n");
         assert_eq!((top.bottom, top.top), (8, 4 + HUD_STAY_RESERVE));
+        let left = spacing("hud_stay = true\nhud_position = \"left\"\n");
+        assert_eq!((left.left, left.bottom), (HUD_STAY_RESERVE, 8));
+        let right = spacing("hud_stay = true\nhud_position = \"right\"\n");
+        assert_eq!((right.right, right.left), (HUD_STAY_RESERVE, 0));
         // With the HUD off, nothing is kept.
         let off = spacing("hud_stay = true\nhud = false\n");
         assert_eq!((off.bottom, off.top), (8, 4));
@@ -1222,7 +1243,12 @@ monitor = "main"
                 .hud_position(),
             HudPosition::Bottom
         );
-        for position in [HudPosition::Bottom, HudPosition::Top] {
+        for position in [
+            HudPosition::Bottom,
+            HudPosition::Top,
+            HudPosition::Left,
+            HudPosition::Right,
+        ] {
             let source = format!(
                 "version = 1\n[settings]\nhud_position = {:?}\n",
                 position.as_str()
