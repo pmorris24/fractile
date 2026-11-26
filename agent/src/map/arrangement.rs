@@ -1,7 +1,6 @@
 //! The screens as they sit on the desk, as System Settings › Displays › Arrange draws them: each
 //! connected display at its real size and position, scaled to fit one panel, holding a card per
-//! workspace that shows on it: a small screen with its open windows, the apps whose new windows
-//! open there, and Add. Main wears the menu bar. A workspace card drags to another screen to
+//! workspace that shows on it: its number, Add, and the apps whose new windows open there. Main wears the menu bar. A workspace card drags to another screen to
 //! move the workspace there, and an app drags onto any workspace card. It is the pane's one
 //! view of the workspaces; the sections below it list only those on an unplugged display.
 
@@ -36,15 +35,13 @@ const CARD_MAX_W: f32 = 240.0;
 const CARD_MAX_H: f32 = 170.0;
 const CARD_ASPECT: f32 = 1.45;
 const CARD_GAP: f32 = 6.0;
-/// The smallest card a screen grows taller to fit: room for the number, a line of apps, and a
-/// preview of the open windows.
+/// The smallest card a screen grows taller to fit: room for the number and two rows of apps.
 const CARD_MIN_W: f32 = 60.0;
-const CARD_MIN_H: f32 = 90.0;
-/// Inside a card: the top line (its number's menu and Add), the line of app icons under it, and
-/// the open windows under those.
+const CARD_MIN_H: f32 = 76.0;
+/// Inside a card: the top line (its number's menu and Add), and the rows of app icons under it.
 const CARD_PAD: f32 = 5.0;
 const CARD_HEAD: f32 = 26.0;
-pub(super) const RULE_ICON: f32 = 16.0;
+pub(super) const RULE_ICON: f32 = 20.0;
 const RULE_GAP: f32 = 4.0;
 
 /// A box: x, y, width, height, from the panel's top-left.
@@ -74,12 +71,14 @@ pub(super) struct Panel {
 
 impl Panel {
     /// The panel for the connected `displays`, `width` wide, each holding the workspaces its
-    /// section in the pane lists.
+    /// section in the pane lists. `apps` says how many apps open on a workspace: a screen
+    /// grows until its cards show every one.
     pub fn new(
         sections: &[Section],
         choices: &[Choice],
         displays: &[ConnectedDisplay],
         width: f32,
+        apps: impl Fn(WorkspaceId) -> usize,
     ) -> Panel {
         if displays.is_empty() {
             return Panel::default();
@@ -93,22 +92,30 @@ impl Panel {
                 Some((section, choice, display))
             })
             .collect();
-        let screens: Vec<(Rect, f32, usize)> = found
+        let card_hs: Vec<f32> = found
             .iter()
-            .map(|(section, _, display)| {
-                (
-                    display.frame,
-                    head(display.is_main),
-                    section.workspaces.len(),
-                )
+            .map(|(section, _, _)| {
+                let most = section.workspaces.iter().map(|ws| apps(*ws)).max();
+                card_min_h(most.unwrap_or(0))
+            })
+            .collect();
+        let screens: Vec<Fit> = found
+            .iter()
+            .zip(&card_hs)
+            .map(|((section, _, display), card_h)| Fit {
+                frame: display.frame,
+                head: head(display.is_main),
+                count: section.workspaces.len(),
+                card_h: *card_h,
             })
             .collect();
         let (height, boxes) = fit(&screens, width);
         let monitors = found
             .into_iter()
             .zip(boxes)
-            .map(|((section, choice, display), frame)| {
-                let cards = cards(frame, head(display.is_main), &section.workspaces);
+            .zip(card_hs)
+            .map(|(((section, choice, display), frame), card_h)| {
+                let cards = cards(frame, head(display.is_main), &section.workspaces, card_h);
                 Monitor {
                     key: section.key.clone(),
                     title: section.title.clone(),
@@ -184,20 +191,35 @@ fn head(is_main: bool) -> f32 {
     (if is_main { MENU_BAR } else { 0.0 }) + INSET + NAME_H
 }
 
+/// What sizing a screen needs: its frame, the space over its cards, how many it holds, and how
+/// tall each must be.
+struct Fit {
+    frame: Rect,
+    head: f32,
+    count: usize,
+    card_h: f32,
+}
+
+/// The smallest card that shows `apps` icons in rows under its number, at [`CARD_MIN_W`].
+fn card_min_h(apps: usize) -> f32 {
+    let rows = apps.div_ceil(per_row(CARD_MIN_W)).max(2) as f32;
+    (CARD_HEAD + rows * (RULE_ICON + RULE_GAP) - RULE_GAP + CARD_PAD).max(CARD_MIN_H)
+}
+
 /// The height a screen `width` wide needs under its `head` for `count` cards of at least
-/// [`CARD_MIN_W`] × [`CARD_MIN_H`].
-fn needed_h(width: f32, head: f32, count: usize) -> f32 {
+/// [`CARD_MIN_W`] × `card_h`.
+fn needed_h(width: f32, head: f32, count: usize, card_h: f32) -> f32 {
     let cols =
         (((width - 2.0 * INSET + CARD_GAP) / (CARD_MIN_W + CARD_GAP)).floor() as usize).max(1);
     let rows = count.max(1).div_ceil(cols) as f32;
-    head + rows * CARD_MIN_H + (rows - 1.0) * CARD_GAP + INSET
+    head + rows * card_h + (rows - 1.0) * CARD_GAP + INSET
 }
 
 /// The panel's height and each screen's box in it. Every screen keeps its true width and
 /// place at one scale, so their sizes and the way they sit compare; a screen too short for its
 /// workspaces' cards grows taller, and pushes down any screen under it.
-fn fit(screens: &[(Rect, f32, usize)], width: f32) -> (f32, Vec<Frame>) {
-    let Some((first, _, _)) = screens.first() else {
+fn fit(screens: &[Fit], width: f32) -> (f32, Vec<Frame>) {
+    let Some(Fit { frame: first, .. }) = screens.first() else {
         return (0.0, Vec::new());
     };
     let (mut left, mut top, mut right, mut bottom) = (
@@ -206,7 +228,7 @@ fn fit(screens: &[(Rect, f32, usize)], width: f32) -> (f32, Vec<Frame>) {
         first.x + first.width,
         first.y + first.height,
     );
-    for (f, _, _) in screens {
+    for Fit { frame: f, .. } in screens {
         left = left.min(f.x);
         top = top.min(f.y);
         right = right.max(f.x + f.width);
@@ -217,9 +239,15 @@ fn fit(screens: &[(Rect, f32, usize)], width: f32) -> (f32, Vec<Frame>) {
     let ox = (width - span_w * scale) / 2.0;
     let mut boxes: Vec<Frame> = screens
         .iter()
-        .map(|(f, head, count)| {
+        .map(|screen| {
+            let f = screen.frame;
             let w = f.width as f32 * scale - SEAM;
-            let h = (f.height as f32 * scale - SEAM).max(needed_h(w, *head, *count));
+            let h = (f.height as f32 * scale - SEAM).max(needed_h(
+                w,
+                screen.head,
+                screen.count,
+                screen.card_h,
+            ));
             (
                 ox + (f.x - left) as f32 * scale + SEAM / 2.0,
                 PAD + (f.y - top) as f32 * scale + SEAM / 2.0,
@@ -253,7 +281,12 @@ fn fit(screens: &[(Rect, f32, usize)], width: f32) -> (f32, Vec<Frame>) {
 
 /// Every workspace's card in a screen's box under its name: the grid of columns that gives the
 /// largest cards in a screen's shape, centred.
-fn cards(screen: Frame, top: f32, workspaces: &[WorkspaceId]) -> Vec<(WorkspaceId, Frame)> {
+fn cards(
+    screen: Frame,
+    top: f32,
+    workspaces: &[WorkspaceId],
+    card_h: f32,
+) -> Vec<(WorkspaceId, Frame)> {
     let (sx, sy, sw, sh) = screen;
     let (avail_w, avail_h) = (sw - 2.0 * INSET, sh - top - INSET);
     let n = workspaces.len().max(1);
@@ -261,8 +294,8 @@ fn cards(screen: Frame, top: f32, workspaces: &[WorkspaceId]) -> Vec<(WorkspaceI
         let rows = n.div_ceil(cols) as f32;
         let w = ((avail_w - (cols - 1) as f32 * CARD_GAP) / cols as f32).min(CARD_MAX_W);
         let h = ((avail_h - (rows - 1.0) * CARD_GAP) / rows).min(CARD_MAX_H);
-        // Never much wider than a screen's shape, nor taller than half again its width.
-        (w.min(h * CARD_ASPECT * 1.4), h.min(w * 1.5))
+        // Never much wider than a screen's shape; as tall as its rows of apps need.
+        (w.min(h * CARD_ASPECT * 1.4), h)
     };
     // The largest cards among the grids whose cards all keep the minimum size, which a screen
     // grown by `needed_h` always has; failing that, the largest cards at all.
@@ -270,7 +303,7 @@ fn cards(screen: Frame, top: f32, workspaces: &[WorkspaceId]) -> Vec<(WorkspaceI
         (1..=n)
             .filter(|cols| {
                 let (w, h) = size(*cols);
-                !fits || (w >= CARD_MIN_W - 0.5 && h >= CARD_MIN_H - 0.5)
+                !fits || (w >= CARD_MIN_W - 0.5 && h >= card_h - 0.5)
             })
             .max_by(|a, b| {
                 let (aw, ah) = size(*a);
@@ -298,23 +331,26 @@ fn cards(screen: Frame, top: f32, workspaces: &[WorkspaceId]) -> Vec<(WorkspaceI
         .collect()
 }
 
-/// How many app icons fit on the line of a card `width` wide.
-pub(super) fn rule_room(width: f32) -> usize {
+/// How many app icons a card of `size` holds: rows of them under its number.
+pub(super) fn rule_room((w, h): (f32, f32)) -> usize {
+    let per_row = per_row(w);
+    let rows =
+        (((h - CARD_HEAD - CARD_PAD + RULE_GAP) / (RULE_ICON + RULE_GAP)).floor() as usize).max(1);
+    per_row * rows
+}
+
+fn per_row(width: f32) -> usize {
     (((width - 2.0 * CARD_PAD + RULE_GAP) / (RULE_ICON + RULE_GAP)).floor() as usize).max(1)
 }
 
-/// The `slot`th app icon, from the card's top-left.
-pub(super) fn rule_offset(slot: usize) -> (f32, f32) {
-    (CARD_PAD + slot as f32 * (RULE_ICON + RULE_GAP), CARD_HEAD)
-}
-
-/// Where a card's open windows start: under its app icons, if it has any.
-pub(super) fn preview_top(has_rules: bool) -> f32 {
-    if has_rules {
-        CARD_HEAD + RULE_ICON + CARD_PAD
-    } else {
-        CARD_HEAD
-    }
+/// The `slot`th app icon in a card `width` wide, from the card's top-left.
+pub(super) fn rule_offset(slot: usize, width: f32) -> (f32, f32) {
+    let per_row = per_row(width);
+    let (col, row) = (slot % per_row, slot / per_row);
+    (
+        CARD_PAD + col as f32 * (RULE_ICON + RULE_GAP),
+        CARD_HEAD + row as f32 * (RULE_ICON + RULE_GAP),
+    )
 }
 
 /// Three screens of different sizes at different heights: a laptop low on the left, Main in
@@ -340,6 +376,15 @@ pub(super) fn fixture_desk() -> Vec<ConnectedDisplay> {
 mod tests {
     use super::*;
 
+    fn fit_of(frame: Rect, is_main: bool, count: usize, apps: usize) -> Fit {
+        Fit {
+            frame,
+            head: head(is_main),
+            count,
+            card_h: card_min_h(apps),
+        }
+    }
+
     fn rect(x: i32, y: i32, width: i32, height: i32) -> Rect {
         Rect {
             x,
@@ -358,8 +403,7 @@ mod tests {
             rect(-1728, 400, 1728, 1117),
         ];
         let width = 600.0;
-        let screens: Vec<(Rect, f32, usize)> =
-            frames.iter().map(|f| (*f, head(false), 1)).collect();
+        let screens: Vec<Fit> = frames.iter().map(|f| fit_of(*f, false, 1, 0)).collect();
         let (height, boxes) = fit(&screens, width);
         assert!(height >= MIN_H);
         let (main, right, left) = (boxes[0], boxes[1], boxes[2]);
@@ -377,12 +421,12 @@ mod tests {
     fn a_screen_grows_to_fit_its_cards_and_pushes_down_the_one_under_it() {
         // A laptop under a wide monitor, holding seven workspaces.
         let screens = [
-            (rect(0, 0, 3440, 1440), head(true), 7),
-            (rect(800, 1440, 1728, 1117), head(false), 3),
+            fit_of(rect(0, 0, 3440, 1440), true, 7, 0),
+            fit_of(rect(800, 1440, 1728, 1117), false, 3, 0),
         ];
         let (height, boxes) = fit(&screens, 600.0);
         let (top, under) = (boxes[0], boxes[1]);
-        assert!(top.3 >= needed_h(top.2, head(true), 7) - 0.01);
+        assert!(top.3 >= needed_h(top.2, head(true), 7, CARD_MIN_H) - 0.01);
         assert!(under.1 >= top.1 + top.3, "no overlap");
         assert!(height >= under.1 + under.3 + PAD_BOTTOM - 0.01);
         // Each card in the grown screen is at least the minimum.
@@ -390,6 +434,7 @@ mod tests {
             top,
             head(true),
             &WorkspaceId::numbered().take(7).collect::<Vec<_>>(),
+            CARD_MIN_H,
         );
         for (_, (_, _, w, h)) in cards {
             assert!(w >= CARD_MIN_W - 0.01 && h >= CARD_MIN_H - 0.01, "{w}x{h}");
@@ -405,7 +450,7 @@ mod tests {
             ((10.0, 10.0, 180.0, 115.0), 2),
             ((10.0, 10.0, 340.0, 190.0), 7),
         ] {
-            let cards = cards(screen, INSET + NAME_H, &all[..count]);
+            let cards = cards(screen, INSET + NAME_H, &all[..count], CARD_MIN_H);
             assert_eq!(cards.len(), count);
             for (i, (_, (x, y, w, h))) in cards.iter().enumerate() {
                 assert!(
@@ -422,8 +467,28 @@ mod tests {
             }
         }
         // Where the screen has room, every card keeps the minimum size.
-        for (_, (_, _, w, h)) in cards((0.0, 0.0, 340.0, 190.0), INSET + NAME_H, &all[..4]) {
+        for (_, (_, _, w, h)) in cards(
+            (0.0, 0.0, 340.0, 190.0),
+            INSET + NAME_H,
+            &all[..4],
+            CARD_MIN_H,
+        ) {
             assert!(w >= CARD_MIN_W - 0.5 && h >= CARD_MIN_H - 0.5, "{w}x{h}");
+        }
+    }
+
+    #[test]
+    fn a_workspace_with_many_apps_gets_a_card_that_shows_every_one() {
+        let all: Vec<WorkspaceId> = WorkspaceId::numbered().collect();
+        let apps = 9;
+        let screens = [fit_of(rect(0, 0, 2560, 1440), true, 4, apps)];
+        let (_, boxes) = fit(&screens, 600.0);
+        for (_, (_, _, w, h)) in cards(boxes[0], head(true), &all[..4], card_min_h(apps)) {
+            assert!(
+                rule_room((w, h)) >= apps,
+                "{w}x{h} holds {}",
+                rule_room((w, h))
+            );
         }
     }
 }

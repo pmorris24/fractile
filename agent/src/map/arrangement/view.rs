@@ -1,18 +1,17 @@
-//! Drawing the arrangement panel, and dragging a workspace card to another screen. A card is a
-//! small screen: its number, the apps whose new windows open there, Add, and under them the
-//! windows open on it now. Its apps drag with the map's own app drag (`crate::map::drag`) and
+//! Drawing the arrangement panel, and dragging a workspace card to another screen. A card holds
+//! its number, Add, and the apps whose new windows open there. Its apps drag with the map's own app drag (`crate::map::drag`) and
 //! take the same right-click menu, so they drop on any workspace card or on the float box.
 
 use rune::{Cursor, El, Tx, el, text};
 use spaceman::WorkspaceId;
 
 use super::{
-    CARD_PAD, Frame, INSET, MENU_BAR, Monitor, NAME_H, PAD_BOTTOM, Panel, RULE_ICON, preview_top,
-    rule_offset, rule_room,
+    CARD_PAD, Frame, INSET, MENU_BAR, Monitor, NAME_H, PAD_BOTTOM, Panel, RULE_ICON, rule_offset,
+    rule_room,
 };
 use crate::{
     Ui,
-    map::{HEAD_GAP, HEAD_H, MapView, SLOP, live},
+    map::{HEAD_GAP, HEAD_H, MapView, SLOP},
     panes::workspaces as screens,
     rules::Place,
 };
@@ -226,7 +225,7 @@ impl MapView<'_> {
             (self.p.hair, c.border_weak)
         };
         let panel = self.layout.grid.panel.clone();
-        let mut card = self
+        let card = self
             .card_face((w, h))
             .key(format!("card-{workspace}"))
             .role("group")
@@ -258,38 +257,24 @@ impl MapView<'_> {
                 self.add_button(Place::Workspace(workspace), layer)
                     .absolute(w - 24.0, 2.0),
             );
-        card = self.card_apps(card, workspace, w, Some(layer));
-        self.card_preview(card, workspace, (w, h))
+        self.card_apps(card, workspace, (w, h), Some(layer))
     }
 
-    /// The windows open on `workspace` now, filling the card under its apps.
-    fn card_preview(self, card: El, workspace: WorkspaceId, (w, h): (f32, f32)) -> El {
-        let Some(entry) = live::windows(self.ui, workspace) else {
-            return card;
-        };
-        let top = preview_top(!self.layout.rules_for(workspace).is_empty());
-        let size = (w - 2.0 * CARD_PAD, h - top - CARD_PAD);
-        if size.0 < RULE_ICON || size.1 < RULE_ICON {
-            return card;
-        }
-        card.child(live::preview(self.ui, self.p, entry, size).absolute(CARD_PAD, top))
-    }
-
-    /// The apps whose new windows open on `workspace`, along the top of a card `width` wide.
-    /// With the menu `layer` they drag and take their menu; without it (the card following
-    /// the pointer) they are only drawn.
+    /// The apps whose new windows open on `workspace`, in rows filling the card under its
+    /// number, with a count of the rest when they outgrow it. With the menu `layer` they drag
+    /// and take their menu; without it (the card following the pointer) they are only drawn.
     fn card_apps(
         self,
         mut card: El,
         workspace: WorkspaceId,
-        width: f32,
+        size: (f32, f32),
         mut layer: Option<&mut Vec<El>>,
     ) -> El {
         let c = &self.p.k.c;
         let rules = self.layout.rules_for(workspace);
-        let room = rule_room(width);
+        let room = rule_room(size);
         for (slot, rule) in rules.iter().enumerate() {
-            let at = rule_offset(slot);
+            let at = rule_offset(slot, size.0);
             if rules.len() > room && slot == room - 1 {
                 card = card.child(
                     el().key("more")
@@ -347,8 +332,7 @@ impl MapView<'_> {
                     .absolute(CARD_PAD + 2.0, 4.0),
             )
             .absolute(drag.origin.0 + drag.delta.0, drag.origin.1 + drag.delta.1);
-        ghost = self.card_apps(ghost, drag.workspace, drag.size.0, None);
-        ghost = self.card_preview(ghost, drag.workspace, drag.size);
+        ghost = self.card_apps(ghost, drag.workspace, drag.size, None);
         for shadow in &self.p.k.elevation.floating {
             ghost = ghost.box_shadow(*shadow);
         }

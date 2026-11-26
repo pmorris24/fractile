@@ -178,7 +178,12 @@ impl Layout {
             &choices,
             doc.workspaces_with_referenced(WorkspaceId::numbered()),
         );
-        let panel = arrangement::Panel::new(&sections, &choices, displays, width);
+        let panel = arrangement::Panel::new(&sections, &choices, displays, width, |ws| {
+            rules
+                .iter()
+                .filter(|rule| rule.place == Place::Workspace(ws))
+                .count()
+        });
         let workspaces: Vec<WorkspaceId> = sections
             .iter()
             .flat_map(|section| section.workspaces.iter().copied())
@@ -261,9 +266,9 @@ impl Layout {
                 let (dx, dy) = Self::icon_offset(slot);
                 return Some(((x + dx, y + dy), (ICON, ICON)));
             }
-            let (x, y, w, _) = self.grid.panel.card(workspace)?;
-            (slot < arrangement::rule_room(w)).then(|| {
-                let (dx, dy) = arrangement::rule_offset(slot);
+            let (x, y, w, h) = self.grid.panel.card(workspace)?;
+            (slot < arrangement::rule_room((w, h))).then(|| {
+                let (dx, dy) = arrangement::rule_offset(slot, w);
                 (
                     (x + dx, y + dy + arrangement::TOP),
                     (arrangement::RULE_ICON, arrangement::RULE_ICON),
