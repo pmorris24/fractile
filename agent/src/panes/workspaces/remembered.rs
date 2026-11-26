@@ -6,10 +6,12 @@
 //! and each workspace on the screen it returns to. Any other set, more displays or different
 //! ones, replaces it.
 //!
-//! Before Settings has seen a desk, the record starts from the one macOS remembers: the window
+//! When the record has no unplugged screen to show (Settings never saw the desk, or saw only
+//! the laptop), it takes the desk macOS remembers around the connected displays: the window
 //! server keeps every set of displays it has arranged, with each screen's place, in a
-//! preferences file of its own. That file is private and undocumented, so reading it is only a
-//! head start: when it moves or changes shape the record starts empty, as it did before.
+//! preferences file of its own. That file is private and undocumented, so it is only a fallback:
+//! when it moves or changes shape the record is Spaceman's own alone. A forgotten display stays
+//! out of both until it is plugged in again.
 
 use std::path::PathBuf;
 
@@ -21,6 +23,59 @@ use super::{ConnectedDisplay, displays};
 
 /// The file next to `config.toml` that holds the record, one display per line.
 const FILE: &str = "known-displays.txt";
+/// The first field of a line naming a forgotten display.
+const FORGOTTEN: &str = "forgotten";
+
+/// The known arrangement, and the displays forgotten from it, which the desk macOS remembers
+/// must not bring back.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub(crate) struct Record {
+    pub(crate) displays: Vec<ConnectedDisplay>,
+    pub(crate) forgotten: Vec<String>,
+}
+
+impl Record {
+    /// Takes in a read of the `connected` displays. When the record has no unplugged display
+    /// to show, and `look` says the displays just changed, it asks `macos` (given the forgotten
+    /// IDs) for the desk macOS remembers around them. Returns whether the record changed.
+    pub(crate) fn update(
+        &mut self,
+        connected: &[ConnectedDisplay],
+        look: bool,
+        macos: impl FnOnce(&[ConnectedDisplay], &[String]) -> Option<Vec<ConnectedDisplay>>,
+    ) -> bool {
+        // A forgotten display plugged in again is part of the desk again.
+        let before = self.forgotten.len();
+        self.forgotten
+            .retain(|id| !connected.iter().any(|display| display.id == *id));
+        let mut changed = self.forgotten.len() != before;
+        changed |= note(&mut self.displays, connected);
+        if look
+            && away(&self.displays, connected).is_empty()
+            && let Some(desk) = macos(connected, &self.forgotten)
+        {
+            self.displays = desk;
+            changed = true;
+        }
+        changed
+    }
+
+    /// Forgets the unplugged display `id`, so neither the record nor macOS's shows it again
+    /// until it is plugged in. Returns whether it was in the record.
+    pub(crate) fn forget(&mut self, id: &str) -> bool {
+        let before = self.displays.len();
+        self.displays.retain(|display| display.id != id);
+        if !self.forgotten.iter().any(|other| other == id) {
+            self.forgotten.push(id.to_owned());
+        }
+        self.displays.len() != before
+    }
+}
+
+/// The displays `known` holds, or none before it is read.
+pub(crate) fn displays(known: Option<&Record>) -> &[ConnectedDisplay] {
+    known.map_or(&[], |record| record.displays.as_slice())
+}
 
 /// Records `connected` as the arrangement unless it is part of the one `known` holds. Returns
 /// whether the record changed.
@@ -58,11 +113,22 @@ pub(crate) fn away(known: &[ConnectedDisplay], connected: &[ConnectedDisplay]) -
 /// Where the window server keeps the display sets it has arranged.
 const MACOS_FILE: &str = "/Library/Preferences/com.apple.windowserver.displays.plist";
 
-/// The desk macOS remembers around the `connected` displays: the first set it lists (it keeps
+/// The desk macOS remembers around the `connected` displays, less the `forgotten` ones: the first set it lists (it keeps
 /// the latest first) holding every connected display and more besides. Names come from the
 /// connected displays; macOS keeps none for the others.
-pub(crate) fn from_macos(connected: &[ConnectedDisplay]) -> Option<Vec<ConnectedDisplay>> {
-    pick(&display_sets(&read_macos()?), connected)
+pub(crate) fn from_macos(
+    connected: &[ConnectedDisplay],
+    forgotten: &[String],
+) -> Option<Vec<ConnectedDisplay>> {
+    let sets: Vec<Vec<(String, Rect)>> = display_sets(&read_macos()?)
+        .into_iter()
+        .map(|set| {
+            set.into_iter()
+                .filter(|(id, _)| !forgotten.contains(id))
+                .collect()
+        })
+        .collect();
+    pick(&sets, connected)
 }
 
 #[cfg(target_os = "macos")]
@@ -161,19 +227,12 @@ fn pick(
     Some(displays::connected(&outputs))
 }
 
-/// Forgets the unplugged display `id`. Returns whether it was in the record.
-pub(crate) fn forget(known: &mut Vec<ConnectedDisplay>, id: &str) -> bool {
-    let before = known.len();
-    known.retain(|display| display.id != id);
-    known.len() != before
-}
-
 fn path() -> Option<PathBuf> {
     spaceman::config::application_support_path(FILE)
 }
 
 /// The record saved on disk, or none when there is no file or it does not read.
-pub(crate) fn load() -> Vec<ConnectedDisplay> {
+pub(crate) fn load() -> Record {
     path()
         .and_then(|path| std::fs::read_to_string(path).ok())
         .map(|text| parse(&text))
@@ -181,7 +240,7 @@ pub(crate) fn load() -> Vec<ConnectedDisplay> {
 }
 
 /// Saves the record; a failure leaves the old one, which only costs a stale picture.
-pub(crate) fn save(known: &[ConnectedDisplay]) {
+pub(crate) fn save(known: &Record) {
     let Some(path) = path() else {
         return;
     };
@@ -195,9 +254,14 @@ pub(crate) fn save(known: &[ConnectedDisplay]) {
 }
 
 /// One line a display: id, selector, x, y, width, height, main, secondary, name; tab-separated,
-/// the name last so it may hold anything but a newline.
-fn write(known: &[ConnectedDisplay]) -> String {
+/// the name last so it may hold anything but a newline. Then a `forgotten` line per forgotten ID.
+fn write(known: &Record) -> String {
+    let forgotten = known
+        .forgotten
+        .iter()
+        .map(|id| format!("{FORGOTTEN}\t{}\n", id.replace(['\t', '\n'], " ")));
     known
+        .displays
         .iter()
         .map(|display| {
             let f = display.frame;
@@ -214,11 +278,20 @@ fn write(known: &[ConnectedDisplay]) -> String {
                 display.name.replace(['\t', '\n'], " "),
             )
         })
+        .chain(forgotten)
         .collect()
 }
 
-fn parse(text: &str) -> Vec<ConnectedDisplay> {
-    text.lines()
+fn parse(text: &str) -> Record {
+    let forgotten = text
+        .lines()
+        .filter_map(|line| line.strip_prefix(FORGOTTEN)?.strip_prefix('\t'))
+        .filter(|id| !id.is_empty())
+        .map(str::to_owned)
+        .collect();
+    let displays = text
+        .lines()
+        .filter(|line| !line.starts_with(FORGOTTEN))
         .filter_map(|line| {
             let mut field = line.splitn(9, '\t');
             let id = field.next()?.to_owned();
@@ -242,7 +315,11 @@ fn parse(text: &str) -> Vec<ConnectedDisplay> {
                 is_secondary,
             })
         })
-        .collect()
+        .collect();
+    Record {
+        displays,
+        forgotten,
+    }
 }
 
 #[cfg(test)]
@@ -337,17 +414,61 @@ mod tests {
 
     #[test]
     fn the_record_reads_back_what_it_wrote_and_forgets_on_request() {
-        let mut known = vec![
-            display("studio", 0, 0, true),
-            display("side", 1000, -200, false),
-        ];
-        known[1].name = "LG\tUltraFine".into();
+        let mut known = Record {
+            displays: vec![
+                display("studio", 0, 0, true),
+                display("side", 1000, -200, false),
+            ],
+            forgotten: Vec::new(),
+        };
+        known.displays[1].name = "LG\tUltraFine".into();
+        assert!(known.forget("side"));
+        assert!(!known.forget("side"));
+        assert_eq!(known.displays.len(), 1);
+        assert_eq!(known.forgotten, vec!["side".to_owned()]);
         let back = parse(&write(&known));
-        assert_eq!(back[0], known[0]);
-        assert_eq!(back[1].name, "LG UltraFine");
-        assert!(parse("garbage\n\n").is_empty());
-        assert!(forget(&mut known, "side"));
-        assert!(!forget(&mut known, "side"));
-        assert_eq!(known.len(), 1);
+        assert_eq!(back, known);
+        let mut named = known.clone();
+        named.displays.push(display("x", 0, 0, false));
+        named.displays[1].name = "LG\tUltraFine".into();
+        assert_eq!(parse(&write(&named)).displays[1].name, "LG UltraFine");
+        assert_eq!(parse("garbage\n\n"), Record::default());
+    }
+
+    #[test]
+    fn a_record_of_the_laptop_alone_takes_the_desk_macos_remembers_but_not_a_forgotten_screen() {
+        let laptop = display("laptop", 0, 0, true);
+        let desk = vec![
+            display("studio", 0, 0, true),
+            display("laptop", -1000, 300, false),
+        ];
+        // Settings saw only the laptop before it could ask macOS.
+        let mut known = Record {
+            displays: vec![laptop.clone()],
+            forgotten: Vec::new(),
+        };
+        let macos = |forgotten: &[String]| {
+            let desk: Vec<ConnectedDisplay> = desk
+                .iter()
+                .filter(|display| !forgotten.contains(&display.id))
+                .cloned()
+                .collect();
+            (desk.len() > 1).then_some(desk)
+        };
+        let one = std::slice::from_ref(&laptop);
+        assert!(known.update(one, true, |_, forgotten| macos(forgotten)));
+        assert_eq!(known.displays, desk);
+        assert_eq!(away(&known.displays, one), vec!["studio".to_owned()]);
+        // While a screen is away, macOS is not asked.
+        assert!(!known.update(one, true, |_, _| panic!("asked macOS")));
+        // Forgotten, the studio stays gone, even from macOS's desk.
+        assert!(known.forget("studio"));
+        known.update(one, true, |_, forgotten| macos(forgotten));
+        assert!(away(&known.displays, one).is_empty());
+        assert_eq!(known.displays, vec![laptop.clone()]);
+        // Plugged in again, it is remembered again.
+        assert!(known.update(&desk, true, |_, _| None));
+        assert!(known.forgotten.is_empty());
+        assert_eq!(known.displays, desk);
     }
 }

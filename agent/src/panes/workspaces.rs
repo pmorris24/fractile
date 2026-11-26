@@ -63,15 +63,11 @@ pub(crate) fn poll_displays(ui: &mut Ui, clock: f64) -> bool {
     let Some(connected) = read_displays() else {
         return false;
     };
+    let first = ui.known_displays.is_none();
     let known = ui.known_displays.get_or_insert_with(remembered::load);
-    let mut noted = false;
-    if known.is_empty()
-        && let Some(desk) = remembered::from_macos(&connected)
-    {
-        *known = desk;
-        noted = true;
-    }
-    noted |= remembered::note(known, &connected);
+    // macOS's file is read only when the displays change, not on every poll.
+    let look = first || connected != ui.displays;
+    let noted = known.update(&connected, look, remembered::from_macos);
     if noted {
         remembered::save(known);
     }

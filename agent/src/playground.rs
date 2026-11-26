@@ -112,7 +112,7 @@ pub(crate) fn reset_fixture(ui: &mut Ui, pane: Pane) {
             WorkspaceId::THREE,
             WorkspaceId::named('M').unwrap_or(WorkspaceId::SIX),
         ],
-        windows: map::live_fixture(),
+        windows: Vec::new(),
         last_error: None,
     });
     ui.look_up_apps();

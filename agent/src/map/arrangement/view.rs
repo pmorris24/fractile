@@ -104,8 +104,7 @@ pub(in crate::map) fn fixture_drag(ui: &Ui) -> Option<ScreenDrag> {
         &ui.doc,
         ui.card_w,
         &ui.displays,
-        ui.known_displays.as_deref().unwrap_or_default(),
-        &[],
+        screens::remembered::displays(ui.known_displays.as_ref()),
         &[],
     );
     let panel = &layout.grid.panel;
@@ -259,7 +258,7 @@ impl MapView<'_> {
             .on_press(move |ui: &mut Ui| {
                 let fixture = ui.fixture;
                 if let Some(known) = ui.known_displays.as_mut()
-                    && screens::remembered::forget(known, &id)
+                    && known.forget(&id)
                     && !fixture
                 {
                     screens::remembered::save(known);

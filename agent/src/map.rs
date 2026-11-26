@@ -12,7 +12,6 @@ mod arrangement;
 mod defaults;
 mod drag;
 mod filter;
-mod live;
 mod screen_menu;
 #[cfg(test)]
 mod tests;
@@ -25,7 +24,6 @@ pub use arrangement::ScreenDrag;
 pub use defaults::{fixture_default_floats, poll as poll_default_floats};
 pub use drag::Drag;
 pub use filter::{FilterDraft, sheet as filter_sheet};
-pub(crate) use live::fixture as live_fixture;
 
 use crate::{
     Menu, Pane, Ui,
@@ -40,10 +38,7 @@ use defaults::DefaultFloat;
 
 const COLS: usize = 5;
 const TILE_H: f32 = 100.0;
-/// A tile on a screen with open windows: taller, for their preview along its bottom.
-const LIVE_TILE_H: f32 = 160.0;
-const LIVE_TOP: f32 = 96.0;
-const LIVE_H: f32 = LIVE_TILE_H - LIVE_TOP - 10.0;
+/// Between tiles.
 const GAP: f32 = 8.0;
 /// A section label's line and the gap to what it names, as over a card.
 const HEAD_H: f32 = 16.0;
@@ -118,7 +113,10 @@ pub(crate) const SCENES: &[Scene] = &[
     // and workspaces, dimmed until they return.
     ("rules-arrangement-unplugged", |ui| {
         fixture(ui);
-        ui.known_displays = Some(arrangement::fixture_desk());
+        ui.known_displays = Some(crate::panes::workspaces::remembered::Record {
+            displays: arrangement::fixture_desk(),
+            forgotten: Vec::new(),
+        });
         ui.displays = arrangement::fixture_laptop_alone();
     }),
     // A workspace number's menu: the screens it can show on.
@@ -164,20 +162,18 @@ impl Layout {
     /// The map for a pane whose cards are `width` wide, with no display read and no built-in
     /// float running.
     fn new(doc: &Doc, width: f32) -> Layout {
-        Layout::with_running(doc, width, &[], &[], &[])
+        Layout::with_running(doc, width, &[], &[])
     }
 
     /// The map for the connected `displays`, with a chip for each of the `running` apps
-    /// Spaceman floats by default. A screen holding one of the `live` workspaces, those with
-    /// open windows, gets the taller tiles that preview them.
+    /// Spaceman floats by default.
     fn with_running(
         doc: &Doc,
         width: f32,
         displays: &[ConnectedDisplay],
-        live: &[WorkspaceId],
         running: &[String],
     ) -> Layout {
-        Layout::with_known(doc, width, displays, &[], live, running)
+        Layout::with_known(doc, width, displays, &[], running)
     }
 
     /// As `with_running`, with the `known` arrangement: screens in it that are unplugged keep
@@ -187,7 +183,6 @@ impl Layout {
         width: f32,
         displays: &[ConnectedDisplay],
         known: &[ConnectedDisplay],
-        live: &[WorkspaceId],
         running: &[String],
     ) -> Layout {
         let rules = doc.rules();
@@ -225,11 +220,7 @@ impl Layout {
         let screens: Vec<Screen> = below
             .into_iter()
             .map(|section| Screen {
-                tile_h: if section.workspaces.iter().any(|ws| live.contains(ws)) {
-                    LIVE_TILE_H
-                } else {
-                    TILE_H
-                },
+                tile_h: TILE_H,
                 key: section.key,
                 title: section.title,
                 caption: section.caption,
@@ -317,7 +308,7 @@ struct Screen {
     title: String,
     caption: String,
     len: usize,
-    /// Its tiles' height: taller when one of its workspaces has open windows to preview.
+    /// Its tiles' height.
     tile_h: f32,
 }
 
@@ -488,18 +479,11 @@ impl DropGrid {
 }
 
 pub fn pane(ui: &Ui, p: Paint, layer: &mut Vec<El>) -> El {
-    let live: Vec<WorkspaceId> = ui
-        .agent
-        .iter()
-        .flat_map(|agent| &agent.windows)
-        .map(|entry| entry.windows.workspace)
-        .collect();
     let layout = Layout::with_known(
         &ui.doc,
         ui.card_w,
         &ui.displays,
-        ui.known_displays.as_deref().unwrap_or_default(),
-        &live,
+        crate::panes::workspaces::remembered::displays(ui.known_displays.as_ref()),
         &ui.default_floats,
     );
     let width = layout.grid.width;
@@ -626,11 +610,6 @@ impl MapView<'_> {
                 self.add_button(Place::Workspace(workspace), layer)
                     .absolute(self.layout.grid.tile_w() - 30.0, 8.0),
             );
-        if let Some(entry) = live::windows(self.ui, workspace) {
-            let size = (self.layout.grid.tile_w() - 2.0 * TILE_PAD, LIVE_H);
-            tile = tile
-                .child(live::preview(self.ui, self.p, entry, size).absolute(TILE_PAD, LIVE_TOP));
-        }
         let overflow = rules.len() > ICONS_SHOWN;
         for (slot, rule) in rules.iter().enumerate() {
             let (x, y) = Layout::icon_offset(slot);

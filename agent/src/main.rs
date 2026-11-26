@@ -85,7 +85,7 @@ pub struct Ui {
     pub(crate) displays_at: Option<f64>,
     /// The last arrangement of displays seen, which Settings › Screens keeps drawing after some
     /// of them are unplugged; read from disk once, on the first display read.
-    pub(crate) known_displays: Option<Vec<panes::workspaces::ConnectedDisplay>>,
+    pub(crate) known_displays: Option<panes::workspaces::remembered::Record>,
     /// Lab slug requested by a `spaceman://labs/<slug>` deep link, preserved
     /// cleanly for Labs cards to highlight.
     pub highlight_lab: Option<String>,
