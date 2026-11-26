@@ -74,6 +74,10 @@ pub struct HudFlow {
     hovered: bool,
     /// A per-app context menu is tracking over the capsule: pauses auto-dismiss until it closes.
     menu_open: bool,
+    /// `settings.hud_stay`: the workspace capsule never leaves on its own.
+    stay: bool,
+    /// The last workspace row, for the capsule kept on screen to come back to after a toast.
+    last_row: Option<UiHudDisplay>,
     /// Empty workspaces visited during this HUD show, kept until hidden so rapid switches across
     /// empty workspaces don't wobble the capsule width underneath the moving marker.
     visited_empty: BTreeSet<WorkspaceId>,
@@ -98,6 +102,8 @@ impl HudFlow {
             drawn: Cell::new(false),
             hovered: false,
             menu_open: false,
+            stay: false,
+            last_row: None,
             visited_empty: BTreeSet::new(),
         }
     }
@@ -153,9 +159,28 @@ impl HudFlow {
         !matches!(self.stage, Stage::Hidden)
     }
 
+    /// Held up: hovered, its menu open, or a workspace capsule kept on screen.
     #[must_use]
     pub const fn is_held(&self) -> bool {
-        self.hovered || self.menu_open
+        self.hovered
+            || self.menu_open
+            || (self.stay && matches!(self.content, Some(HudContent::Workspaces(_))))
+    }
+
+    /// Keeps the workspace capsule on screen, or lets it leave on its own again.
+    pub fn set_stay(&mut self, stay: bool, now_ms: u64) {
+        self.stay = stay;
+        if !stay && let Stage::Shown { hide_at_ms } = &mut self.stage {
+            *hide_at_ms = (*hide_at_ms).max(now_ms.saturating_add(RESUME_HOLD_MS));
+        }
+    }
+
+    /// With the capsule kept on screen and gone (a toast took its place), the row to show again.
+    #[must_use]
+    pub fn resume_row(&self) -> Option<UiHudDisplay> {
+        (self.stay && self.enabled && self.stage == Stage::Hidden)
+            .then(|| self.last_row.clone())
+            .flatten()
     }
 
     /// Updates pointer hover over the capsule. Hovering while visible pauses auto-dismiss;
@@ -255,6 +280,7 @@ impl HudFlow {
         self.stage = Stage::Shown {
             hide_at_ms: now_ms.saturating_add(HOLD_MS),
         };
+        self.last_row = Some(row.clone());
         self.content = Some(HudContent::Workspaces(row));
         if hidden {
             HudTransition::Show
@@ -346,6 +372,7 @@ impl HudFlow {
 
     /// Gone at once: its display went away or another event left it out.
     pub fn dismiss(&mut self) {
+        self.last_row = None;
         self.stage = Stage::Hidden;
         self.hovered = false;
         self.menu_open = false;

@@ -618,3 +618,35 @@ fn transient_status_toast_shows_even_when_workspace_hud_is_off_and_holds_for_toa
     );
     assert_eq!(flow.toast_view(false).unwrap().toast, &resumed);
 }
+
+#[test]
+fn a_capsule_kept_on_screen_never_leaves_and_comes_back_after_a_toast() {
+    let mut flow = HudFlow::new(true);
+    flow.set_stay(true, 0);
+    assert_eq!(flow.trigger(row(1, None), 0), HudTransition::Show);
+    // Long past the hold, it is still up.
+    for now in [HOLD_MS, HOLD_MS * 10, 60_000] {
+        assert_eq!(flow.tick(now), HudTick::Idle, "{now}");
+        assert!(shown(&flow));
+    }
+    // A toast takes its place and leaves as toasts do; then the row is there to show again.
+    flow.trigger_toast(spaceman::app::UiHudToast::paused("Paused"), 60_000);
+    assert!(flow.resume_row().is_none(), "not while the toast is up");
+    let mut now = 60_000;
+    while flow.is_up() {
+        now += 50;
+        flow.tick(now);
+        assert!(now < 70_000, "the toast never left");
+    }
+    assert_eq!(flow.resume_row(), Some(row(1, None)));
+    // Let go, it leaves on its own again.
+    assert_eq!(flow.trigger(row(1, None), now), HudTransition::Show);
+    flow.set_stay(false, now);
+    assert!(flow.resume_row().is_none());
+    let mut later = now;
+    while flow.is_up() {
+        later += 50;
+        flow.tick(later);
+        assert!(later < now + 10_000, "it never left");
+    }
+}

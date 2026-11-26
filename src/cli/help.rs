@@ -164,6 +164,7 @@ pub(crate) fn config_help(executable: &str) -> String {
         "  hud             true | false      Show the Workspace HUD overlay (default: true)",
         "  hud_style       icons | layouts   Workspace HUD drawing style (default: icons)",
         "  hud_position    bottom | top      Workspace HUD screen edge (default: bottom)",
+        "  hud_stay        true | false      Keep the Workspace HUD on screen; windows tile clear of it (default: false)",
         "  layout          dwindle | columns How new windows split the layout (default: dwindle)",
         "  update_channel  stable | dev      In-app updater release channel (default: stable)",
         "  mouse_follows_focus  off | display | window  Move pointer on focus changes (default: off)",

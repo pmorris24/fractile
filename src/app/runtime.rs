@@ -66,6 +66,8 @@ pub(super) struct WorkspaceRuntime<B = MacWorkspaceBackend> {
     /// The pointer drag or resize being previewed, until mouse-up commits it.
     pub(super) gesture: Option<super::commands::GestureOverlay>,
     pub(super) exact_spacing_workspaces: HashSet<WorkspaceId>,
+    /// With the HUD kept on screen, the rows it last got, so a cycle sends it only changes.
+    pub(super) stay_hud: Option<Vec<super::UiHudDisplay>>,
     pub(super) persisted_workspace_state: crate::workspace::WorkspaceState,
     /// Title-free placements that survive application relaunches and reboots.
     pub(super) memory: MemoryState,
@@ -96,6 +98,8 @@ impl<B: WorkspaceBackend> WorkspaceRuntime<B> {
         if config.spacing() != self.config.spacing() {
             self.exact_spacing_workspaces.extend(WorkspaceId::all());
         }
+        // A HUD kept on screen (again) gets its rows on the next cycle.
+        self.stay_hud = None;
         // An edit that only renames the selector a display is known by (its
         // UUID instead of secondary) keeps that display's workspace in front.
         let known = self.displays.known_outputs().cloned();
@@ -367,6 +371,7 @@ impl<B: WorkspaceBackend> WorkspaceRuntime<B> {
             focus: super::focus::FocusTracker::with_fullscreen_restore(fullscreen_restore),
             gesture: None,
             exact_spacing_workspaces: WorkspaceId::all().filter(|_| has_spacing).collect(),
+            stay_hud: None,
             persisted_workspace_state,
             memory: MemoryState::default(),
             journal: JournalState::default(),

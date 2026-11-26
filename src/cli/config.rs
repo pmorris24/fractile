@@ -58,6 +58,7 @@ enum SettingKey {
     Hud,
     HudStyle,
     HudPosition,
+    HudStay,
     Layout,
     UpdateChannel,
     MouseFollowsFocus,
@@ -74,6 +75,7 @@ impl SettingKey {
             "hud" => Ok(Self::Hud),
             "hud_style" => Ok(Self::HudStyle),
             "hud_position" => Ok(Self::HudPosition),
+            "hud_stay" => Ok(Self::HudStay),
             "layout" => Ok(Self::Layout),
             "update_channel" => Ok(Self::UpdateChannel),
             "mouse_follows_focus" => Ok(Self::MouseFollowsFocus),
@@ -83,7 +85,7 @@ impl SettingKey {
             spacing::OUTER => Ok(Self::Outer),
             other => SpacingKey::parse(other).map(Self::Spacing).ok_or_else(|| {
                 format!(
-                    "unknown setting {raw:?}; valid keys: hud, hud_style, hud_position, layout, \
+                    "unknown setting {raw:?}; valid keys: hud, hud_style, hud_position, hud_stay, layout, \
                      update_channel, mouse_follows_focus, trackpad_swipe, menu_bar_icon, \
                      pause_on_builtin_display, gaps.inner, gaps.outer, gaps.top, gaps.bottom, \
                      gaps.left, gaps.right, single_window_max_width, single_window_max_height"
@@ -97,6 +99,7 @@ impl SettingKey {
             Self::Hud => "hud",
             Self::HudStyle => "hud_style",
             Self::HudPosition => "hud_position",
+            Self::HudStay => "hud_stay",
             Self::Layout => "layout",
             Self::UpdateChannel => "update_channel",
             Self::MouseFollowsFocus => "mouse_follows_focus",
@@ -155,6 +158,10 @@ impl SettingKey {
                 let icon = settings.effective_menu_bar_icon().as_str();
                 (icon.to_owned(), serde_json::Value::String(icon.to_owned()))
             }
+            Self::HudStay => {
+                let on = settings.effective_hud_stay();
+                (on.to_string(), serde_json::Value::Bool(on))
+            }
             Self::PauseOnBuiltinDisplay => {
                 let on = settings.effective_pause_on_builtin_display();
                 (on.to_string(), serde_json::Value::Bool(on))
@@ -176,6 +183,7 @@ impl SettingKey {
             Self::Hud => settings.hud.is_some(),
             Self::HudStyle => settings.hud_style.is_some(),
             Self::HudPosition => settings.hud_position.is_some(),
+            Self::HudStay => settings.hud_stay.is_some(),
             Self::Layout => settings.layout.is_some(),
             Self::UpdateChannel => settings.update_channel.is_some(),
             Self::MouseFollowsFocus => settings.mouse_follows_focus.is_some(),
@@ -193,6 +201,7 @@ impl SettingKey {
             Self::Hud => settings.hud = None,
             Self::HudStyle => settings.hud_style = None,
             Self::HudPosition => settings.hud_position = None,
+            Self::HudStay => settings.hud_stay = None,
             Self::Layout => settings.layout = None,
             Self::UpdateChannel => settings.update_channel = None,
             Self::MouseFollowsFocus => settings.mouse_follows_focus = None,
@@ -380,6 +389,7 @@ enum SettingValue {
     MouseFollowsFocus(MouseFollowsFocus),
     TrackpadSwipe(bool),
     MenuBarIcon(MenuBarIcon),
+    HudStay(bool),
     PauseOnBuiltinDisplay(bool),
     Outer(i64),
     Spacing(SpacingKey, i64),
@@ -445,6 +455,13 @@ impl SettingValue {
                         "invalid value for menu_bar_icon: expected 'full', 'compact', or 'off', got {raw_value:?}"
                     )
                 }),
+            SettingKey::HudStay => match raw_value {
+                "true" => Ok(Self::HudStay(true)),
+                "false" => Ok(Self::HudStay(false)),
+                _ => Err(format!(
+                    "invalid value for hud_stay: expected 'true' or 'false', got {raw_value:?}"
+                )),
+            },
             SettingKey::PauseOnBuiltinDisplay => match raw_value {
                 "true" => Ok(Self::PauseOnBuiltinDisplay(true)),
                 "false" => Ok(Self::PauseOnBuiltinDisplay(false)),
@@ -534,6 +551,13 @@ fn run_set(args: &[&str], path_override: Option<&Path>) -> Result<String, String
                 (
                     format!("set menu_bar_icon = {}", parsed.as_str()),
                     serde_json::Value::String(parsed.as_str().to_owned()),
+                )
+            }
+            SettingValue::HudStay(parsed) => {
+                doc.settings.hud_stay = Some(parsed);
+                (
+                    format!("set hud_stay = {parsed}"),
+                    serde_json::Value::Bool(parsed),
                 )
             }
             SettingValue::PauseOnBuiltinDisplay(parsed) => {

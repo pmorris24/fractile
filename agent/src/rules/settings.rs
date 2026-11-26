@@ -52,6 +52,20 @@ impl Doc {
             .unwrap_or_default()
     }
 
+    /// Whether the Workspace HUD stays on screen, from `settings.hud_stay` (defaults to off).
+    pub fn hud_stay(&self) -> bool {
+        self.doc
+            .get("settings")
+            .and_then(Item::as_table_like)
+            .and_then(|table| table.get("hud_stay"))
+            .and_then(Item::as_bool)
+            .unwrap_or(false)
+    }
+
+    pub fn set_hud_stay(&mut self, stay: bool) {
+        self.set_setting("hud_stay", stay.then(|| value(true)));
+    }
+
     pub fn set_hud_position(&mut self, position: HudPosition) {
         self.set_setting(
             "hud_position",

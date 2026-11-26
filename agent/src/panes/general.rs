@@ -384,6 +384,23 @@ pub fn hud_sheet(
         .build(p.k)
         .key("hud-position-picker"),
     );
+    let stay = ui.doc.hud_stay();
+    let stay_row = controls::toggle_row(
+        p,
+        "hud-stay",
+        "Keep on screen",
+        Some((
+            if stay {
+                "Always showing; windows tile clear of it"
+            } else {
+                "Shows when you switch, then fades"
+            }
+            .to_owned(),
+            p.muted(),
+        )),
+        stay,
+        move |ui| ui.set_hud_stay(!stay),
+    );
     let displays_row = controls::setting_row(
         p,
         "hud-displays",
@@ -403,7 +420,7 @@ pub fn hud_sheet(
         width,
         vec![
             miniature,
-            controls::card(p, "card", vec![position_row, displays_row]),
+            controls::card(p, "card", vec![stay_row, position_row, displays_row]),
         ],
         vec![
             controls::button(
@@ -489,6 +506,19 @@ mod tests {
         ui.open_hud_sheet();
         assert!(ui.sheet.is_none(), "no HUD, no sheet");
         let _ = pane(&ui, p);
+    }
+
+    #[test]
+    fn keep_on_screen_round_trips_and_omits_its_off_default() {
+        let mut ui = crate::playground::blank_fixture();
+        assert!(!ui.doc.hud_stay());
+        ui.set_hud_stay(true);
+        assert!(ui.doc.hud_stay());
+        let on = ui.doc.source();
+        assert!(on.contains("hud_stay = true"), "{on}");
+        assert!(spaceman::config::Config::parse(&on).unwrap().hud_stay());
+        ui.set_hud_stay(false);
+        assert!(!ui.doc.source().contains("hud_stay"));
     }
 
     #[test]

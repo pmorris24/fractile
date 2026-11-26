@@ -316,9 +316,36 @@ impl<B: WorkspaceBackend> WorkspaceRuntime<B> {
                 &outputs,
             ));
         }
+        self.keep_hud_current(&mut status, &visible, &outputs);
         status.close_recheck = close_recheck;
         status.missing_frontmost_window = missing_frontmost_window;
         self.settle_tab_detach(status, &outputs, cancelled)
+    }
+
+    /// With the HUD kept on screen, a cycle that changes what it shows (a window opened or
+    /// closed, a workspace switched by other means) sends it the new rows.
+    fn keep_hud_current(
+        &mut self,
+        status: &mut CycleStatus,
+        visible: &[super::runtime::ResolvedWorkspace],
+        outputs: &macos::DisplayOutputs,
+    ) {
+        if !self.config.hud_stay() {
+            self.stay_hud = None;
+            return;
+        }
+        if let Some(hud) = &status.hud {
+            self.stay_hud = Some(hud.displays.clone());
+            return;
+        }
+        let workspace = visible
+            .first()
+            .map_or(WorkspaceId::ONE, |resolved| resolved.workspace);
+        let hud = self.hud_for(workspace, super::UiHudKind::Workspace, None, outputs);
+        if self.stay_hud.as_ref() != Some(&hud.displays) {
+            self.stay_hud = Some(hud.displays.clone());
+            status.hud = Some(hud);
+        }
     }
 
     /// Bookkeeping shared by every path that moves a window between workspaces.

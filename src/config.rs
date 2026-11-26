@@ -20,11 +20,20 @@ use crate::{
     spacing::{Spacing, SpacingKey, check_outer},
 };
 
+/// The Workspace HUD capsule's height, in points.
+pub const HUD_PILL_HEIGHT: i32 = 44;
+/// With `settings.hud_stay`, the room between the capsule and the edge of the area windows
+/// tile in (above the Dock, below the menu bar), and between the capsule and the windows.
+pub const HUD_STAY_GAP: i32 = 8;
+/// The strip of each display a HUD that stays on screen keeps from the windows.
+pub const HUD_STAY_RESERVE: i32 = HUD_STAY_GAP + HUD_PILL_HEIGHT + HUD_STAY_GAP;
+
 #[derive(Clone, Copy, Debug)]
 struct AppSettings {
     hud: bool,
     hud_style: HudStyle,
     hud_position: HudPosition,
+    hud_stay: bool,
     layout: LayoutMode,
     update_channel: UpdateChannel,
     mouse_follows_focus: MouseFollowsFocus,
@@ -40,6 +49,7 @@ impl Default for AppSettings {
             hud: true,
             hud_style: HudStyle::default(),
             hud_position: HudPosition::default(),
+            hud_stay: false,
             layout: LayoutMode::default(),
             update_channel: UpdateChannel::default(),
             mouse_follows_focus: MouseFollowsFocus::default(),
@@ -268,6 +278,8 @@ struct RawSettings {
     #[serde(default)]
     hud_position: HudPosition,
     #[serde(default)]
+    hud_stay: bool,
+    #[serde(default)]
     layout: LayoutMode,
     #[serde(default)]
     update_channel: UpdateChannel,
@@ -295,6 +307,7 @@ impl Default for RawSettings {
             hud: true,
             hud_style: HudStyle::default(),
             hud_position: HudPosition::default(),
+            hud_stay: false,
             layout: LayoutMode::default(),
             update_channel: UpdateChannel::default(),
             mouse_follows_focus: MouseFollowsFocus::default(),
@@ -455,6 +468,7 @@ impl Config {
                 hud: raw.settings.hud,
                 hud_style: raw.settings.hud_style,
                 hud_position: raw.settings.hud_position,
+                hud_stay: raw.settings.hud_stay,
                 layout: raw.settings.layout,
                 update_channel: raw.settings.update_channel,
                 mouse_follows_focus: raw.settings.mouse_follows_focus,
@@ -496,6 +510,13 @@ impl Config {
     #[must_use]
     pub const fn hud_position(&self) -> HudPosition {
         self.settings.hud_position
+    }
+
+    /// `settings.hud_stay`: the Workspace HUD stays on screen and windows tile clear of it.
+    /// It counts only with the HUD on.
+    #[must_use]
+    pub const fn hud_stay(&self) -> bool {
+        self.settings.hud && self.settings.hud_stay
     }
 
     #[must_use]
@@ -570,6 +591,13 @@ impl Config {
         let mut spacing = self.settings.spacing;
         if !self.labs.single_window_height {
             spacing.single_window_max_height = 0;
+        }
+        // A HUD that stays on screen keeps its strip of every display to itself.
+        if self.hud_stay() {
+            match self.settings.hud_position {
+                HudPosition::Bottom => spacing.bottom += HUD_STAY_RESERVE,
+                HudPosition::Top => spacing.top += HUD_STAY_RESERVE,
+            }
         }
         spacing
     }
@@ -1156,6 +1184,29 @@ monitor = "main"
         assert!(Config::parse("version = 1\n[settings]\nhud_style = \"grid\"\n").is_err());
         assert!(Config::parse("version = 1\n[settings]\nhud_style = true\n").is_err());
         assert_eq!(HudStyle::parse("Icons"), None);
+    }
+
+    #[test]
+    fn a_hud_kept_on_screen_takes_its_strip_from_the_windows_only_while_it_shows() {
+        let base = "version = 1\n[settings.gaps]\nbottom = 8\ntop = 4\n[settings]\n";
+        let spacing = |extra: &str| {
+            Config::parse(&base.replace("[settings]\n", &format!("[settings]\n{extra}")))
+                .unwrap()
+                .spacing()
+        };
+        assert_eq!((spacing("").bottom, spacing("").top), (8, 4));
+        let kept = spacing("hud_stay = true\n");
+        assert_eq!((kept.bottom, kept.top), (8 + HUD_STAY_RESERVE, 4));
+        let top = spacing("hud_stay = true\nhud_position = \"top\"\n");
+        assert_eq!((top.bottom, top.top), (8, 4 + HUD_STAY_RESERVE));
+        // With the HUD off, nothing is kept.
+        let off = spacing("hud_stay = true\nhud = false\n");
+        assert_eq!((off.bottom, off.top), (8, 4));
+        assert!(
+            !Config::parse(&format!("{base}hud = false\nhud_stay = true\n"))
+                .unwrap()
+                .hud_stay()
+        );
     }
 
     #[test]

@@ -60,6 +60,8 @@ const REVEAL_FADE: Duration = Duration::from_millis(33);
 /// Room on every side of the capsule for its shadow, which the panel's edge would cut, and
 /// for ten or so workspaces before the row scrolls.
 const OVERLAY_SIZE: (f32, f32) = (860.0, pill::PILL_HEIGHT + 2.0 * pill::SHADOW_REACH);
+// The engine's reserved strip is sized for this capsule.
+const _: () = assert!(pill::PILL_HEIGHT == spaceman::config::HUD_PILL_HEIGHT as f32);
 /// Keeps the capsule 60 pt inside the display edge it sits on, above the bottom or below the top.
 pub const OVERLAY_MARGIN: f32 = pill::CAPSULE_INSET - pill::SHADOW_REACH;
 
@@ -84,6 +86,8 @@ pub(super) struct HudOverlay {
     style: HudStyle,
     /// Which edge of its display the capsule sits on.
     position: HudPosition,
+    /// `settings.hud_stay`: the capsule stays up, next to the strip windows leave it.
+    stay: bool,
     icons: Icons,
     names: HashMap<String, String>,
     sink: Arc<dyn HudSink>,
@@ -107,6 +111,7 @@ impl HudOverlay {
             flow: HudFlow::new(enabled),
             style,
             position,
+            stay: false,
             icons: Icons::new(),
             names: HashMap::new(),
             sink,
@@ -140,6 +145,24 @@ impl HudOverlay {
         } else if self.flow.is_up() && self.display.is_some() {
             tx.wake_after(Duration::from_millis(DISPLAY_CHECK_MS));
         }
+    }
+
+    /// Puts the panel on its edge: `OVERLAY_MARGIN` in, or, kept on screen, with the capsule
+    /// `HUD_STAY_GAP` from the area windows tile in (above the Dock, below the menu bar), in
+    /// the strip the engine keeps clear of them.
+    fn place(&self) {
+        let Some(handle) = &self.handle else {
+            return;
+        };
+        let margin = if self.stay {
+            let bar = self
+                .display
+                .map_or(0.0, |display| bar_inset(display, self.position));
+            bar + spaceman::config::HUD_STAY_GAP as f32 - pill::SHADOW_REACH
+        } else {
+            OVERLAY_MARGIN
+        };
+        handle.place(panel_edge(self.position), margin);
     }
 
     pub(super) fn set_hovered(&mut self, inside: bool, tx: &mut Tx) {
@@ -339,6 +362,7 @@ impl HudDriver {
                         handle.set_display(target);
                     }
                     overlay.display = display;
+                    overlay.place();
                 }
                 let now_ms = overlay.now_ms();
                 let handle = overlay.handle.clone();
@@ -440,10 +464,25 @@ impl HudDriver {
         self.each(move |overlay, _| {
             let changed = overlay.position != position;
             overlay.position = position;
-            if changed && let Some(handle) = &overlay.handle {
-                handle.set_edge(panel_edge(position));
+            if changed {
+                overlay.place();
             }
             changed
+        });
+    }
+
+    /// Keeps the capsule on screen (`settings.hud_stay`), or lets it leave on its own again.
+    pub fn set_stay(&self, stay: bool) {
+        self.each(move |overlay, tx| {
+            if overlay.stay == stay {
+                return false;
+            }
+            overlay.stay = stay;
+            let now_ms = overlay.now_ms();
+            overlay.flow.set_stay(stay, now_ms);
+            overlay.place();
+            overlay.schedule_wake(now_ms, tx);
+            true
         });
     }
 
@@ -538,6 +577,34 @@ fn display_ids() -> std::collections::HashMap<String, u32> {
     std::collections::HashMap::new()
 }
 
+/// How far the area windows tile in sits from `display`'s `position` edge: the Dock's height
+/// below, the menu bar's above; 0 when the display can't be read.
+#[cfg(target_os = "macos")]
+fn bar_inset(display: u32, position: HudPosition) -> f32 {
+    let Ok(outputs) = spaceman::macos::outputs() else {
+        return 0.0;
+    };
+    let ids = display_ids();
+    let Some(index) = outputs
+        .displays()
+        .iter()
+        .position(|output| ids.get(&output.id) == Some(&display))
+    else {
+        return 0.0;
+    };
+    let (frame, screen) = (outputs.displays()[index].frame, outputs.screens()[index]);
+    let inset = match position {
+        HudPosition::Bottom => (screen.y + screen.height) - (frame.y + frame.height),
+        HudPosition::Top => frame.y - screen.y,
+    };
+    inset.max(0) as f32
+}
+
+#[cfg(not(target_os = "macos"))]
+fn bar_inset(_display: u32, _position: HudPosition) -> f32 {
+    0.0
+}
+
 #[cfg(target_os = "macos")]
 fn reduce_motion() -> bool {
     objc2_app_kit::NSWorkspace::sharedWorkspace().accessibilityDisplayShouldReduceMotion()
@@ -568,6 +635,15 @@ fn overlay_poll(overlay: &mut HudOverlay, _clock: f64, tx: &mut Tx) -> bool {
         overlay.hovered_workspace = None;
         if let Some(handle) = &overlay.handle {
             handle.hide();
+        }
+        // A toast took the place of a capsule kept on screen: the capsule comes back.
+        if let Some(row) = overlay.flow.resume_row()
+            && overlay.flow.trigger(row, now_ms) == HudTransition::Show
+            && let Some(handle) = &overlay.handle
+        {
+            handle.fade_in(REVEAL_FADE);
+            overlay.schedule_wake(now_ms, tx);
+            return true;
         }
     }
     overlay.schedule_wake(now_ms, tx);

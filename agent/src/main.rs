@@ -367,6 +367,17 @@ impl Ui {
         }
     }
 
+    /// Saves whether the Workspace HUD stays on screen; the engine reserves its strip of each
+    /// display when it reads the file.
+    pub fn set_hud_stay(&mut self, stay: bool) {
+        self.edit(|doc| doc.set_hud_stay(stay));
+        if self.error.is_none()
+            && let Some(driver) = &self.hud_driver
+        {
+            driver.set_stay(stay);
+        }
+    }
+
     /// Saves where the Workspace HUD capsule sits, then moves every panel to that edge.
     pub fn set_hud_position(&mut self, position: spaceman::config::HudPosition) {
         self.edit(|doc| doc.set_hud_position(position));
@@ -464,6 +475,7 @@ impl Ui {
             driver.set_enabled(self.doc.hud());
             driver.set_style(self.doc.hud_style());
             driver.set_position(self.doc.hud_position());
+            driver.set_stay(self.doc.hud_stay());
         }
     }
 
@@ -704,6 +716,7 @@ pub(crate) fn live_app(
     let initial_hud = doc.hud();
     let initial_style = doc.hud_style();
     let initial_position = doc.hud_position();
+    let initial_stay = doc.hud_stay();
     let hud_bridge = bridge.clone();
     let mut app = base_app()
         .init(move || Ui::load_live(doc, bridge, initial_tour, accessibility, initial_target))
@@ -717,6 +730,7 @@ pub(crate) fn live_app(
         initial_position,
         hud_sink,
     );
+    hud_driver.set_stay(initial_stay);
     app.handle().update_if(move |ui, _| {
         ui.hud_driver = Some(hud_driver);
         false
