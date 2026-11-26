@@ -43,6 +43,7 @@ mod switch_repeat;
 mod switching;
 mod tear_regressions;
 mod three_display;
+mod unplugged_desktops;
 mod utility_floats;
 mod workspace_order;
 mod workspace_steps;

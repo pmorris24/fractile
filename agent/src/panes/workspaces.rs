@@ -1,6 +1,7 @@
 //! Workspaces pane: display assignments for numbered and referenced named workspaces.
 
 mod displays;
+pub(crate) mod remembered;
 
 pub(crate) use displays::{
     Choice, ConnectedDisplay, THIRD_FIXTURE_ID, choices, fixture_long_name, fixture_pair,
@@ -20,6 +21,9 @@ use crate::{
 };
 
 use displays::{MAIN, SECONDARY, TERTIARY};
+
+/// The selector of the display macOS marks as main.
+pub(crate) const MAIN_SELECTOR: &str = MAIN;
 
 /// How often the pane reads the connected displays while it is on screen, in seconds.
 const DISPLAY_REFRESH_SECONDS: f64 = 1.0;
@@ -59,8 +63,13 @@ pub(crate) fn poll_displays(ui: &mut Ui, clock: f64) -> bool {
     let Some(connected) = read_displays() else {
         return false;
     };
+    let known = ui.known_displays.get_or_insert_with(remembered::load);
+    let noted = remembered::note(known, &connected);
+    if noted {
+        remembered::save(known);
+    }
     if connected == ui.displays {
-        return false;
+        return noted;
     }
     ui.displays = connected;
     true

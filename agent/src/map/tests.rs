@@ -736,3 +736,60 @@ fn an_app_dropped_on_a_workspace_card_in_the_panel_opens_there() {
         Place::Workspace(WorkspaceId::TWO)
     );
 }
+
+#[test]
+fn unplugged_screens_keep_their_place_and_workspaces_in_the_arrangement() {
+    let mut ui = rules_ui();
+    let desk = arrangement::fixture_desk();
+    let alone = arrangement::fixture_laptop_alone();
+    let plugged = Layout::with_running(&ui.doc, WIDTH, &desk, &[], &[]);
+    let unplugged = Layout::with_known(&ui.doc, WIDTH, &alone, &desk, &[], &[]);
+    let (before, after) = (&plugged.grid.panel, &unplugged.grid.panel);
+    assert_eq!(after.monitors.len(), desk.len());
+    for (then, now) in before.monitors.iter().zip(&after.monitors) {
+        assert_eq!(then.frame, now.frame, "{} keeps its place", then.title);
+        assert_eq!(then.cards, now.cards, "{} keeps its workspaces", then.title);
+        assert_eq!(then.selector, now.selector);
+        assert_eq!(now.connected, now.id == alone[0].id, "{}", now.title);
+    }
+    assert!(unplugged.grid.screens.is_empty());
+
+    // A workspace dragged onto an unplugged screen is saved for it.
+    let laptop = after.monitors.iter().position(|m| m.connected).unwrap();
+    let to = after
+        .monitors
+        .iter()
+        .position(|m| !m.connected && !m.is_main)
+        .unwrap();
+    let (workspace, (x, y, w, h)) = after.monitors[laptop].cards[0];
+    let (tx, ty, tw, th) = after.monitors[to].frame;
+    let grab = (w / 2.0, h / 2.0);
+    let delta = (tx + tw / 2.0 - x - grab.0, ty + th / 2.0 - y - grab.1);
+    let panel = after.clone();
+    for (phase, d) in [
+        (rune::Phase::Down, (0.0, 0.0)),
+        (rune::Phase::Move, delta),
+        (rune::Phase::Up, delta),
+    ] {
+        arrangement::screen_drag_step(
+            &mut ui,
+            phase,
+            grab,
+            d,
+            false,
+            workspace,
+            (x, y + arrangement::TOP),
+            (w, h),
+            &panel,
+        );
+    }
+    assert_eq!(ui.error, None);
+    let moved = Layout::with_known(&ui.doc, WIDTH, &alone, &desk, &[], &[]);
+    assert_eq!(moved.grid.panel.monitor_of(workspace), Some(to));
+
+    // Forgotten, an unplugged screen leaves the panel; a different desk shows only itself.
+    let mut known = desk.clone();
+    crate::panes::workspaces::remembered::forget(&mut known, &after.monitors[to].id);
+    let fewer = Layout::with_known(&ui.doc, WIDTH, &alone, &known, &[], &[]);
+    assert_eq!(fewer.grid.panel.monitors.len(), desk.len() - 1);
+}

@@ -47,7 +47,7 @@ const RULE_GAP: f32 = 4.0;
 /// A box: x, y, width, height, from the panel's top-left.
 pub(super) type Frame = (f32, f32, f32, f32);
 
-/// One connected screen, where it sits in the panel, and its workspace cards.
+/// One screen, connected or remembered, where it sits in the panel, and its workspace cards.
 #[derive(Clone, Debug, PartialEq)]
 pub(super) struct Monitor {
     pub key: String,
@@ -55,6 +55,10 @@ pub(super) struct Monitor {
     pub caption: String,
     /// The `monitor` selector a workspace dropped here gets.
     pub selector: String,
+    /// The display's own ID, and whether it is plugged in. An unplugged screen keeps the
+    /// place and workspaces it had; they show on Main until it returns.
+    pub id: String,
+    pub connected: bool,
     pub is_main: bool,
     pub frame: Frame,
     /// Its workspaces, each with its card's frame.
@@ -77,24 +81,26 @@ impl Panel {
         sections: &[Section],
         choices: &[Choice],
         displays: &[ConnectedDisplay],
+        away: &[String],
         width: f32,
         apps: impl Fn(WorkspaceId) -> usize,
     ) -> Panel {
         if displays.is_empty() {
             return Panel::default();
         }
-        let found: Vec<(&Section, &Choice, &ConnectedDisplay)> = sections
+        let found: Vec<(&Section, String, &ConnectedDisplay, bool)> = sections
             .iter()
             .filter_map(|section| {
                 let index: usize = section.key.strip_prefix("display-")?.parse().ok()?;
                 let choice = choices.get(index)?;
                 let display = displays.iter().find(|d| d.selector == choice.selector)?;
-                Some((section, choice, display))
+                let connected = !away.contains(&display.id);
+                Some((section, choice.selector.clone(), display, connected))
             })
             .collect();
         let card_hs: Vec<f32> = found
             .iter()
-            .map(|(section, _, _)| {
+            .map(|(section, ..)| {
                 let most = section.workspaces.iter().map(|ws| apps(*ws)).max();
                 card_min_h(most.unwrap_or(0))
             })
@@ -102,7 +108,7 @@ impl Panel {
         let screens: Vec<Fit> = found
             .iter()
             .zip(&card_hs)
-            .map(|((section, _, display), card_h)| Fit {
+            .map(|((section, _, display, _), card_h)| Fit {
                 frame: display.frame,
                 head: head(display.is_main),
                 count: section.workspaces.len(),
@@ -114,18 +120,22 @@ impl Panel {
             .into_iter()
             .zip(boxes)
             .zip(card_hs)
-            .map(|(((section, choice, display), frame), card_h)| {
-                let cards = cards(frame, head(display.is_main), &section.workspaces, card_h);
-                Monitor {
-                    key: section.key.clone(),
-                    title: section.title.clone(),
-                    caption: section.caption.clone(),
-                    selector: choice.selector.clone(),
-                    is_main: display.is_main,
-                    frame,
-                    cards,
-                }
-            })
+            .map(
+                |(((section, selector, display, connected), frame), card_h)| {
+                    let cards = cards(frame, head(display.is_main), &section.workspaces, card_h);
+                    Monitor {
+                        key: section.key.clone(),
+                        title: section.title.clone(),
+                        caption: section.caption.clone(),
+                        selector,
+                        id: display.id.clone(),
+                        connected,
+                        is_main: display.is_main,
+                        frame,
+                        cards,
+                    }
+                },
+            )
             .collect();
         Panel {
             width,
@@ -370,6 +380,22 @@ pub(super) fn fixture_desk() -> Vec<ConnectedDisplay> {
         };
     }
     displays
+}
+
+/// The desk's laptop unplugged from both monitors: Main now, at the origin.
+pub(super) fn fixture_laptop_alone() -> Vec<ConnectedDisplay> {
+    let laptop = fixture_desk().remove(2);
+    vec![ConnectedDisplay {
+        selector: crate::panes::workspaces::MAIN_SELECTOR.to_owned(),
+        frame: Rect {
+            x: 0,
+            y: 0,
+            ..laptop.frame
+        },
+        is_main: true,
+        is_secondary: false,
+        ..laptop
+    }]
 }
 
 #[cfg(test)]

@@ -83,6 +83,9 @@ pub struct Ui {
     pub(crate) displays: Vec<panes::workspaces::ConnectedDisplay>,
     /// When the display list was last read, on Rune's clock.
     pub(crate) displays_at: Option<f64>,
+    /// The last arrangement of displays seen, which Settings › Screens keeps drawing after some
+    /// of them are unplugged; read from disk once, on the first display read.
+    pub(crate) known_displays: Option<Vec<panes::workspaces::ConnectedDisplay>>,
     /// Lab slug requested by a `spaceman://labs/<slug>` deep link, preserved
     /// cleanly for Labs cards to highlight.
     pub highlight_lab: Option<String>,
@@ -128,6 +131,7 @@ impl Ui {
             title_filter: rune::TextEdit::default(),
             displays: Vec::new(),
             displays_at: None,
+            known_displays: None,
             highlight_lab: None,
             highlight_feature: None,
             error: None,

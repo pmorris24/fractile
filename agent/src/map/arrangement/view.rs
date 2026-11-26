@@ -18,6 +18,8 @@ use crate::{
 
 /// The panel's top in the map: under the map's heading.
 pub(in crate::map) const TOP: f32 = HEAD_H + HEAD_GAP;
+/// The Forget button on an unplugged screen.
+const FORGET_W: f32 = 48.0;
 const HINT: &str = "Drag a workspace to another screen, or an app onto a workspace";
 
 /// A workspace card being dragged to another screen.
@@ -98,7 +100,14 @@ pub(in crate::map) fn screen_drag_step(
 
 /// Workspace 2's card held over the first screen that is not Main, for stills.
 pub(in crate::map) fn fixture_drag(ui: &Ui) -> Option<ScreenDrag> {
-    let layout = crate::map::Layout::with_running(&ui.doc, ui.card_w, &ui.displays, &[], &[]);
+    let layout = crate::map::Layout::with_known(
+        &ui.doc,
+        ui.card_w,
+        &ui.displays,
+        ui.known_displays.as_deref().unwrap_or_default(),
+        &[],
+        &[],
+    );
     let panel = &layout.grid.panel;
     let (x, y, w, h) = panel.card(WorkspaceId::TWO)?;
     let to = panel.monitors.iter().position(|m| !m.is_main)?;
@@ -153,15 +162,39 @@ impl MapView<'_> {
         } else {
             (self.p.hair, c.border_base)
         };
+        let border = if monitor.connected || target {
+            border
+        } else {
+            (self.p.hair, c.border_weak)
+        };
+        let fill = if target {
+            c.layer_03
+        } else if monitor.connected {
+            c.layer_02
+        } else {
+            c.layer_01
+        };
         let mut out = el()
             .key(format!("arrange-{}", monitor.key))
             .role("group")
             .label(format!("{}: {}", monitor.title, monitor.caption))
             .size(w, h)
             .radius(self.p.k.radius.md)
-            .fill(if target { c.layer_03 } else { c.layer_02 })
+            .fill(fill)
             .border(border.0, border.1)
+            .opacity(if monitor.connected || target {
+                1.0
+            } else {
+                0.7
+            })
             .absolute(x, y);
+        let forget_w = if monitor.connected { 0.0 } else { FORGET_W };
+        if !monitor.connected && w > FORGET_W + 2.0 * INSET {
+            out = out.child(
+                self.forget_button(&monitor.id)
+                    .absolute(w - FORGET_W - 4.0, 4.0),
+            );
+        }
         let mut name_top = INSET;
         if monitor.is_main {
             out = out.child(
@@ -173,14 +206,19 @@ impl MapView<'_> {
             name_top += MENU_BAR;
         }
         if w > 2.0 * INSET && h > name_top + NAME_H {
+            let title = if monitor.connected {
+                monitor.title.clone()
+            } else {
+                format!("Unplugged · {}", monitor.title)
+            };
             out = out.child(
-                text(monitor.title.clone())
+                text(title)
                     .key("name")
                     .help(format!("{} · {}", monitor.title, monitor.caption))
                     .font(self.p.meta())
                     .color(self.p.muted())
                     .truncate()
-                    .w(w - 2.0 * INSET)
+                    .w((w - 2.0 * INSET - forget_w).max(0.0))
                     .absolute(INSET, name_top),
             );
         }
@@ -203,6 +241,31 @@ impl MapView<'_> {
             );
         }
         out
+    }
+
+    /// Drops an unplugged screen from the arrangement; its workspaces stay saved for it.
+    fn forget_button(self, id: &str) -> El {
+        let c = &self.p.k.c;
+        let id = id.to_owned();
+        el().key("forget")
+            .role("button")
+            .label("Forget this display")
+            .help("Forget this display. Its workspaces stay saved in config.toml")
+            .size(FORGET_W, 18.0)
+            .center()
+            .radius(self.p.k.radius.sm)
+            .hover(c.hover)
+            .press(c.pressed)
+            .on_press(move |ui: &mut Ui| {
+                let fixture = ui.fixture;
+                if let Some(known) = ui.known_displays.as_mut()
+                    && screens::remembered::forget(known, &id)
+                    && !fixture
+                {
+                    screens::remembered::save(known);
+                }
+            })
+            .child(text("Forget").font(self.p.meta()).color(self.p.muted()))
     }
 
     /// A workspace's card. Dragged by its body it moves the workspace to another screen; its

@@ -114,6 +114,13 @@ pub(crate) const SCENES: &[Scene] = &[
         ui.displays = arrangement::fixture_desk();
         ui.screen_drag = arrangement::fixture_drag(ui);
     }),
+    // The same desk with the laptop alone: the monitors it was plugged into keep their places
+    // and workspaces, dimmed until they return.
+    ("rules-arrangement-unplugged", |ui| {
+        fixture(ui);
+        ui.known_displays = Some(arrangement::fixture_desk());
+        ui.displays = arrangement::fixture_laptop_alone();
+    }),
     // A workspace number's menu: the screens it can show on.
     ("rules-screen-menu", |ui| {
         fixture(ui);
@@ -170,15 +177,32 @@ impl Layout {
         live: &[WorkspaceId],
         running: &[String],
     ) -> Layout {
+        Layout::with_known(doc, width, displays, &[], live, running)
+    }
+
+    /// As `with_running`, with the `known` arrangement: screens in it that are unplugged keep
+    /// their place in the panel and the workspaces saved for them.
+    fn with_known(
+        doc: &Doc,
+        width: f32,
+        displays: &[ConnectedDisplay],
+        known: &[ConnectedDisplay],
+        live: &[WorkspaceId],
+        running: &[String],
+    ) -> Layout {
         let rules = doc.rules();
         let defaults = defaults::listed(&rules, running);
-        let choices = screens::choices(displays);
+        // With some of the known screens unplugged, the panel draws the desk they made, each
+        // workspace on the screen it returns to, and edits it as if they were all plugged in.
+        let away = screens::remembered::away(known, displays);
+        let desk = if away.is_empty() { displays } else { known };
+        let choices = screens::choices(desk);
         let sections = screens::sections(
             doc,
             &choices,
             doc.workspaces_with_referenced(WorkspaceId::numbered()),
         );
-        let panel = arrangement::Panel::new(&sections, &choices, displays, width, |ws| {
+        let panel = arrangement::Panel::new(&sections, &choices, desk, &away, width, |ws| {
             rules
                 .iter()
                 .filter(|rule| rule.place == Place::Workspace(ws))
@@ -470,7 +494,14 @@ pub fn pane(ui: &Ui, p: Paint, layer: &mut Vec<El>) -> El {
         .flat_map(|agent| &agent.windows)
         .map(|entry| entry.windows.workspace)
         .collect();
-    let layout = Layout::with_running(&ui.doc, ui.card_w, &ui.displays, &live, &ui.default_floats);
+    let layout = Layout::with_known(
+        &ui.doc,
+        ui.card_w,
+        &ui.displays,
+        ui.known_displays.as_deref().unwrap_or_default(),
+        &live,
+        &ui.default_floats,
+    );
     let width = layout.grid.width;
     let view = MapView {
         ui,
