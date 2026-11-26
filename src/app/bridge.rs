@@ -51,13 +51,6 @@ pub enum UiAction {
     Quit,
     OpenSettings,
     OpenAccessibility,
-    CheckForUpdates,
-    /// Restore every window, then install the staged update and relaunch.
-    InstallUpdate,
-    /// Switch to the update channel's release on offer.
-    ConfirmUpdateSwitch,
-    /// Open the release's download, for a copy that can't update itself.
-    DownloadUpdate,
     ToggleLaunchAtLogin,
     SetHud(bool),
     SetPauseOnBuiltinDisplay(bool),
@@ -80,10 +73,6 @@ impl From<UiAction> for Action {
             UiAction::Quit => Self::Quit,
             UiAction::OpenSettings => Self::OpenSettings,
             UiAction::OpenAccessibility => Self::OpenAccessibility,
-            UiAction::CheckForUpdates => Self::CheckForUpdates,
-            UiAction::InstallUpdate => Self::InstallUpdate,
-            UiAction::ConfirmUpdateSwitch => Self::ConfirmUpdateSwitch,
-            UiAction::DownloadUpdate => Self::DownloadUpdate,
             UiAction::ToggleLaunchAtLogin => Self::ToggleLaunchAtLogin,
             UiAction::SetHud(enabled) => Self::SetHud(enabled),
             UiAction::SetPauseOnBuiltinDisplay(enabled) => Self::SetPauseOnBuiltinDisplay(enabled),
@@ -236,86 +225,12 @@ impl UiLaunchAtLogin {
     }
 }
 
-/// What the in-app updater is doing (`crate::updater`).
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
-pub enum UiUpdateStatus {
-    /// Updates are off for this copy: turned off, or not in a `Spaceman.app`.
-    #[default]
-    Unavailable,
-    /// A build from source, which its checkout updates.
-    SourceBuild,
-    Idle,
-    Checking,
-    UpToDate,
-    Downloading,
-    /// A verified update waits for Install & restart.
-    Ready {
-        version: String,
-    },
-    /// The update channel setting names another channel, whose release waits
-    /// for the user to switch to it.
-    Switch {
-        channel: String,
-        version: String,
-    },
-    /// A release this copy can't install itself (a read-only or translocated
-    /// location); the user downloads it.
-    Download {
-        version: String,
-    },
-    /// Windows are restored and the update is swapped in; Spaceman relaunches.
-    Installing,
-    Failed,
-}
-
-impl UiUpdateStatus {
-    pub(crate) const fn as_str(&self) -> &'static str {
-        match self {
-            Self::Unavailable => "unavailable",
-            Self::SourceBuild => "source-build",
-            Self::Idle => "idle",
-            Self::Checking => "checking",
-            Self::UpToDate => "up-to-date",
-            Self::Downloading => "downloading",
-            Self::Ready { .. } => "ready",
-            Self::Switch { .. } => "switch-available",
-            Self::Download { .. } => "download-available",
-            Self::Installing => "installing",
-            Self::Failed => "failed",
-        }
-    }
-
-    /// The version a ready update installs.
-    #[must_use]
-    pub fn ready_version(&self) -> Option<&str> {
-        match self {
-            Self::Ready { version } => Some(version),
-            _ => None,
-        }
-    }
-
-    /// Whether a manual check may start now.
-    #[must_use]
-    pub const fn can_check(&self) -> bool {
-        matches!(
-            self,
-            Self::Idle
-                | Self::UpToDate
-                | Self::Failed
-                | Self::Ready { .. }
-                | Self::Switch { .. }
-                | Self::Download { .. }
-        )
-    }
-}
-
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct UiAgentSnapshot {
     pub accessibility: bool,
     pub automatic: bool,
     pub hud: bool,
     pub launch_at_login: UiLaunchAtLogin,
-    pub update: UiUpdateStatus,
     pub active_workspaces: Vec<WorkspaceId>,
     /// Every workspace holding windows, with a preview of its tiles, for Settings › Screens.
     pub windows: Vec<UiWorkspaceWindows>,
@@ -335,13 +250,11 @@ pub struct UiWorkspaceWindows {
 impl UiAgentSnapshot {
     pub(super) fn to_settings_json(&self) -> serde_json::Value {
         serde_json::json!({
-            "version": crate::updater::build_version(),
+            "version": crate::build_version(),
             "accessibility": self.accessibility,
             "automatic": self.automatic,
             "hud": self.hud,
             "launch_at_login": self.launch_at_login.as_settings_value(),
-            "update": self.update.as_str(),
-            "update_version": self.update.ready_version(),
             "active_workspaces": self.active_workspaces,
             "last_error": self.last_error,
         })
@@ -508,7 +421,6 @@ mod tests {
             automatic: true,
             hud: true,
             launch_at_login: UiLaunchAtLogin::On,
-            update: UiUpdateStatus::Idle,
             active_workspaces: vec![WorkspaceId::ONE],
             windows: Vec::new(),
             last_error: None,
@@ -624,7 +536,6 @@ mod tests {
             automatic: false,
             hud: false,
             launch_at_login: UiLaunchAtLogin::NeedsApproval,
-            update: UiUpdateStatus::Checking,
             active_workspaces: vec![WorkspaceId::THREE, WorkspaceId::named('M').unwrap()],
             windows: Vec::new(),
             last_error: Some("Hotkeys unavailable".into()),
@@ -634,7 +545,6 @@ mod tests {
         assert_eq!(value["automatic"], false);
         assert_eq!(value["hud"], false);
         assert_eq!(value["launch_at_login"], "requires-approval");
-        assert_eq!(value["update"], "checking");
         assert_eq!(value["active_workspaces"], serde_json::json!([3, "M"]));
         assert_eq!(value["last_error"], "Hotkeys unavailable");
     }

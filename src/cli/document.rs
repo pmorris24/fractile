@@ -9,7 +9,7 @@ use spaceman::{
     DisplaySelector, WorkspaceId, Workspaces,
     config::{
         Config, HudPosition, HudStyle, LabFeature, LayoutMode, MenuBarIcon, MouseFollowsFocus,
-        RouteWindows, UpdateChannel, config_path, lock_config, write_config_atomic,
+        RouteWindows, config_path, lock_config, write_config_atomic,
     },
     spacing::{Spacing, SpacingKey, check_outer},
 };
@@ -189,12 +189,6 @@ pub(crate) struct SettingsDoc {
     #[serde(
         default,
         skip_serializing_if = "Option::is_none",
-        serialize_with = "serialize_optional_update_channel"
-    )]
-    pub update_channel: Option<UpdateChannel>,
-    #[serde(
-        default,
-        skip_serializing_if = "Option::is_none",
         serialize_with = "serialize_optional_mouse_follows_focus"
     )]
     pub mouse_follows_focus: Option<MouseFollowsFocus>,
@@ -250,7 +244,6 @@ impl SettingsDoc {
             && self.hud_position.is_none()
             && self.hud_stay.is_none()
             && self.layout.is_none()
-            && self.update_channel.is_none()
             && self.mouse_follows_focus.is_none()
             && self.trackpad_swipe.is_none()
             && self.menu_bar_icon.is_none()
@@ -345,10 +338,6 @@ impl SettingsDoc {
         self.layout.unwrap_or_default()
     }
 
-    pub(crate) fn effective_update_channel(&self) -> UpdateChannel {
-        self.update_channel.unwrap_or_default()
-    }
-
     pub(crate) fn effective_mouse_follows_focus(&self) -> MouseFollowsFocus {
         self.mouse_follows_focus.unwrap_or_default()
     }
@@ -404,16 +393,6 @@ fn serialize_optional_layout<S: serde::Serializer>(
     }
 }
 
-fn serialize_optional_update_channel<S: serde::Serializer>(
-    channel: &Option<UpdateChannel>,
-    serializer: S,
-) -> Result<S::Ok, S::Error> {
-    match channel {
-        Some(channel) => serializer.serialize_str(channel.as_str()),
-        None => serializer.serialize_none(),
-    }
-}
-
 fn serialize_optional_mouse_follows_focus<S: serde::Serializer>(
     mode: &Option<MouseFollowsFocus>,
     serializer: S,
@@ -455,7 +434,6 @@ pub(crate) struct EffectiveSettings {
     pub hud_position: &'static str,
     pub hud_stay: bool,
     pub layout: &'static str,
-    pub update_channel: &'static str,
     pub mouse_follows_focus: &'static str,
     pub trackpad_swipe: bool,
     pub menu_bar_icon: &'static str,
@@ -556,7 +534,6 @@ impl ConfigDoc {
             hud_position: self.settings.effective_hud_position().as_str(),
             hud_stay: self.settings.effective_hud_stay(),
             layout: self.settings.effective_layout().as_str(),
-            update_channel: self.settings.effective_update_channel().as_str(),
             mouse_follows_focus: self.settings.effective_mouse_follows_focus().as_str(),
             trackpad_swipe: self.settings.effective_trackpad_swipe(),
             menu_bar_icon: self.settings.effective_menu_bar_icon().as_str(),

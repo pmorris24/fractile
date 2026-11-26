@@ -37,7 +37,6 @@ hud_style = "icons"                   # optional (default: "icons"); or "layouts
 hud_position = "bottom"               # optional (default: "bottom"); or "top", "left", "right"
 hud_stay = false                      # optional (default: false); keep the HUD on screen, windows tile clear of it
 layout = "dwindle"                    # optional (default: "dwindle"); or "columns"
-update_channel = "stable"             # optional (default: "stable"); or "dev", a build of every merge
 mouse_follows_focus = "off"           # optional (default: "off"); or "display", "window"
 trackpad_swipe = true                 # optional (default: true); read only with [labs] swipe_switch
 menu_bar_icon = "full"                # optional (default: "full"); or "compact", "off"; read only with [labs] menu_bar_icon_style
@@ -566,7 +565,7 @@ cases:
   bundle is seen for the first time in the session (such as after a reboot or a Spaceman start
   without valid workspace state).
 - **Mid-session relaunch:** after the startup window, when another process of the same application
-  quit within the last 30 seconds or still owns windows (for example, an in-app update or restart
+  quit within the last 30 seconds or still owns windows (for example, a reinstall or restart
   that launches the new process before the old one exits).
 - **Restored arrangements:** whenever the application's memory spans two or more workspaces and
   its new process presents two or more windows at once (macOS reopening the windows it had when it
@@ -674,8 +673,7 @@ workspace display assignments, `settings.hud`, `settings.hud_style`,
 `settings.hud_position`, `settings.mouse_follows_focus`, `settings.trackpad_swipe`,
 `settings.workspace_order`, `settings.gaps`, `settings.single_window_max_width`, and
 `settings.single_window_max_height` reload without restarting (Settings › Layout retiles at once; an
-external edit applies on the next retile);
-`settings.update_channel` applies at the next update check. Global shortcuts for a
+external edit applies on the next retile). Global shortcuts for a
 newly added named workspace letter (`Option+A` ... `Option+Z`) register on the next app start:
 
 ```sh

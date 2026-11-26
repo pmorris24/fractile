@@ -1,5 +1,5 @@
 //! Single-process macOS Rune host: runs Rune's AppKit event loop on the main
-//! thread alongside the native status item, updater, winit termination
+//! thread alongside the native status item, winit termination
 //! gate, and a 25 ms `NSTimer` pump in `NSRunLoopCommonModes`.
 
 #![allow(unsafe_code)]

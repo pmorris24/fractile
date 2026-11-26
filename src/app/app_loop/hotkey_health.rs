@@ -85,12 +85,10 @@ impl MainThreadAgent {
 }
 
 /// Clears `last_error` after re-registering the active shortcut table,
-/// preserving retained diagnostics that re-registration does not resolve
-/// (`Update failed:` and `Shortcuts not applied:`).
+/// preserving a retained diagnostic that re-registration does not resolve
+/// (`Shortcuts not applied:`).
 pub(super) fn clear_hotkey_reinstall_error(last_error: &mut Option<String>) {
-    let keep = is_update_failed_error(last_error.as_deref())
-        || is_shortcuts_not_applied_error(last_error.as_deref());
-    if !keep {
+    if !is_shortcuts_not_applied_error(last_error.as_deref()) {
         *last_error = None;
     }
 }
@@ -100,12 +98,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn hotkey_reinstall_preserves_update_and_unapplied_shortcut_errors() {
-        let update_reason = format!("{UPDATE_FAILED_PREFIX}could not write update receipt");
-        let mut last_error = Some(update_reason.clone());
-        clear_hotkey_reinstall_error(&mut last_error);
-        assert_eq!(last_error.as_deref(), Some(update_reason.as_str()));
-
+    fn hotkey_reinstall_preserves_unapplied_shortcut_errors() {
         let shortcut_reason = format!("{}: conflict", live_shortcuts::NOT_APPLIED);
         let mut last_error = Some(shortcut_reason.clone());
         clear_hotkey_reinstall_error(&mut last_error);

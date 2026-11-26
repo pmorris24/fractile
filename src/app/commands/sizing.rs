@@ -118,6 +118,7 @@ impl<B: WorkspaceBackend> WorkspaceRuntime<B> {
         }
         // An explicit size is written exactly, even a point or two away (#412).
         self.exact_spacing_workspaces.insert(workspace);
-        self.relayout_persist(workspace, outputs, cancelled).map(Some)
+        self.relayout_persist(workspace, outputs, cancelled)
+            .map(Some)
     }
 }

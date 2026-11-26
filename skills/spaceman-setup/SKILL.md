@@ -5,9 +5,9 @@ description: Install, configure, verify, troubleshoot, or uninstall the Spaceman
 
 # Spaceman Setup
 
-Spaceman is an experimental native macOS tiling window manager for Apple silicon. Version 0.3.5 is
-signed by Anomaly (`anomaly.spaceman`), notarized, and distributed outside the Mac App Store. The
-preview declares macOS 14.0 as its minimum; compatibility is not yet broadly qualified.
+Spaceman is an experimental native macOS tiling window manager for Apple silicon. It installs from
+source only, signed with your own Developer ID Application identity. It declares macOS 14.0 as its
+minimum; compatibility is not yet broadly qualified.
 
 ## Install
 
@@ -18,20 +18,12 @@ aerospace enable off   # AeroSpace
 yabai --stop-service   # yabai
 ```
 
-Download, verify, and open:
+Build, sign, install and open from a repository checkout (needs the Xcode command-line tools,
+Rust 1.100.0 and a Developer ID Application identity; set `SPACEMAN_CODESIGN_IDENTITY` to pick
+one). Run the same command again to upgrade:
 
 ```sh
-cd "$(mktemp -d)"
-if [[ -e "/Applications/Spaceman.app" ]]; then
-  echo "Spaceman is already installed; upgrade through Spaceman Settings." >&2
-  exit 1
-fi
-curl -fL "https://anoma.ly/spaceman/download/macos-arm64" -o Spaceman.zip
-curl -fL "https://anoma.ly/spaceman/download/macos-arm64.sha256" -o Spaceman.zip.sha256
-shasum -a 256 -c Spaceman.zip.sha256
-ditto -x -k Spaceman.zip .
-mv Spaceman.app "/Applications/"
-open "/Applications/Spaceman.app"
+./scripts/install-app.sh
 ```
 
 Spaceman opens a four-step setup tour: `Welcome`, `Give Spaceman window access`,
@@ -50,7 +42,7 @@ and later System Settings refuses dragged app tiles: click the Privacy & Securit
 use the list's `+` button to add Spaceman. Never tell someone to drag Spaceman into that list, and
 never float a drag guide over System Settings there.
 
-Source, issues and releases: <https://github.com/anomalyco/spaceman>.
+Source and issues: <https://github.com/anomalyco/spaceman>.
 
 ## Verify
 
@@ -106,8 +98,8 @@ spaceman displays
   until pause or quit has restored every window.
 - **Windows keep moving on their own**: another window manager is running; quit it, then
   `spaceman ctl resume`.
-- **Updates**: Spaceman checks Anomaly's release service and offers `Install & restart` in Settings
-  and the menu; it restores every window first.
+- **Upgrades**: pull the checkout and run `./scripts/install-app.sh` again; it restores every
+  window before the old version quits.
 
 ## Uninstall
 
@@ -124,8 +116,6 @@ Confirm windows returned, then remove the app and CLI (this preserves your confi
 rm -rf "/Applications/Spaceman.app"
 rm -f "$HOME/.local/bin/spaceman"
 ```
-
-(If installed via Homebrew, run `brew uninstall --cask anomalyco/tap/spaceman` instead.)
 
 Only if you also want to erase saved configuration, workspace state, and recovery files after confirming every window has returned:
 

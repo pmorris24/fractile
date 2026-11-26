@@ -4,8 +4,7 @@ version = 1
 # Optional UI preferences. The non-activating Workspace HUD capsule is on by default.
 # hud_style is "icons" (each workspace's number and its apps' icons, the default) or
 # "layouts" (each workspace's layout with app icons). hud_position is "bottom" (just above
-# the Dock, the default) or "top" (just below the menu bar). update_channel is "stable"
-# (releases, the default) or "dev" (a build of every change merged to dev).
+# the Dock, the default) or "top" (just below the menu bar).
 [settings]
 hud = true
 hud_style = "icons"
@@ -13,7 +12,6 @@ hud_position = "bottom"
 # How new windows split the workspace: "dwindle" (default, binary space partition along each
 # tile's longer side) or "columns" (side-by-side siblings).
 layout = "dwindle"
-update_channel = "stable"
 # Whether explicit keyboard/ctl focus actions move the mouse pointer: "off" (default) leaves
 # it alone, "display" warps it when it is not on the target's display, and "window" warps it
 # when it is outside the newly focused window (on an empty target workspace, the display).

@@ -162,7 +162,7 @@ a workspace, tiling it with `Option+Shift+Space`, or closing it also takes it ou
 scratchpad. `Scratchpad is empty` in the menu status means there was nothing to summon.
 
 A hidden scratchpad window is parked like a window on an inactive workspace, with its recovery frame
-in `parked-windows.json`, so pausing, quitting, restarting, installing an update, a crash, or turning
+in `parked-windows.json`, so pausing, quitting, restarting, reinstalling, a crash, or turning
 the Lab off brings it back on screen, where it tiles again. Which windows are in the scratchpad is not
 saved across agent restarts.
 
@@ -187,8 +187,6 @@ workspace's) or `Off` (no icon; open Spaceman again for Settings), `[settings] m
   (`[settings] hud_position`, default `Bottom`) under a live miniature of the capsule;
 - `Launch at Login`, shown checked when macOS has enabled the signed app bundle;
 - `Settings...` (`⌘,`), opening the Rune Settings window (`General`, `Layout`, `Rules`, `Workspaces`, `Shortcuts`, with `[labs] activity = true`, `Activity`, and `Labs`, the experimental features' switches, plus `⇧⌘D` Playground);
-- `Check for Updates...`, which checks and opens Settings (its sidebar and `General > Updates` show
-  the result), or `Install Spaceman <version> and Restart` once an update is downloaded and verified;
 - `Quit Spaceman` (`⌘Q`).
 
 If macOS reports that the login item requires approval, the menu label says
@@ -200,21 +198,13 @@ notch, or by a menu-bar manager): `Pause & restore windows` (shown while tiling)
 `Pause Tiling` does, and `Quit` what `Quit Spaceman` does.
 
 Pausing, quitting, and external macOS termination requests restore parked windows before completing.
-Restoration retries are visible in the menu status. Installing an update uses the same restoration
-gate: Spaceman swaps in the new bundle and relaunches only after every parked window is restored and
-its recovery metadata is durably removed. If the install then fails, Spaceman keeps running and
-resumes tiling. Quitting with an update ready installs it the same way, after the restore, for the
-next launch. `Settings > General > Updates` shows the running version and the updater's state,
-and picks the release channel (`Stable` or `Dev`, `[settings] update_channel`, default `Stable`).
-Picking a channel other than the running build's offers `Switch to Dev` (or `Switch to Stable`),
-and a copy Spaceman can't replace offers `Download`.
+Restoration retries are visible in the menu status.
 
 ## CLI
 
-Homebrew cask installs link the bundled CLI into `$(brew --prefix)/bin/spaceman` (typically
-`/opt/homebrew/bin/spaceman`, already on `PATH`). Source installs (`scripts/install-app.sh`) link
-`~/.local/bin/spaceman` (add `~/.local/bin` to `PATH` or invoke that absolute path), and direct ZIP
-installs bundle the CLI at `/Applications/Spaceman.app/Contents/MacOS/spaceman`. Commands that
+Source installs (`scripts/install-app.sh`) link `~/.local/bin/spaceman` (add `~/.local/bin` to
+`PATH` or invoke that absolute path); the CLI is bundled at
+`/Applications/Spaceman.app/Contents/MacOS/spaceman`. Commands that
 alter layouts require automatic tiling to be enabled.
 
 ```sh

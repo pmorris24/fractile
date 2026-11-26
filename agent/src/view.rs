@@ -1,5 +1,5 @@
 //! The window: Hex's settings shell. A sidebar of panes under the traffic lights, with the
-//! version and an update check at its foot, beside a raised panel holding the pane.
+//! version at its foot, beside a raised panel holding the pane.
 
 use rune::{Anim, Cx, El, ScrollSpec, Tx, col, el, icon, row, text};
 
@@ -82,7 +82,6 @@ fn sidebar(ui: &Ui, p: Paint) -> El {
                 .color(p.faint())
                 .pl(SIDEBAR_PX),
         )
-        .child(crate::updates::sidebar(ui, p))
 }
 
 /// Slots tile the item column, each reaching halfway into the gaps around its item, so a press

@@ -76,18 +76,6 @@ objc2::define_class!(
             drop(self.ivars().actions.send(Action::OpenSettings));
         }
 
-        /// Checks and opens Settings, whose sidebar shows the check's progress.
-        #[unsafe(method(checkForUpdates:))]
-        fn check_for_updates(&self, _sender: &NSObject) {
-            drop(self.ivars().actions.send(Action::CheckForUpdates));
-            drop(self.ivars().actions.send(Action::OpenSettings));
-        }
-
-        #[unsafe(method(installUpdate:))]
-        fn install_update(&self, _sender: &NSObject) {
-            drop(self.ivars().actions.send(Action::InstallUpdate));
-        }
-
         #[unsafe(method(toggleLaunchAtLogin:))]
         fn toggle_launch_at_login(&self, _sender: &NSObject) {
             drop(self.ivars().actions.send(Action::ToggleLaunchAtLogin));
@@ -128,7 +116,6 @@ struct Controller {
     automatic: Retained<NSMenuItem>,
     hud: Retained<NSMenuItem>,
     launch_at_login: Retained<NSMenuItem>,
-    update: Retained<NSMenuItem>,
     status_title: String,
     button_state: ButtonState,
     rendered_visual: Option<ButtonVisual>,
@@ -177,14 +164,6 @@ pub fn install(sender: Sender<Action>) -> Result<(), String> {
         ",",
         marker,
     ));
-    let update = action_item(
-        CHECK_FOR_UPDATES,
-        &target,
-        sel!(checkForUpdates:),
-        "",
-        marker,
-    );
-    menu.addItem(&update);
     menu.addItem(&NSMenuItem::separatorItem(marker));
     menu.addItem(&action_item(
         "Quit Spaceman",
@@ -213,7 +192,6 @@ pub fn install(sender: Sender<Action>) -> Result<(), String> {
             automatic,
             hud,
             launch_at_login,
-            update,
             status_title: String::new(),
             button_state: ButtonState::new(),
             rendered_visual: None,
@@ -222,26 +200,6 @@ pub fn install(sender: Sender<Action>) -> Result<(), String> {
         });
     });
     Ok(())
-}
-
-const CHECK_FOR_UPDATES: &str = "Check for Updates...";
-
-/// The update item checks, or installs a ready update.
-pub fn set_update(ready: Option<&str>) {
-    CONTROLLER.with(|controller| {
-        if let Some(controller) = controller.borrow().as_ref() {
-            let (title, action) = match ready {
-                Some(version) => (
-                    format!("Install Spaceman {version} and Restart"),
-                    sel!(installUpdate:),
-                ),
-                None => (CHECK_FOR_UPDATES.to_owned(), sel!(checkForUpdates:)),
-            };
-            controller.update.setTitle(&NSString::from_str(&title));
-            // SAFETY: Both selectors are methods on `Target`, the item's retained target.
-            unsafe { controller.update.setAction(Some(action)) };
-        }
-    });
 }
 
 /// Shows or hides the whole menu bar icon: hidden for `settings.menu_bar_icon = "off"`

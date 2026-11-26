@@ -1,11 +1,6 @@
 #!/bin/sh
 # Builds target/Spaceman.app and signs it with a Developer ID identity
 # (SPACEMAN_CODESIGN_IDENTITY, or the first one in the keychain).
-# SPACEMAN_RELEASE_UNSIGNED=1 skips signing: the Release workflow's build job
-# makes the bundle that way and its sign job signs it (.github/release/).
-# With it, SPACEMAN_RELEASE_CHANNEL (stable or dev) and SPACEMAN_RELEASE_VERSION
-# stamp the channel and version the workflow publishes this build as
-# (src/updater/stamp.rs); set both or neither.
 set -eu
 
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
@@ -13,7 +8,6 @@ bundle="$root/target/Spaceman.app"
 icon_output="$root/target/AppIcon.assets"
 icon_info="$root/target/AppIcon-info.plist"
 identity=${SPACEMAN_CODESIGN_IDENTITY:-}
-unsigned=${SPACEMAN_RELEASE_UNSIGNED:-}
 deployment_target=$(/usr/bin/plutil -extract LSMinimumSystemVersion raw "$root/app/Info.plist")
 sdk_version=$(/usr/bin/xcrun --sdk macosx --show-sdk-version)
 cargo_bin=${CARGO:-}
@@ -29,64 +23,23 @@ if [ -z "$cargo_bin" ] || ! command -v "$cargo_bin" >/dev/null 2>&1; then
   exit 1
 fi
 
-case "$unsigned" in
-  ''|1) ;;
-  *)
-    echo "SPACEMAN_RELEASE_UNSIGNED must be 1 or unset, not '$unsigned'." >&2
-    exit 1
-    ;;
-esac
-if [ -z "$unsigned" ]; then
-  if [ -z "$identity" ]; then
-    identity=$(security find-identity -v -p codesigning \
-      | sed -n 's/.*"\(Developer ID Application:[^"]*\)".*/\1/p' \
-      | head -1)
-  fi
-  if [ -z "$identity" ]; then
-    echo "No Developer ID Application identity found; set SPACEMAN_CODESIGN_IDENTITY." >&2
-    exit 1
-  fi
-  case "$identity" in
-    "Developer ID Application:"*) ;;
-    *)
-      echo "SPACEMAN_CODESIGN_IDENTITY must be a Developer ID Application identity, not '$identity'." >&2
-      exit 1
-      ;;
-  esac
+if [ -z "$identity" ]; then
+  identity=$(security find-identity -v -p codesigning \
+    | sed -n 's/.*"\(Developer ID Application:[^"]*\)".*/\1/p' \
+    | head -1)
 fi
-
-release_channel=${SPACEMAN_RELEASE_CHANNEL:-}
-release_version=${SPACEMAN_RELEASE_VERSION:-}
-case "$release_channel" in
-  ''|stable|dev) ;;
-  *)
-    echo "SPACEMAN_RELEASE_CHANNEL must be stable, dev or unset, not '$release_channel'." >&2
-    exit 1
-    ;;
-esac
-case "$release_version" in
-  '') ;;
-  .*|*[!A-Za-z0-9.+_-]*)
-    echo "SPACEMAN_RELEASE_VERSION must be a version name, not '$release_version'." >&2
-    exit 1
-    ;;
-esac
-if { [ -n "$release_channel" ] && [ -z "$release_version" ]; } ||
-  { [ -z "$release_channel" ] && [ -n "$release_version" ]; }; then
-  echo "Set both SPACEMAN_RELEASE_CHANNEL and SPACEMAN_RELEASE_VERSION, or neither." >&2
+if [ -z "$identity" ]; then
+  echo "No Developer ID Application identity found; set SPACEMAN_CODESIGN_IDENTITY." >&2
   exit 1
 fi
+case "$identity" in
+  "Developer ID Application:"*) ;;
+  *)
+    echo "SPACEMAN_CODESIGN_IDENTITY must be a Developer ID Application identity, not '$identity'." >&2
+    exit 1
+    ;;
+esac
 
-# Only the Release workflow builds unsigned, and only its builds update themselves from
-# anoma.ly/release (src/updater.rs); every other build is a source build that never checks.
-if [ -n "$unsigned" ]; then
-  export SPACEMAN_RELEASE_BUILD=1
-  if [ -n "$release_channel" ]; then
-    export SPACEMAN_RELEASE_CHANNEL="$release_channel" SPACEMAN_RELEASE_VERSION="$release_version"
-  fi
-else
-  unset SPACEMAN_RELEASE_BUILD SPACEMAN_RELEASE_CHANNEL SPACEMAN_RELEASE_VERSION
-fi
 CARGO_TARGET_DIR="$root/target" \
   "$cargo_bin" build --manifest-path "$root/Cargo.toml" --release --locked --workspace --bins
 # A global MACOSX_DEPLOYMENT_TARGET also applies to host-side proc-macro
@@ -124,10 +77,6 @@ else
   echo "warning: actool not found (needs full Xcode); building without the app icon" >&2
 fi
 plutil -lint "$bundle/Contents/Info.plist" >/dev/null
-if [ -n "$unsigned" ]; then
-  printf '%s\n' "$bundle"
-  exit 0
-fi
 codesign --force --timestamp --options runtime --sign "$identity" \
   "$bundle/Contents/MacOS/spaceman-agent"
 codesign --force --timestamp --options runtime --sign "$identity" \

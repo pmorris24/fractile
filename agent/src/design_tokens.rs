@@ -40,7 +40,7 @@ fn defines_tokens(path: &str) -> bool {
 
 /// Files made of settings rows, whose height and vertical padding belong to `controls::row_frame`.
 fn made_of_rows(path: &str) -> bool {
-    ["src/panes", "src/activity", "src/updates.rs", "src/rules"]
+    ["src/panes", "src/activity", "src/rules"]
         .iter()
         .any(|prefix| path.starts_with(prefix))
 }

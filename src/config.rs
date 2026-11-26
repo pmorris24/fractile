@@ -35,7 +35,6 @@ struct AppSettings {
     hud_position: HudPosition,
     hud_stay: bool,
     layout: LayoutMode,
-    update_channel: UpdateChannel,
     mouse_follows_focus: MouseFollowsFocus,
     trackpad_swipe: bool,
     menu_bar_icon: MenuBarIcon,
@@ -51,7 +50,6 @@ impl Default for AppSettings {
             hud_position: HudPosition::default(),
             hud_stay: false,
             layout: LayoutMode::default(),
-            update_channel: UpdateChannel::default(),
             mouse_follows_focus: MouseFollowsFocus::default(),
             trackpad_swipe: true,
             menu_bar_icon: MenuBarIcon::default(),
@@ -86,36 +84,6 @@ impl LayoutMode {
         match value {
             "dwindle" => Some(Self::Dwindle),
             "columns" => Some(Self::Columns),
-            _ => None,
-        }
-    }
-}
-
-/// Which release channel the in-app updater follows: `settings.update_channel`.
-#[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
-#[serde(rename_all = "lowercase")]
-pub enum UpdateChannel {
-    /// Public releases.
-    #[default]
-    Stable,
-    /// A build of every merge to `dev`.
-    Dev,
-}
-
-impl UpdateChannel {
-    #[must_use]
-    pub const fn as_str(self) -> &'static str {
-        match self {
-            Self::Stable => "stable",
-            Self::Dev => "dev",
-        }
-    }
-
-    #[must_use]
-    pub fn parse(value: &str) -> Option<Self> {
-        match value {
-            "stable" => Some(Self::Stable),
-            "dev" => Some(Self::Dev),
             _ => None,
         }
     }
@@ -297,8 +265,6 @@ struct RawSettings {
     #[serde(default)]
     layout: LayoutMode,
     #[serde(default)]
-    update_channel: UpdateChannel,
-    #[serde(default)]
     mouse_follows_focus: MouseFollowsFocus,
     #[serde(default = "default_trackpad_swipe")]
     trackpad_swipe: bool,
@@ -324,7 +290,6 @@ impl Default for RawSettings {
             hud_position: HudPosition::default(),
             hud_stay: false,
             layout: LayoutMode::default(),
-            update_channel: UpdateChannel::default(),
             mouse_follows_focus: MouseFollowsFocus::default(),
             trackpad_swipe: true,
             menu_bar_icon: MenuBarIcon::default(),
@@ -485,7 +450,6 @@ impl Config {
                 hud_position: raw.settings.hud_position,
                 hud_stay: raw.settings.hud_stay,
                 layout: raw.settings.layout,
-                update_channel: raw.settings.update_channel,
                 mouse_follows_focus: raw.settings.mouse_follows_focus,
                 trackpad_swipe: raw.settings.trackpad_swipe,
                 menu_bar_icon: raw.settings.menu_bar_icon,
@@ -537,11 +501,6 @@ impl Config {
     #[must_use]
     pub const fn layout(&self) -> LayoutMode {
         self.settings.layout
-    }
-
-    #[must_use]
-    pub const fn update_channel(&self) -> UpdateChannel {
-        self.settings.update_channel
     }
 
     #[must_use]
@@ -1424,24 +1383,6 @@ monitor = "main"
         assert!(saved.labs().scratchpad);
         assert!(load_path(&path).unwrap().labs().scratchpad);
         std::fs::remove_dir_all(directory).unwrap();
-    }
-
-    #[test]
-    fn parses_update_channel_with_stable_default() {
-        assert_eq!(Config::default().update_channel(), UpdateChannel::Stable);
-        assert_eq!(
-            Config::parse("version = 1").unwrap().update_channel(),
-            UpdateChannel::Stable
-        );
-        for channel in [UpdateChannel::Stable, UpdateChannel::Dev] {
-            let source = format!(
-                "version = 1\n[settings]\nupdate_channel = {:?}\n",
-                channel.as_str()
-            );
-            assert_eq!(Config::parse(&source).unwrap().update_channel(), channel);
-            assert_eq!(UpdateChannel::parse(channel.as_str()), Some(channel));
-        }
-        assert!(Config::parse("version = 1\n[settings]\nupdate_channel = \"beta\"\n").is_err());
     }
 
     #[test]

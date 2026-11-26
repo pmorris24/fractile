@@ -166,7 +166,6 @@ pub(crate) fn config_help(executable: &str) -> String {
         "  hud_position    bottom | top | left | right  Workspace HUD screen edge (default: bottom)",
         "  hud_stay        true | false      Keep the Workspace HUD on screen; windows tile clear of it (default: false)",
         "  layout          dwindle | columns How new windows split the layout (default: dwindle)",
-        "  update_channel  stable | dev      In-app updater release channel (default: stable)",
         "  mouse_follows_focus  off | display | window  Move pointer on focus changes (default: off)",
         "  trackpad_swipe  true | false      Three-finger swipe switches workspaces (default: true);",
         "                                    read only with labs.swipe_switch on; get/show print the file's value",
@@ -311,7 +310,6 @@ pub(crate) fn ctl_help(executable: &str) -> String {
         "  open <url-or-target>       Open Settings on a spaceman:// link, pane, feature, or Lab",
         "  open-settings              Open the Spaceman Settings window",
         "  open-accessibility         Open Accessibility onboarding / System Settings",
-        "  check-for-updates          Check for Spaceman updates",
         "  toggle-launch-at-login     Toggle Launch at Login registration",
         "  restart | quit             Restore parked windows and exit the agent (does not relaunch)",
     ]

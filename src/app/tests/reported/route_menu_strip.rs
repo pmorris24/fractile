@@ -56,7 +56,11 @@ fn route_rule_owns_a_new_window_centered_in_the_menu_strip() {
 
         runtime.cycle(outputs, &AtomicBool::new(false)).unwrap();
 
-        assert_eq!(runtime.workspaces.workspace_of(&created), Some(target), "y={y}");
+        assert_eq!(
+            runtime.workspaces.workspace_of(&created),
+            Some(target),
+            "y={y}"
+        );
         assert!(runtime.parked.contains_key(&created), "y={y}");
         assert!(
             runtime

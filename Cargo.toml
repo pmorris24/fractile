@@ -21,11 +21,6 @@ libc = "0.2"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 block2 = "0.6"
-# The updater's SHA-256 checks and HTTPS (updater/transport.rs): Security.framework TLS and the
-# system's trusted roots. `native-tls`, not `native-tls-no-default`: ureq 3.4 checks the former's
-# name and panics on any https request without it.
-sha2 = "0.11"
-ureq = { version = "3.4.2", default-features = false, features = ["native-tls"] }
 objc2 = { version = "0.6", default-features = false, features = ["std"] }
 objc2-app-kit = { version = "0.3.2", default-features = false, features = [
   "block2",

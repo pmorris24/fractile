@@ -66,7 +66,6 @@ final class Agent {
         [
             "SPACEMAN_APPLICATION_SUPPORT": state.path,
             "SPACEMAN_CONFIG": config.path,
-            "SPACEMAN_DISABLE_UPDATES": "1",
         ]
     }
 

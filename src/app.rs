@@ -70,8 +70,8 @@ pub use app_loop::{MainThreadAgent, TickOutcome};
 pub use bridge::{
     HUD_MAX_DISPLAYS, HUD_MAX_FLOATING, HUD_MAX_TILES, HUD_PORTRAIT_PREVIEW_RECT, HUD_PREVIEW_RECT,
     UiAction, UiAgentSnapshot, UiBridge, UiHudDisplay, UiHudEvent, UiHudKind, UiHudLayout,
-    UiHudTile, UiHudToast, UiHudWorkspace, UiLaunchAtLogin, UiNews, UiUpdateStatus,
-    UiWorkspaceWindows, hud_preview_rect,
+    UiHudTile, UiHudToast, UiHudWorkspace, UiLaunchAtLogin, UiNews, UiWorkspaceWindows,
+    hud_preview_rect,
 };
 
 pub struct HostCallbacks {
@@ -91,8 +91,6 @@ use runtime::*;
 use worker::spawn_worker;
 
 pub const TICK_INTERVAL: Duration = Duration::from_millis(25);
-/// Prefix on `UiAgentSnapshot::last_error` when installing a staged update fails.
-pub const UPDATE_FAILED_PREFIX: &str = "Update failed: ";
 /// Retile without an event this often while the user is active...
 const FALLBACK_REFRESH_INTERVAL: Duration = Duration::from_secs(1);
 /// ...and this often once nothing has happened for `RECENT_ACTIVITY`. Each
@@ -236,10 +234,6 @@ pub(crate) enum Action {
     ToggleHud,
     SetHud(bool),
     SetPauseOnBuiltinDisplay(bool),
-    CheckForUpdates,
-    InstallUpdate,
-    ConfirmUpdateSwitch,
-    DownloadUpdate,
     Terminate,
     ToggleLaunchAtLogin,
     Restart,
@@ -414,7 +408,6 @@ impl FinalGesture {
 enum ExitIntent {
     Quit,
     Restart,
-    Update,
     Terminate,
 }
 
@@ -423,7 +416,6 @@ impl ExitIntent {
         match self {
             Self::Quit => "quitting",
             Self::Restart => "restarting",
-            Self::Update => "updating",
             Self::Terminate => "terminating",
         }
     }
@@ -466,7 +458,7 @@ pub fn prepare() -> Result<(PreparedAgent, UiBridge), String> {
     log_event!(
         "agent started (pid {}, version {})",
         std::process::id(),
-        crate::updater::build_version()
+        crate::build_version()
     );
     let scope = ManagementScope::from_environment()?;
     let parked = load_parked()?;
@@ -539,7 +531,7 @@ pub fn prepare() -> Result<(PreparedAgent, UiBridge), String> {
 }
 
 impl PreparedAgent {
-    /// Installs main-thread AppKit hooks (termination gate, status item, updater,
+    /// Installs main-thread AppKit hooks (termination gate, status item,
     /// AX event monitor) once winit's `NSApplication` delegate is active.
     /// `setup_tour_open` holds automatic tiling until the first-run setup tour
     /// finishes, so a new install is never retiled behind the setup window.

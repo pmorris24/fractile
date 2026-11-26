@@ -2,7 +2,7 @@
 
 Spaceman is an experimental public preview, not a broadly qualified release.
 
-- The downloadable preview is currently arm64-only; x86_64 and universal packaging are not validated.
+- Builds are currently arm64-only; x86_64 and universal packaging are not validated.
 - The declared macOS 14 minimum lacks a documented validation matrix across supported macOS releases.
 - Clean-machine install, permission, upgrade, recovery, and uninstall have not been release-qualified.
 - The app depends on private `_AXUIElementGetWindow` behavior and cannot target the Mac App Store.

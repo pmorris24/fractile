@@ -46,11 +46,10 @@ pub mod swipe;
 #[allow(unsafe_code)]
 mod termination;
 #[cfg(target_os = "macos")]
-mod updater;
-pub use updater::build_version;
-#[cfg(target_os = "macos")]
 #[allow(unsafe_code)]
 mod url_handler;
+mod version;
+pub use version::build_version;
 pub mod window_memory;
 pub mod workspace;
 

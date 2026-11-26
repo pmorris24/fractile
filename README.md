@@ -5,7 +5,7 @@ native window, including a selected Ghostty native tab, can change physical Acce
 without creating a new tile. Spaceman keeps the logical slot and replaces its physical binding when
 the evidence is unambiguous.
 
-[Website](https://anoma.ly/spaceman) · [Download for Apple silicon](https://anoma.ly/spaceman/download/macos-arm64)
+[Website](https://anoma.ly/spaceman)
 
 > [!WARNING]
 > Disable AeroSpace, yabai, Amethyst, and every other window manager before first opening Spaceman
@@ -46,40 +46,10 @@ Spaceman uses Accessibility APIs to observe, focus, move, and resize eligible wi
 SIP change. Read [Security and privacy](docs/security-and-privacy.md),
 [Compatibility](docs/compatibility.md), and [Limitations](docs/limitations.md) before trying it.
 
-## Install Preview
-
-The current preview is a Developer ID-signed, notarized arm64 build for Apple silicon Macs. It remains
-experimental; read [Known limitations](docs/limitations.md) before installing it.
-
-1. Disable every other window manager. For AeroSpace: `aerospace enable off`.
-2. Download, install and open the latest build:
-
-   ```sh
-   curl -fL https://anoma.ly/spaceman/download/macos-arm64 -o /tmp/Spaceman.zip \
-     && ditto -x -k /tmp/Spaceman.zip /Applications && open /Applications/Spaceman.app
-   ```
-
-3. Follow the setup tour: grant Accessibility access, then press `Arrange & start`.
-4. Optionally link the bundled CLI: `mkdir -p "$HOME/.local/bin" && ln -sf "/Applications/Spaceman.app/Contents/MacOS/spaceman" "$HOME/.local/bin/spaceman"`.
-
-To check the download first, get
-[Spaceman for Apple silicon](https://anoma.ly/spaceman/download/macos-arm64)
-and its [SHA-256 checksum](https://anoma.ly/spaceman/download/macos-arm64.sha256),
-run `shasum -a 256 -c Spaceman.zip.sha256`, then unzip it and move `Spaceman.app`
-to `/Applications`.
-
-Spaceman updates itself from Anomaly's release service: when an update is ready, choose
-`Install & restart` in Settings or the menu's install item, or just quit and it installs for the next launch.
-Spaceman restores every window first.
-Builds after 0.3.0 are signed by Anomaly with the bundle ID `anomaly.spaceman`, so macOS asks for
-Accessibility access once more after that update; your config, workspaces and parked-window recovery
-carry over. If a manual replacement is necessary, pause and quit the running version and confirm that every parked
-window has returned before replacing its bundle.
-
 ## Install From Source
 
-Source builds are distinct from the notarized preview artifact and require your own `Developer ID
-Application` signing identity.
+Spaceman installs from source only. Source builds require your own `Developer ID Application`
+signing identity.
 
 Requirements: macOS, Xcode command-line tools, Rust 1.100.0, and a Developer ID Application identity.
 
@@ -99,9 +69,6 @@ Ensure `~/.local/bin` is on `PATH`. For zsh:
 printf '\nexport PATH="$HOME/.local/bin:$PATH"\n' >> "$HOME/.zshrc"
 exec zsh
 ```
-
-Artifact users do not need a Developer ID identity. See [Releasing](docs/releasing.md) for the
-maintainer workflow.
 
 ## First Open
 
@@ -135,7 +102,7 @@ Accessibility permission, the menu reports the permission error and tiling remai
 tiling, the menu lists each display's workspaces (the visible one checked, plus any holding windows,
 with their apps' icons); choosing one switches to it. The menu actions are `Setup Tour…` (while
 Accessibility is missing), `Pause Tiling` (or `Resume Tiling` while paused), `Workspace HUD`,
-`Launch at Login`, `Settings...` (`⌘,`), `Check for Updates...`, and `Quit Spaceman` (`⌘Q`). Settings
+`Launch at Login`, `Settings...` (`⌘,`), and `Quit Spaceman` (`⌘Q`). Settings
 includes `General`, `Layout` (Dwindle or Columns new-window tiling, window gaps, screen-edge padding,
 and a single-window width for wide displays, over a live preview), `Rules`, `Workspaces`,
 `Shortcuts`, with `[labs] activity = true`, `Activity` (title-free arrangement diagnostics and
@@ -237,15 +204,13 @@ Follow [Recovery](docs/recovery.md) for stuck or crashed processes and safe unin
 - [Compatibility](docs/compatibility.md)
 - [Known limitations](docs/limitations.md)
 - [Development](docs/development.md)
-- [Releasing](docs/releasing.md)
 - [Contributing](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)
 - [Historical implementation plan](PLAN.md) and [historical research](docs/RESEARCH.md)
 
 ## Status
 
-Public experimental preview. The arm64 artifact is signed, notarized, stapled, checksummed, and served
-through Anomaly's release service, which the app's own updater checks. Broad release readiness is not proven: minimum-OS runtime validation,
+Experimental, installed from source. Broad release readiness is not proven: minimum-OS runtime validation,
 clean-machine install/upgrade/recovery/uninstall qualification, wider architecture support, and a
 concise product demo remain outstanding.
 

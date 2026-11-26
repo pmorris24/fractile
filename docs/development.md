@@ -13,14 +13,12 @@ scripts/dev --once   # build and install once
 
 Each install restores every window, swaps `/Applications/Spaceman.app`, and resumes tiling, so
 workspaces and layouts come back. `scripts/install-app.sh --bundle PATH --wait-idle SECS` installs a
-built bundle once the keyboard and mouse have been idle; the updater
-(`scripts/spaceman-updater`, set up with `scripts/install-updater`) uses it to keep the installed
-app on `dev`.
+built bundle once the keyboard and mouse have been idle.
 
 ## Verify
 
 ```sh
-scripts/check            # fmt, release metadata, clippy, tests, audit, CA roots, replay, config, website
+scripts/check            # fmt, clippy, tests, audit, replay, config, website
 scripts/check --no-web   # the same without the website
 ```
 
@@ -101,7 +99,7 @@ the run's `state/` (`agent.log`, `journal.jsonl`, `parked-windows.json`,
 step fails.
 
 Isolation: Spaceman starts through LaunchServices with `SPACEMAN_APPLICATION_SUPPORT` and
-`SPACEMAN_CONFIG` pointing into the receipt directory and `SPACEMAN_DISABLE_UPDATES=1`. Its config
+`SPACEMAN_CONFIG` pointing into the receipt directory. Its config
 ignores every app already running, so it only ever tiles, parks or focuses the gauntlet's own
 windows, and each window is a separate process the gauntlet closes at the end. It refuses to start
 while another Spaceman, AeroSpace, yabai or Amethyst runs. Interrupting it quits Spaceman (which

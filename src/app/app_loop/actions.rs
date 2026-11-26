@@ -151,25 +151,6 @@ impl MainThreadAgent {
                     self.config_stamp = crate::config::modified();
                     self.ui_dirty = true;
                 }
-                Action::CheckForUpdates => {
-                    self.clear_update_failed_error();
-                    self.updater.check_now();
-                    self.ui_dirty = true;
-                }
-                Action::InstallUpdate if !self.updater.ready() => {
-                    status_item::set_status("No update is ready to install");
-                }
-                Action::ConfirmUpdateSwitch => {
-                    self.clear_update_failed_error();
-                    self.updater.confirm_switch();
-                    self.ui_dirty = true;
-                }
-                Action::DownloadUpdate => match self.updater.open_download() {
-                    Ok(()) => self.clear_update_failed_error(),
-                    Err(error) => {
-                        status_item::set_status(&format!("Could not open the update: {error}"));
-                    }
-                },
                 Action::ToggleLaunchAtLogin => {
                     let result = login_item::toggle();
                     self.launch_at_login = UiLaunchAtLogin::from_result(result.clone());
@@ -190,22 +171,19 @@ impl MainThreadAgent {
                         }
                     }
                 }
-                Action::Restart | Action::Quit | Action::InstallUpdate | Action::Terminate => {
+                Action::Restart | Action::Quit | Action::Terminate => {
                     let intent = match action {
                         Action::Restart => ExitIntent::Restart,
-                        Action::InstallUpdate => ExitIntent::Update,
                         Action::Terminate => ExitIntent::Terminate,
                         _ => ExitIntent::Quit,
                     };
                     permission_guide::close();
-                    self.resume_after_update = intent == ExitIntent::Update && self.automatic;
                     self.exit_intent = Some(intent);
                     self.stop_automatic_and_restore(RestoreKind::Restore);
                     if self.worker.is_busy() {
                         status_item::set_status(match intent {
                             ExitIntent::Quit => "Restoring windows...",
                             ExitIntent::Restart => "Restarting · restoring windows...",
-                            ExitIntent::Update => "Update ready · restoring windows...",
                             ExitIntent::Terminate => "Terminating · restoring windows...",
                         });
                     } else {

@@ -132,7 +132,8 @@ impl<B: WorkspaceBackend> WorkspaceRuntime<B> {
                 // tiles it again, #160) or keeps it floating by hand. A float set by hand this
                 // session stays manual whatever its rules say (#493). A window no workspace owns
                 // yet floats by hand when the setup tour or a recalled placement floated it.
-                self.workspaces.settle_restored_float(&window.id, rules.floats());
+                self.workspaces
+                    .settle_restored_float(&window.id, rules.floats());
                 let recalled = self.memory.recalled(&window.id);
                 let by_hand = self.workspaces.is_manual_float(&window.id)
                     || (self.workspaces.residency(&window.id).is_none()

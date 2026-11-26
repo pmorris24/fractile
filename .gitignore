@@ -6,10 +6,8 @@ target/
 /dist/
 /website/dist/
 /website/node_modules/
-/.github/release/wrangler/node_modules/
 /website/*.tsbuildinfo
 .wrangler/
-.release.env
 *.p12
 *.provisionprofile
 /scratchpad/

@@ -8,7 +8,7 @@ pub(crate) mod workspaces;
 
 use rune::{El, Icon};
 use spaceman::{
-    app::{UiLaunchAtLogin, UiUpdateStatus},
+    app::UiLaunchAtLogin,
     config::{LabFeature, LabsConfig},
 };
 
@@ -204,14 +204,6 @@ pub(crate) const SCENES: &[Scene] = &[
     ("hud-customize-top", |ui| {
         reset_fixture(ui, Pane::General);
         general::fixture_hud_sheet(ui, spaceman::config::HudPosition::Top);
-    }),
-    ("general-update-ready", |ui| {
-        reset_fixture(ui, Pane::General);
-        if let Some(agent) = &mut ui.agent {
-            agent.update = UiUpdateStatus::Ready {
-                version: "0.3.3".into(),
-            };
-        }
     }),
     ("layout", |ui| reset_fixture(ui, Pane::Layout)),
     // Gaps, uneven edges for a custom bar, and a width cap that brings in the ultrawide.

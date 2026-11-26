@@ -1,7 +1,7 @@
 //! `[settings]` and `[labs]` scalar accessors on `Doc`.
 
 use spaceman::config::{
-    HudPosition, HudStyle, LabFeature, LayoutMode, MenuBarIcon, MouseFollowsFocus, UpdateChannel,
+    HudPosition, HudStyle, LabFeature, LayoutMode, MenuBarIcon, MouseFollowsFocus,
 };
 use toml_edit::{Item, Table, value};
 
@@ -89,25 +89,6 @@ impl Doc {
         self.set_setting(
             "layout",
             (mode != LayoutMode::default()).then(|| value(mode.as_str())),
-        );
-    }
-
-    /// The release channel the updater follows, from `settings.update_channel` (defaults to
-    /// stable).
-    pub fn update_channel(&self) -> UpdateChannel {
-        self.doc
-            .get("settings")
-            .and_then(Item::as_table_like)
-            .and_then(|table| table.get("update_channel"))
-            .and_then(Item::as_str)
-            .and_then(UpdateChannel::parse)
-            .unwrap_or_default()
-    }
-
-    pub fn set_update_channel(&mut self, channel: UpdateChannel) {
-        self.set_setting(
-            "update_channel",
-            (channel != UpdateChannel::default()).then(|| value(channel.as_str())),
         );
     }
 

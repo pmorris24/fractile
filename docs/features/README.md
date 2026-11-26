@@ -17,18 +17,16 @@ docs/features/
 
 ## Availability
 
-Baseline: `dev` at 0.3.2 (`93897a4`). Everything below except named workspaces and
-secondary-display workspaces ships in the notarized preview at
-<https://anoma.ly/spaceman/download/macos-arm64> and in source builds.
+Baseline: `dev` at 0.3.2 (`93897a4`). Everything below ships in source builds.
 
 | Surface | Status |
 | --- | --- |
-| Workspaces, tiling, Fullscreen Layout, parking/restoration | Preview artifact and source builds |
-| Parking exemption, remembered placements (`window-memory.json`), arrangement journal, `spaceman doctor` | Preview artifact and source builds |
+| Workspaces, tiling, Fullscreen Layout, parking/restoration | Source builds |
+| Parking exemption, remembered placements (`window-memory.json`), arrangement journal, `spaceman doctor` | Source builds |
 | Settings › Labs | One off-by-default switch per `[labs]` feature, written to `config.toml`; `spaceman://labs/<slug>` highlights a row. Covered by `agent/src/panes/labs.rs` and `agent/src/panes/tests.rs` |
-| Single-process Rune Settings, four-step [setup tour](setup-tour.md), non-activating Workspace HUD (`[settings] hud`), dimmed paused menu bar glyph & `[settings] pause_on_builtin_display` auto-pause/resume with transient HUD toast | Preview artifact and source builds |
+| Single-process Rune Settings, four-step [setup tour](setup-tour.md), non-activating Workspace HUD (`[settings] hud`), dimmed paused menu bar glyph & `[settings] pause_on_builtin_display` auto-pause/resume with transient HUD toast | Source builds |
 | Named workspaces A-Z | Opt-in: enabled by a `route` rule or `[[workspaces]]` entry |
-| Custom shortcuts (`[shortcuts]`) | Preview artifact and source builds; rebind, unbind, or replace the built-in keys in `config.toml` or by recording a chord in Settings › Shortcuts, with a base `modifier` for the built-ins, applied live without a restart. Covered by unit tests in `src/shortcuts.rs`, `src/hotkeys.rs`, `src/config.rs`, `src/app/app_loop/live_shortcuts.rs`, `agent/src/rules/shortcuts/tests.rs`, and `agent/src/panes/shortcuts/`; no live harness exercises a rebound chord or live re-registration yet |
+| Custom shortcuts (`[shortcuts]`) | Source builds; rebind, unbind, or replace the built-in keys in `config.toml` or by recording a chord in Settings › Shortcuts, with a base `modifier` for the built-ins, applied live without a restart. Covered by unit tests in `src/shortcuts.rs`, `src/hotkeys.rs`, `src/config.rs`, `src/app/app_loop/live_shortcuts.rs`, `agent/src/rules/shortcuts/tests.rs`, and `agent/src/panes/shortcuts/`; no live harness exercises a rebound chord or live re-registration yet |
 | Scratchpad (`[labs] scratchpad`) | Opt-in Lab in source builds; off by default, shortcuts register only when on |
 | Empty workspace focus (`[labs] empty_workspace_focus`, Settings › Labs › Workspaces › `Focus empty workspaces on other displays`) | Opt-in Lab in source builds; off by default, an empty workspace chosen on another display is the focused one for commands until another window takes focus ([Workspaces](workspaces.md)) |
 | Dragged floats join their display's workspace (`[labs] float_follows_display`) | Opt-in Lab in source builds; off by default, switched in Settings › Labs › Windows. Covered by `src/app/tests/three_display.rs` |

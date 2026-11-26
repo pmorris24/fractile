@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{
     Config, HudPosition, HudStyle, LayoutMode, MenuBarIcon, MouseFollowsFocus, RouteWindows,
-    UpdateChannel, parse_path,
+    parse_path,
 };
 use crate::{DisplaySelector, WorkspaceId, Workspaces};
 
@@ -56,8 +56,6 @@ struct EditableSettings {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     layout: Option<LayoutMode>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    update_channel: Option<UpdateChannel>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     mouse_follows_focus: Option<MouseFollowsFocus>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     trackpad_swipe: Option<bool>,
@@ -82,7 +80,6 @@ impl EditableSettings {
             && self.hud_position.is_none()
             && self.hud_stay.is_none()
             && self.layout.is_none()
-            && self.update_channel.is_none()
             && self.mouse_follows_focus.is_none()
             && self.trackpad_swipe.is_none()
             && self.menu_bar_icon.is_none()

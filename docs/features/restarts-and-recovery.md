@@ -1,6 +1,6 @@
 # Restarts And Recovery
 
-Quit, update, crash, or reboot without losing windows off-screen, and come back to the same
+Quit, reinstall, crash, or reboot without losing windows off-screen, and come back to the same
 workspaces and layouts; when something looks wrong, find out what happened.
 
 ## Sub-features
@@ -9,7 +9,7 @@ workspaces and layouts; when something looks wrong, find out what happened.
 Spaceman restarts, apps keep running                       // recover.resume
 └── workspace-state.json valid -> same workspaces, layouts, Fullscreen Layout, last focus
 
-Pause / auto-pause on built-in display / quit / update / macOS termination   // recover.restore-on-exit
+Pause / auto-pause on built-in display / quit / macOS termination   // recover.restore-on-exit
 ├── Every parked window moved back to its original frame
 │   └── that frame's display unplugged -> moved onto the main display instead
 ├── Recovery entry removed only after the window server confirms arrival
@@ -17,16 +17,6 @@ Pause / auto-pause on built-in display / quit / update / macOS termination   // 
 │       for as long as it lasts (a window on another macOS desktop restores once that desktop
 │       is shown); only the window server dropping it or its app quitting retires the entry
 └── Restoration fails -> exit blocked, menu shows "Restoring windows · N failed", retries
-
-Install & restart (in-app update)                          // recover.update
-├── Update downloaded and verified first (size, SHA-256, anomaly.spaceman, Developer ID, team)
-├── Same exit as quit: tiling stops, every parked window restored
-├── Only after restoration fully succeeds -> signature re-checked, bundles swapped, relaunch
-└── Install fails after restoration -> Spaceman keeps running, tiling resumes, menu says why
-
-Quit with an update ready                                  // recover.update
-├── Same exit as quit: every parked window restored
-└── Only after restoration fully succeeds -> signature re-checked, bundles swapped, no relaunch
 
 Crash or hard kill                                         // recover.crash
 ├── Next launch, valid state   -> parked windows reveal as their workspaces become visible
@@ -43,7 +33,7 @@ Placement recall (reboot, fresh start, or app relaunch)     // recover.memory
 │   │   display, until Toggle Float tiles it
 │   ├── route/ignore rules win; disabled/unmanaged workspaces skipped
 │   └── apps launched after the startup window open on the active workspace
-├── An app relaunched mid-session (an update or restart) recalls its placements too: its new
+├── An app relaunched mid-session (a reinstall or restart) recalls its placements too: its new
 │   instance appears within 30 s of the old one quitting, or while the old one still owns windows
 │   (a quit is noticed whichever workspace the app was on, visible or hidden)
 ├── Kit moves a window back by hand within 120 s of it opening on the active workspace
@@ -64,15 +54,13 @@ Diagnose                                                   // recover.doctor
 
 ```ts
 Menu bar: workspaces (switch) | Pause Tiling (pause + restore) | Workspace HUD | Settings... (⌘,)
-          | Check for Updates... / Install Spaceman <version> and Restart | Quit Spaceman (⌘Q)
-Settings: sidebar foot -> version, Check for updates, Install & restart
-          General -> Updates (Update channel; plus one row only when there is something to act
-          on: Install & restart, Switch to Dev/Stable, Download, Check again)
+          | Quit Spaceman (⌘Q)
+Settings: sidebar foot -> version
 Settings: Activity ([labs] activity = true) -> Journal (Show in Finder) | Save snapshot
 CLI:      spaceman ctl pause | resume | quit | restart | status | debug
           spaceman doctor [hours]      // reads files directly; works with the agent stopped
           spaceman hud
-Implicit: macOS restart/log out/shutdown, Install & restart, quitting with an update ready,
+Implicit: macOS restart/log out/shutdown, scripts/install-app.sh,
           reopening Spaceman.app after a crash
 Files:    ~/Library/Application Support/Spaceman/
           ├── workspace-state.json   parked-windows.json   window-memory.json
@@ -109,14 +97,6 @@ See [Recovery](../recovery.md) for the safe manual procedure; never delete `park
   (`a_recalled_floating_placement_keeps_the_window_floating`, issue 122), and settle-before-record. Pure tests in
   `src/window_memory.rs` and `src/journal.rs` cover matching, eviction, diffing, debouncing,
   rotation, and the doctor summary. None involves a real reboot.
-- Unit, `src/updater/`: manifest decisions (the release service's shared vectors), download URLs
-  confined to `anoma.ly/release/spaceman/files/`, size/SHA-256 checks, bundle identity, signature
-  and team checks (ad-hoc bundles must fail Anomaly's requirement), the zip holding exactly
-  `Spaceman.app`, the bundle swap and staging cleanup, the install receipt and staged-update state,
-  `If-None-Match`/304 manifest caching, `Range` resumes (206, 200 and 416), the build stamp in the
-  `User-Agent`, channel-switch confirmation, the download-only plan, and the quit-time install's
-  state and receipt. The exit paths themselves (`Restored { failed: 0 }` under `ExitIntent::Update`
-  or a quit) have no automated test.
 - Live harness (not run): `scripts/live-workspaces.sh` hard-kills the agent with a parked window and
   checks startup recovery.
 - Live gauntlet, `scripts/gauntlet.sh`: SIGKILL with a window parked keeps it parked and its record on

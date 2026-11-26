@@ -1,4 +1,4 @@
-//! General pane: Accessibility (only while missing), core preferences, updates, and
+//! General pane: Accessibility (only while missing), core preferences, and
 //! configuration. The Workspace HUD's rare refinements open in its Customize sheet.
 
 use rune::{El, Tx, row};
@@ -188,7 +188,6 @@ pub fn pane(ui: &Ui, p: Paint) -> El {
         rows.push(login);
         sections.push(controls::card(p, "agent", rows));
     }
-    sections.push(crate::updates::section(ui, p));
     let config_file = highlight(
         controls::setting_row(
             p,

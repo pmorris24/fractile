@@ -3,8 +3,7 @@ use std::path::{Path, PathBuf};
 use serde::Serialize;
 use spaceman::{
     config::{
-        HudPosition, HudStyle, LabFeature, LayoutMode, MenuBarIcon, MouseFollowsFocus,
-        UpdateChannel, load_path,
+        HudPosition, HudStyle, LabFeature, LayoutMode, MenuBarIcon, MouseFollowsFocus, load_path,
     },
     spacing::{self, SpacingKey},
 };
@@ -60,7 +59,6 @@ enum SettingKey {
     HudPosition,
     HudStay,
     Layout,
-    UpdateChannel,
     MouseFollowsFocus,
     TrackpadSwipe,
     MenuBarIcon,
@@ -77,7 +75,6 @@ impl SettingKey {
             "hud_position" => Ok(Self::HudPosition),
             "hud_stay" => Ok(Self::HudStay),
             "layout" => Ok(Self::Layout),
-            "update_channel" => Ok(Self::UpdateChannel),
             "mouse_follows_focus" => Ok(Self::MouseFollowsFocus),
             "trackpad_swipe" => Ok(Self::TrackpadSwipe),
             "menu_bar_icon" => Ok(Self::MenuBarIcon),
@@ -86,7 +83,7 @@ impl SettingKey {
             other => SpacingKey::parse(other).map(Self::Spacing).ok_or_else(|| {
                 format!(
                     "unknown setting {raw:?}; valid keys: hud, hud_style, hud_position, hud_stay, layout, \
-                     update_channel, mouse_follows_focus, trackpad_swipe, menu_bar_icon, \
+                     mouse_follows_focus, trackpad_swipe, menu_bar_icon, \
                      pause_on_builtin_display, gaps.inner, gaps.outer, gaps.top, gaps.bottom, \
                      gaps.left, gaps.right, single_window_max_width, single_window_max_height"
                 )
@@ -101,7 +98,6 @@ impl SettingKey {
             Self::HudPosition => "hud_position",
             Self::HudStay => "hud_stay",
             Self::Layout => "layout",
-            Self::UpdateChannel => "update_channel",
             Self::MouseFollowsFocus => "mouse_follows_focus",
             Self::TrackpadSwipe => "trackpad_swipe",
             Self::MenuBarIcon => "menu_bar_icon",
@@ -137,13 +133,6 @@ impl SettingKey {
                 (
                     layout.to_owned(),
                     serde_json::Value::String(layout.to_owned()),
-                )
-            }
-            Self::UpdateChannel => {
-                let channel = settings.effective_update_channel().as_str();
-                (
-                    channel.to_owned(),
-                    serde_json::Value::String(channel.to_owned()),
                 )
             }
             Self::MouseFollowsFocus => {
@@ -185,7 +174,6 @@ impl SettingKey {
             Self::HudPosition => settings.hud_position.is_some(),
             Self::HudStay => settings.hud_stay.is_some(),
             Self::Layout => settings.layout.is_some(),
-            Self::UpdateChannel => settings.update_channel.is_some(),
             Self::MouseFollowsFocus => settings.mouse_follows_focus.is_some(),
             Self::TrackpadSwipe => settings.trackpad_swipe.is_some(),
             Self::MenuBarIcon => settings.menu_bar_icon.is_some(),
@@ -203,7 +191,6 @@ impl SettingKey {
             Self::HudPosition => settings.hud_position = None,
             Self::HudStay => settings.hud_stay = None,
             Self::Layout => settings.layout = None,
-            Self::UpdateChannel => settings.update_channel = None,
             Self::MouseFollowsFocus => settings.mouse_follows_focus = None,
             Self::TrackpadSwipe => settings.trackpad_swipe = None,
             Self::MenuBarIcon => settings.menu_bar_icon = None,
@@ -385,7 +372,6 @@ enum SettingValue {
     HudStyle(HudStyle),
     HudPosition(HudPosition),
     Layout(LayoutMode),
-    UpdateChannel(UpdateChannel),
     MouseFollowsFocus(MouseFollowsFocus),
     TrackpadSwipe(bool),
     MenuBarIcon(MenuBarIcon),
@@ -425,13 +411,6 @@ impl SettingValue {
                 .ok_or_else(|| {
                     format!(
                         "invalid value for layout: expected 'dwindle' or 'columns', got {raw_value:?}"
-                    )
-                }),
-            SettingKey::UpdateChannel => UpdateChannel::parse(raw_value)
-                .map(Self::UpdateChannel)
-                .ok_or_else(|| {
-                    format!(
-                        "invalid value for update_channel: expected 'stable' or 'dev', got {raw_value:?}"
                     )
                 }),
             SettingKey::MouseFollowsFocus => MouseFollowsFocus::parse(raw_value)
@@ -522,13 +501,6 @@ fn run_set(args: &[&str], path_override: Option<&Path>) -> Result<String, String
                 doc.settings.layout = Some(parsed);
                 (
                     format!("set layout = {}", parsed.as_str()),
-                    serde_json::Value::String(parsed.as_str().to_owned()),
-                )
-            }
-            SettingValue::UpdateChannel(parsed) => {
-                doc.settings.update_channel = Some(parsed);
-                (
-                    format!("set update_channel = {}", parsed.as_str()),
                     serde_json::Value::String(parsed.as_str().to_owned()),
                 )
             }

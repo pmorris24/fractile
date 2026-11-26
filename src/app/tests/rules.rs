@@ -225,8 +225,14 @@ fn columns_route_joins_a_nested_focused_split_and_keeps_the_other_column() {
     // A third row under `below`; `right` keeps half the display at full height (#494).
     let frames = &runtime.backend.frames;
     let column = [&top, &below, &created].map(|window| frames[window]);
-    assert!(column.iter().all(|frame| frame.x == column[0].x), "{frames:?}");
-    assert!(column[0].y < column[1].y && column[1].y < column[2].y, "{frames:?}");
+    assert!(
+        column.iter().all(|frame| frame.x == column[0].x),
+        "{frames:?}"
+    );
+    assert!(
+        column[0].y < column[1].y && column[1].y < column[2].y,
+        "{frames:?}"
+    );
     assert_eq!(frames[&right].width, column[0].width, "{frames:?}");
     assert!(frames[&right].x > column[0].x, "{frames:?}");
     assert!(frames[&right].height > column[0].height * 2, "{frames:?}");

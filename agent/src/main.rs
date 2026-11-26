@@ -1,5 +1,5 @@
 //! Spaceman's single-process macOS agent (`spaceman-agent`): runs the window
-//! manager, native status bar item, updater, Settings window, and Rune
+//! manager, native status bar item, Settings window, and Rune
 //! Playground (`⇧⌘D` / `--playground`) on one AppKit + Rune event loop.
 
 #[cfg(not(test))]
@@ -19,7 +19,6 @@ mod onboarding;
 mod panes;
 mod playground;
 mod rules;
-mod updates;
 mod view;
 
 use std::sync::Arc;
@@ -318,33 +317,6 @@ impl Ui {
 
     pub fn toggle_launch_at_login(&self) {
         self.send_action(UiAction::ToggleLaunchAtLogin);
-    }
-
-    pub fn check_for_updates(&self) {
-        self.send_action(UiAction::CheckForUpdates);
-    }
-
-    /// Restores every window, then installs the ready update and relaunches.
-    pub fn install_update(&self) {
-        self.send_action(UiAction::InstallUpdate);
-    }
-
-    /// Switches to the update channel's release on offer.
-    pub fn confirm_update_switch(&self) {
-        self.send_action(UiAction::ConfirmUpdateSwitch);
-    }
-
-    /// Opens the release's download, for a copy that can't update itself.
-    pub fn download_update(&self) {
-        self.send_action(UiAction::DownloadUpdate);
-    }
-
-    /// Saves the channel, then checks it at once.
-    pub fn set_update_channel(&mut self, channel: spaceman::config::UpdateChannel) {
-        self.edit(|doc| doc.set_update_channel(channel));
-        if self.error.is_none() {
-            self.check_for_updates();
-        }
     }
 
     /// Sets the Workspace HUD off (`None`) or on with `style` (`Some(style)`).

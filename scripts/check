@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# The one check: formatting, code shape, release metadata, clippy, tests, dependency audit, CA
-# roots, fixture replay, example config and the website build. Run it before merging.
+# The one check: formatting, code shape, clippy, tests, dependency audit, fixture replay, example
+# config and the website build. Run it before merging.
 #   scripts/check            everything
 #   scripts/check --no-web   skip the website
 set -euo pipefail
@@ -9,12 +9,10 @@ step() { printf '\n== %s\n' "$*"; }
 step fmt; cargo fmt --all -- --check
 step file size; scripts/file-size.sh
 step folder shape; scripts/folder-shape.sh
-step release metadata; scripts/validate-release.sh --metadata-only
 step clippy; cargo clippy --locked --workspace --all-targets -- -D warnings
 step test; cargo test --locked --workspace --all-targets
 step audit
 if cargo audit --version >/dev/null 2>&1; then cargo audit; else echo "cargo-audit isn't installed here; skipped (CI runs it)"; fi
-step ca roots; cargo build --locked --workspace --bins && scripts/check-ca-roots.sh target/debug/spaceman target/debug/spaceman-agent
 step replay; cargo run --locked -- replay fixtures/ghostty-tab-replacement.json
 step config; cargo run --locked -- config-check config.example.toml
 if [ "${1:-}" != "--no-web" ]; then

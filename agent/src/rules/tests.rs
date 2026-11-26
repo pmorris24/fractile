@@ -214,23 +214,6 @@ fn hud_position_round_trips_and_leaves_bottom_out() {
 }
 
 #[test]
-fn update_channel_round_trips_and_leaves_stable_out() {
-    use spaceman::config::{Config, UpdateChannel};
-    let mut doc = Doc::parse(SOURCE);
-    assert_eq!(doc.update_channel(), UpdateChannel::Stable);
-    doc.set_update_channel(UpdateChannel::Dev);
-    assert_eq!(doc.update_channel(), UpdateChannel::Dev);
-    let dev = doc.source();
-    assert!(dev.contains("update_channel = \"dev\""));
-    assert_eq!(
-        Config::parse(&dev).unwrap().update_channel(),
-        UpdateChannel::Dev
-    );
-    doc.set_update_channel(UpdateChannel::Stable);
-    assert!(!doc.source().contains("[settings]"));
-}
-
-#[test]
 fn mouse_follows_focus_round_trips_preserving_comments_and_leaves_off_out() {
     use spaceman::config::{Config, MouseFollowsFocus};
     let mut doc = Doc::parse(SOURCE);

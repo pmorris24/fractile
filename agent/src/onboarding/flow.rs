@@ -253,7 +253,7 @@ pub fn record_completion() {
 
 /// Decides whether a launch opens into the setup tour, and at which step.
 /// Existing trusted installs with no in-progress tour record completion silently
-/// so unattended `spaceman-updater` restarts stay windowless.
+/// so unattended restarts stay windowless.
 pub(crate) fn launch_step_at(directory: &Path, accessibility_trusted: bool) -> Option<Step> {
     if completion_recorded_at(directory) {
         return None;

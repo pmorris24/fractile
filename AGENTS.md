@@ -5,25 +5,16 @@ This file is the current engineering contract. README and `docs/` describe curre
 
 ## Working Here
 
-- Agents merge their own Spaceman PRs and redeploy (release, publish, install) without asking.
+- Agents merge their own Spaceman PRs and redeploy (build and install) without asking.
 - CI's macOS checks run only on dispatch and tags, so run `scripts/check` locally before merging
   and say so in the PR.
-- The installed app follows `dev`: `scripts/spaceman-updater` (LaunchAgent
-  `anomaly.spaceman.updater`, set up with `scripts/install-updater`, log in
-  `~/.local/share/spaceman/updater.log`) builds a merged `dev` once pushes stop for 3 minutes, or
-  after 10 at most, and installs it when the keyboard and mouse have been idle for 2 minutes. You
-  don't need to install by hand after a merge.
+- Spaceman installs only from source: `scripts/install-app.sh` builds the signed bundle and
+  installs it to `/Applications`; `scripts/dev --once` does the same once.
 - Dev loop: `scripts/dev` rebuilds and reinstalls on every save; restart restores every window and
-  resumes tiling. The updater puts `dev` back on its next build.
+  resumes tiling.
 - Release notes are one file per version in `changelog/<version>.md` (frontmatter `date` and
-  `summary`, then `## Major`, `## Improvements`, and `## Fixes`).
-  The Release workflow (`.github/workflows/release.yml`, on `dev`) builds, signs with Anomaly's
-  Developer ID, notarizes and publishes to `https://anoma.ly/release/spaceman` (dev channel on every
-  push, stable on dispatch); `.github/` changes require CODEOWNERS review; then
-  installed builds update themselves from it (`src/updater.rs`). Until every install has a build
-  with that updater, `scripts/release-app.sh` on the release Mac (which holds the Sparkle key and
-  `wrangler` auth) still puts each stable zip into the R2 appcast that older (Sparkle) builds read.
-  See [docs/releasing.md](docs/releasing.md).
+  `summary`, then `## Major`, `## Improvements`, and `## Fixes`). `.github/` changes require
+  CODEOWNERS review.
 - Bundle ID is `anomaly.spaceman` (was `com.kitlangton.spaceman` through 0.3.0). State and config
   paths (`~/Library/Application Support/Spaceman`, `~/.config/spaceman`) don't depend on it.
 - Code shape: keep Rust files under 800 non-test lines (1,500 hard cap, 1,000 for test files;
@@ -64,8 +55,6 @@ This file is the current engineering contract. README and `docs/` describe curre
 - `src/status_item.rs`, `src/login_item.rs`, `src/termination.rs`: main-thread
   menu bar status item, login registration, and asynchronous AppKit termination
   coordination on winit's application delegate.
-- `src/updater.rs`, `src/updater/`: the in-app updater (release-service protocol, HTTPS transport,
-  bundle staging, Developer ID verification, swap and relaunch after restoration).
 - `src/hotkeys.rs`, `src/keyboard_layout.rs`: Carbon global shortcut adapters.
 - `src/macos.rs`, `src/macos/`: Accessibility/Core Graphics observation and writes, display
   discovery, native event monitor, and native handle cache.
@@ -91,10 +80,8 @@ This file is the current engineering contract. README and `docs/` describe curre
 - `src/geometry.rs`, `src/live.rs`: frame math, off-screen target selection, live observation
   completion, placement filtering, and CLI probe helpers.
 - `src/permission_guide.rs`, `native/permission_guide.m`: Accessibility onboarding adapter.
-- `.github/workflows/release.yml`, `.github/release/`: the CI release (build, Developer ID sign,
-  notarize, verify, publish to the Anomaly release service, tag).
-- `scripts/`: icon generation, verified Sparkle setup, signed bundle assembly/install, notarized
-  release preparation/validation/publication, and destructive live acceptance harnesses.
+- `scripts/`: icon generation, signed bundle assembly/install, and destructive live acceptance
+  harnesses.
 
 ## Product Invariants
 
@@ -115,7 +102,7 @@ This file is the current engineering contract. README and `docs/` describe curre
 - Persist a window's original frame before moving it off-screen.
 - Remove parked metadata only after restoration succeeds and the removal is durably persisted. Roll
   metadata back in memory if persistence fails.
-- Pause, quit, restart-for-install, hotkey failure, and worker failure must favor restoration. Never
+- Pause, quit, restart, hotkey failure, and worker failure must favor restoration. Never
   recommend deleting `parked-windows.json` as the first recovery step.
 - `workspace-state.json` must validate before restoration. Invalid config/state may be ignored so
   parked recovery can proceed; malformed parked state must not be silently discarded.
@@ -132,8 +119,6 @@ This file is the current engineering contract. README and `docs/` describe curre
   solely for matching multi-window apps across restarts, and must never enter logs, `spaceman
   doctor`, debug output, HUD output, fixtures, serialized snapshots, or control responses.
 - No telemetry, network access, or update checks without explicit product and security review.
-  The updater (`src/updater.rs`) is the one reviewed network path: release builds only, the
-  release service's manifest and `files/` only, nothing about the install beyond the User-Agent.
 - Keep `control.sock` and `control.lock` at mode `0600`, bound under the user's Application Support
   directory, with bounded requests and single-agent locking.
 - Treat `_AXUIElementGetWindow` as private, optional, dynamically resolved compatibility risk. Do not

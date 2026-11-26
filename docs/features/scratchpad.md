@@ -26,7 +26,7 @@ Leave the scratchpad                                                 // scratchp
 
 Stays safe                                                           // scratchpad.recovery
 ├── Switch away from a workspace showing one -> it hides, stays hidden until summoned
-├── Pause / quit / restart / update / crash -> hidden windows restored on screen, then tiled
+├── Pause / quit / restart / crash -> hidden windows restored on screen, then tiled
 ├── Lab switched off while windows are hidden -> they come back on screen
 └── Membership is not persisted; titles never leave memory
 ```

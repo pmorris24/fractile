@@ -24,24 +24,7 @@ command and presses it. It does not require disabling System Integrity Protectio
 
 ## Data Handling
 
-Spaceman has no telemetry or analytics. Release builds check Anomaly's release service for updates:
-10 seconds after launch, then hourly (every 15 minutes on the dev channel) and on
-`Check for Updates...`, they request `https://anoma.ly/release/spaceman/desktop/<channel>.json` over
-HTTPS with the system's TLS and trusted roots and no redirects. The only thing a request says about
-the install is `User-Agent: spaceman/<channel>/<version>` (the channel and version the build was
-released as), plus `If-None-Match` with the manifest's last ETag and `Range` to resume an
-interrupted download. A newer release's zip is downloaded only
-from `https://anoma.ly/release/spaceman/files/`, and is used only once its size and SHA-256 match the
-manifest and the `Spaceman.app` inside it is `anomaly.spaceman`, passes
-`codesign --verify --deep --strict` against Anomaly's notarized Developer ID requirement
-(`app/update-requirement.txt`), and carries team `5NZ4Q7NXJ4`. Automatic installation is off: the
-update waits for `Install & restart` or a quit, either of which restores every parked window before
-the bundle is swapped (`renamex_np`); only `Install & restart` relaunches. Downloads, the install's
-rollout bucket (a random 0–99 that never leaves the Mac) and `installed.json` (which release the
-updater last installed) live in `~/Library/Application Support/Spaceman/updates/`. Builds from
-source never check. An install in a location the user can't write to checks, but only offers the
-zip, which `Download` opens in the browser. `SPACEMAN_DISABLE_UPDATES=1` turns checks off for a
-launch.
+Spaceman has no telemetry or analytics and makes no network requests.
 Other runtime data stays on the Mac unless the user shares CLI output or files.
 
 The optional `Launch at Login` menu action registers or unregisters the signed main app through

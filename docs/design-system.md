@@ -34,7 +34,7 @@ Three surfaces draw objects, not settings rows, and keep their own measurements:
 4. **A modal is a small page.** Every modal is `modal_panel` inside `modal_sheet`, with a
    `ModalWidth`, and reuses the page's rails.
 5. **One accent per screen.** `ButtonKind::Primary` marks at most one action per screen. A state
-   (an update is ready) is a Secondary button with a `status_dot`.
+   that wants attention is a Secondary button with a `status_dot`.
 6. **A settings row never paints a hover.** Only the controls inside it react; a row pressed as a
    whole is built on `controls::row_frame` with its own `on_press`.
 7. **Verify by looking.** Render every view you touched as a `--snap` scene at 860 × 580 and
@@ -152,19 +152,18 @@ Shortcut rows show the chord the base modifier produces, never a hard-coded ⌥.
 
 ## Copy
 
-- Sentence case for every label, button, title and section label: "Install & restart", "Reset to
-  defaults", "Launch at login". Proper nouns keep their capitals: Spaceman, Finder, System
+- Sentence case for every label, button, title and section label: "Reset to defaults", "Launch at
+  login". Proper nouns keep their capitals: Spaceman, Finder, System
   Settings, Workspace HUD, Dwindle.
-- Use "…" (one character) for progress ("Checking for updates…") and for a button that opens a
+- Use "…" (one character) for progress ("Restoring windows…") and for a button that opens a
   further choice ("Customize…").
 - A row's description is one phrase with no closing period; it says what the current choice does
   ("Each workspace's apps"), not what the control is. Two sentences keep their periods.
 - One line per control. No intro paragraphs above cards, no state words beside switches, no hint
   that repeats a label.
-- Say a thing once: the version and the update check live in the sidebar foot; General's Updates
-  card adds a row only when there is something to act on.
+- Say a thing once: the version lives in the sidebar foot.
 - Exception: the native menu bar menu (`src/status_item.rs`) follows the macOS title-case
-  convention ("Launch at Login", "Check for Updates...").
+  convention ("Launch at Login", "Quit Spaceman").
 
 ## Enforcement
 

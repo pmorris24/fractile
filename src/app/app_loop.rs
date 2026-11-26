@@ -123,11 +123,6 @@ pub struct MainThreadAgent {
     swipes: Option<macos::SwipeMonitor>,
     /// Option key presses, to notice hotkeys macOS stopped delivering.
     keys: Option<macos::KeyMonitor>,
-    updater: crate::updater::Updater,
-    /// The updater revision last shown.
-    update_revision: u64,
-    /// Tiling was on when Install & restart began, so a failed install resumes it.
-    resume_after_update: bool,
     setup: setup::SetupRequests,
 }
 
@@ -242,12 +237,8 @@ impl MainThreadAgent {
             activation_refresh_at: None,
             swipes: None,
             keys: None,
-            updater: crate::updater::Updater::start(),
-            update_revision: 0,
-            resume_after_update: false,
             setup: setup::SetupRequests::default(),
         };
-        status_item::set_update(agent.updater.status().ready_version());
         if automatic {
             agent.listen_for_input();
         } else if start_auto_paused {
@@ -376,32 +367,13 @@ impl MainThreadAgent {
                         self.ui_dirty = true;
                     }
                 }
-                // Every parked window is back on screen: only now may the
-                // bundle be swapped and Spaceman relaunch into it.
-                WorkerResult::Restored { failed: 0 }
-                    if self.exit_intent == Some(ExitIntent::Update) =>
-                {
-                    match self.updater.install() {
-                        Ok(version) => {
-                            log_event!("update {version} installed; relaunching");
-                            self.worker.stop();
-                            termination::allow_next();
-                            return TickOutcome::Quit;
-                        }
-                        Err(error) => self.update_failed(&error),
-                    }
-                }
-                // Every parked window is back: a ready update may now be
-                // swapped in for the next launch.
                 WorkerResult::Restored { failed: 0 }
                     if self.exit_intent == Some(ExitIntent::Terminate) =>
                 {
-                    self.install_update_on_quit();
                     self.worker.stop();
                     return TickOutcome::TerminateAppKit;
                 }
                 WorkerResult::Restored { failed: 0 } if self.exit_intent.is_some() => {
-                    self.install_update_on_quit();
                     self.worker.stop();
                     termination::allow_next();
                     return TickOutcome::Quit;
@@ -453,16 +425,6 @@ impl MainThreadAgent {
             self.tick_automatic();
         }
 
-        let revision = self.updater.revision();
-        if revision != self.update_revision {
-            self.update_revision = revision;
-            let update_status = self.updater.status();
-            status_item::set_update(update_status.ready_version());
-            if update_status != UiUpdateStatus::Failed {
-                self.clear_update_failed_error();
-            }
-            self.ui_dirty = true;
-        }
         self.maybe_publish_ui();
         TickOutcome::Continue
     }
@@ -500,43 +462,6 @@ impl MainThreadAgent {
         self.last_error = Some("Exit blocked because window restoration is unavailable".into());
         self.ui_dirty = true;
         status_item::set_status("Exit blocked · restoration unavailable");
-    }
-
-    /// Quitting with an update ready installs it for the next launch. Called
-    /// only once every parked window is restored; a failure never holds the quit.
-    fn install_update_on_quit(&self) {
-        match self.updater.install_on_quit() {
-            Some(Ok(version)) => log_event!("update {version} installed; it starts next launch"),
-            Some(Err(error)) => log_event!("update install at quit failed: {error}"),
-            None => {}
-        }
-    }
-
-    /// The update couldn't be installed after windows were restored: stay
-    /// running and resume tiling as it was.
-    fn update_failed(&mut self, error: &str) {
-        log_event!("update install failed: {error}");
-        self.worker.finish_restore();
-        self.exit_intent = None;
-        let message = format!("{UPDATE_FAILED_PREFIX}{error}");
-        self.last_error = Some(message.clone());
-        self.ui_dirty = true;
-        status_item::set_status(&message);
-        if std::mem::take(&mut self.resume_after_update) {
-            drop(self.actions_sender.send(Action::ToggleAutomatic));
-        }
-    }
-
-    pub(super) fn clear_update_failed_error(&mut self) {
-        if is_update_failed_error(self.last_error.as_deref()) {
-            self.last_error = None;
-            self.ui_dirty = true;
-            if self.automatic {
-                status_item::clear_status();
-            } else {
-                status_item::set_status(self.paused_status());
-            }
-        }
     }
 
     fn queue_worker_input(&mut self, input: QueuedInput) {
@@ -658,7 +583,6 @@ impl MainThreadAgent {
             automatic: self.automatic,
             hud: self.hud,
             launch_at_login: self.launch_at_login.clone(),
-            update: self.updater.status(),
             active_workspaces: self.active_workspaces.clone(),
             windows: self.workspace_windows.clone(),
             last_error: self.last_error.clone(),
@@ -666,30 +590,21 @@ impl MainThreadAgent {
     }
 }
 
-pub(super) fn is_update_failed_error(error: Option<&str>) -> bool {
-    error.is_some_and(|error| error.starts_with(UPDATE_FAILED_PREFIX))
-}
-
 pub(super) fn is_shortcuts_not_applied_error(error: Option<&str>) -> bool {
     error.is_some_and(|error| error.starts_with(live_shortcuts::NOT_APPLIED))
 }
 
 /// Updates `last_error` when automatic tiling starts and returns the status text
-/// to show in the menu bar. A failed update installation is unrelated to tiling
-/// and survives the automatic resume that follows it; an unapplied shortcut table
-/// also stays retained while the previous table remains active.
+/// to show in the menu bar. An unapplied shortcut table stays retained while the
+/// previous table remains active.
 pub(super) fn automatic_started_status<'a>(
     last_error: &'a mut Option<String>,
     automatic_status: &'a str,
 ) -> &'a str {
-    if is_update_failed_error(last_error.as_deref()) {
-        last_error.as_deref().unwrap_or(automatic_status)
-    } else {
-        if !is_shortcuts_not_applied_error(last_error.as_deref()) {
-            *last_error = None;
-        }
-        automatic_status
+    if !is_shortcuts_not_applied_error(last_error.as_deref()) {
+        *last_error = None;
     }
+    automatic_status
 }
 
 /// Applies a fresh background login-item status probe to both the published
@@ -727,32 +642,23 @@ fn worker_status_update(
     result: Result<usize, &str>,
 ) -> Option<String> {
     match result {
-        Err(error) if is_cancelled_error(error) => {
-            // Routine cancellation is not a failure: keep any retained status
-            // error intact instead of overwriting it or flashing an error.
-            is_update_failed_error(last_error.as_deref())
-                .then(|| last_error.clone())
-                .flatten()
-        }
+        // Routine cancellation is not a failure: keep any retained error intact
+        // instead of overwriting it or flashing an error.
+        Err(error) if is_cancelled_error(error) => None,
         Err(error) => {
             *last_error = Some(error.to_owned());
             Some(error.to_owned())
         }
         Ok(failed) => {
-            let keep_update = is_update_failed_error(last_error.as_deref());
-            if !keep_shortcuts && !keep_update {
+            if !keep_shortcuts {
                 *last_error = None;
             }
-            if failed > 0 {
-                Some(format!(
+            (failed > 0).then(|| {
+                format!(
                     "{failed} window operation{} failed",
                     if failed == 1 { "" } else { "s" },
-                ))
-            } else if keep_update {
-                last_error.clone()
-            } else {
-                None
-            }
+                )
+            })
         }
     }
 }
@@ -773,31 +679,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn automatic_resume_and_clean_cycles_preserve_update_install_failure() {
-        let reason = format!("{UPDATE_FAILED_PREFIX}could not write update receipt");
-        let mut last_error = Some(reason.clone());
-
-        let resumed_status = automatic_started_status(
-            &mut last_error,
-            "Automatic tiling enabled · Workspaces 1 / 6",
-        );
-        assert_eq!(resumed_status, reason);
-        assert_eq!(last_error.as_deref(), Some(reason.as_str()));
-
-        let cycle_status = worker_status_update(&mut last_error, false, Ok(0));
-        assert_eq!(cycle_status.as_deref(), Some(reason.as_str()));
-        assert_eq!(last_error.as_deref(), Some(reason.as_str()));
-
-        let failed_ops_status = worker_status_update(&mut last_error, false, Ok(2));
-        assert_eq!(
-            failed_ops_status.as_deref(),
-            Some("2 window operations failed")
-        );
-        assert_eq!(last_error.as_deref(), Some(reason.as_str()));
-    }
-
-    #[test]
-    fn automatic_start_and_clean_cycles_still_clear_non_update_errors() {
+    fn automatic_start_and_clean_cycles_clear_errors_except_unapplied_shortcuts() {
         let mut last_error = Some("Accessibility permission is required".to_owned());
         let status = automatic_started_status(
             &mut last_error,
@@ -834,20 +716,13 @@ mod tests {
 
     #[test]
     fn routine_cancellations_preserve_retained_errors_and_never_store_cancelled() {
-        let reason = format!("{UPDATE_FAILED_PREFIX}could not write update receipt");
+        let reason = "Shortcuts not applied: conflict".to_owned();
         let mut last_error = Some(reason.clone());
 
-        // Routine cancellation while automatic preserves the retained install failure.
+        // Routine cancellation while automatic keeps the retained error and shows nothing.
         assert_eq!(
-            worker_status_update(&mut last_error, false, Err("workspace operation cancelled")),
-            Some(reason.clone())
-        );
-        assert_eq!(last_error.as_deref(), Some(reason.as_str()));
-
-        // The following clean cycle still retains the install failure.
-        assert_eq!(
-            worker_status_update(&mut last_error, false, Ok(0)),
-            Some(reason.clone())
+            worker_status_update(&mut last_error, true, Err("workspace operation cancelled")),
+            None
         );
         assert_eq!(last_error.as_deref(), Some(reason.as_str()));
 

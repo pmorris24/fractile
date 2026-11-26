@@ -6,7 +6,7 @@ use std::sync::OnceLock;
 use rune::{App, Playground};
 use spaceman::{
     WorkspaceId,
-    app::{UiAgentSnapshot, UiLaunchAtLogin, UiUpdateStatus},
+    app::{UiAgentSnapshot, UiLaunchAtLogin},
 };
 
 use crate::{Pane, Ui, activity, controls::WINDOW, hud, map, onboarding, panes, rules::Doc};
@@ -107,7 +107,6 @@ pub(crate) fn reset_fixture(ui: &mut Ui, pane: Pane) {
         automatic: true,
         hud: true,
         launch_at_login: UiLaunchAtLogin::On,
-        update: UiUpdateStatus::Idle,
         active_workspaces: vec![
             WorkspaceId::THREE,
             WorkspaceId::named('M').unwrap_or(WorkspaceId::SIX),
