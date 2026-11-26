@@ -302,15 +302,15 @@ fn the_setup_inventory_carries_no_titles_and_counts_parked_windows() {
             .collect::<Vec<_>>(),
         vec![(CHROME, 4), (TERMINAL, 1), (STICKIES, 1)]
     );
-    assert_eq!(fresh.main.width, 1000);
+    assert_eq!(fresh.lanes[0].width, 1000);
     assert_eq!(
-        fresh.main.workspaces,
+        fresh.lanes[0].workspaces,
         (1..=4)
             .map(|number| WorkspaceId::new(number).unwrap())
             .collect::<Vec<_>>()
     );
     assert_eq!(
-        fresh.secondary.as_ref().map(|lane| lane.workspaces.len()),
+        fresh.lanes.get(1).map(|lane| lane.workspaces.len()),
         Some(6)
     );
     let text = format!("{fresh:?}");
@@ -334,7 +334,7 @@ fn the_setup_inventory_carries_no_titles_and_counts_parked_windows() {
     runtime.backend.observation = None;
     let unreadable = runtime.inventory(&outputs());
     assert!(unreadable.apps.is_empty());
-    assert_eq!(unreadable.main.workspaces.len(), 4);
+    assert_eq!(unreadable.lanes[0].workspaces.len(), 4);
 }
 
 #[test]

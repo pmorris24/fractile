@@ -550,6 +550,10 @@ pub(crate) const SCENES: &[Scene] = &[
     ("onboarding-arrange-dual", |ui| {
         board_scene(ui, Board::fixture_dual())
     }),
+    // Three displays as they sit on the desk.
+    ("onboarding-arrange-triple", |ui| {
+        board_scene(ui, Board::fixture_triple())
+    }),
     // Terminal held over workspace 3.
     ("onboarding-arrange-drag", |ui| {
         let mut board = Board::fixture_laptop();

@@ -2,7 +2,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 use fractile::WorkspaceId;
 
-use super::arrange::{Board, Geometry, Target, Tile};
+use super::arrange::{Board, Target, Tile};
 use super::conflicts::{Conflict, switch_on};
 use super::flow::{
     Effect, Flow, Input, SetupState, Step, completion_recorded_at, launch_step_at,
@@ -308,7 +308,7 @@ fn tiles_on(board: &Board, workspace: WorkspaceId) -> Vec<&str> {
 
 /// Drags tile `index` of `from` to a board point, as the pointer would.
 fn drag_to(board: &mut Board, from: WorkspaceId, index: usize, to: (f32, f32)) {
-    let geometry = Geometry::new(&board.plan);
+    let geometry = board.geometry();
     let (card, planned) = geometry
         .cards
         .iter()
@@ -337,7 +337,7 @@ fn drag_to(board: &mut Board, from: WorkspaceId, index: usize, to: (f32, f32)) {
 }
 
 fn card_centre(board: &Board, workspace: WorkspaceId) -> (f32, f32) {
-    let geometry = Geometry::new(&board.plan);
+    let geometry = board.geometry();
     let card = geometry
         .cards
         .iter()
@@ -370,7 +370,7 @@ fn the_board_moves_a_tile_by_click_or_drag_and_floats_by_drop() {
     assert!(board.drag.is_none());
 
     // Dropped between cards, nothing moves.
-    let geometry = Geometry::new(&board.plan);
+    let geometry = board.geometry();
     assert_eq!(geometry.target_at(-20.0, 30.0), None);
     drag_to(&mut board, WorkspaceId::TWO, 0, (-20.0, 30.0));
     assert_eq!(tiles_on(&board, WorkspaceId::TWO), [SAFARI]);
@@ -386,7 +386,7 @@ fn the_board_moves_a_tile_by_click_or_drag_and_floats_by_drop() {
     assert_eq!(tiles_on(&board, WorkspaceId::TWO).last(), Some(&TERMINAL));
 
     // A cancelled drag puts nothing anywhere.
-    let geometry = Geometry::new(&board.plan);
+    let geometry = board.geometry();
     let card = &geometry.cards[0];
     let tile = Tile {
         workspace: card.workspace,
@@ -426,9 +426,9 @@ fn the_board_moves_a_tile_by_click_or_drag_and_floats_by_drop() {
 fn the_board_lays_out_one_display_two_displays_and_one_window() {
     // One display: its cards share a line and fit the step.
     let laptop = Board::fixture_laptop();
-    let geometry = Geometry::new(&laptop.plan);
+    let geometry = laptop.geometry();
     assert_eq!(geometry.cards.len(), 5);
-    assert!(geometry.cards.iter().all(|card| card.caption.is_none()));
+    assert_eq!(geometry.screens.len(), 1);
     assert!(
         geometry
             .cards
@@ -447,15 +447,33 @@ fn the_board_lays_out_one_display_two_displays_and_one_window() {
     assert!(frames[0][0] + frames[0][2] <= frames[1][0]);
     assert!(frames[1][1] + frames[1][3] <= frames[2][1]);
 
-    // Two displays: each names itself above its first card.
+    // Two displays, then three: each is its own box where it sits on the desk, holding its
+    // cards, and no two boxes overlap.
     let dual = Board::fixture_dual();
-    let geometry = Geometry::new(&dual.plan);
-    let captions: Vec<_> = geometry
-        .cards
-        .iter()
-        .filter_map(|card| card.caption.map(|_| card.workspace))
-        .collect();
-    assert_eq!(captions, [WorkspaceId::ONE, WorkspaceId::FIVE]);
+    for board in [&dual, &Board::fixture_triple()] {
+        let geometry = board.geometry();
+        let screens = &geometry.screens;
+        assert_eq!(screens.len(), board.inventory().unwrap().lanes.len());
+        for (card, planned) in geometry.cards.iter().zip(&board.plan.workspaces) {
+            assert_eq!(card.workspace, planned.workspace);
+            let screen = screens.iter().find(|s| s.screen == planned.screen).unwrap();
+            assert!(card.x >= screen.x && card.x + card.w <= screen.x + screen.w);
+            assert!(card.y >= screen.y && card.y + card.mini_h <= screen.y + screen.h);
+        }
+        for (index, a) in screens.iter().enumerate() {
+            for b in &screens[index + 1..] {
+                let apart =
+                    a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y;
+                assert!(apart, "{} overlaps {}", a.name, b.name);
+            }
+            assert!(a.x >= 0.0 && a.x + a.w <= super::arrange::WIDTH);
+        }
+    }
+    // The laptop of the three sits left of the main display, as on the desk.
+    let triple = Board::fixture_triple().geometry();
+    let x_of = |name: &str| triple.screens.iter().find(|s| s.name == name).unwrap().x;
+    assert!(x_of("Built-in Retina Display") < x_of("Studio Display"));
+    assert!(x_of("Studio Display") < x_of("LG UltraFine"));
     assert_eq!(tiles_on(&dual, WorkspaceId::ONE), [SAFARI, SAFARI]);
     assert_eq!(tiles_on(&dual, WorkspaceId::FIVE).len(), 2);
 
@@ -518,11 +536,11 @@ fn the_worker_inventory_becomes_the_plan_only_while_a_tour_is_open() {
                 3
             ],
         }],
-        main: Lane {
+        lanes: vec![Lane {
             width: 1512,
             workspaces: vec![WorkspaceId::ONE, WorkspaceId::TWO, WorkspaceId::THREE],
-        },
-        secondary: None,
+            ..Lane::default()
+        }],
     };
     let mut ui = crate::playground::blank_fixture();
     assert!(!super::inventory(&mut ui, inventory()));

@@ -9,6 +9,12 @@ const WIDE: i32 = 2560;
 fn lane(width: i32, workspaces: std::ops::RangeInclusive<u8>) -> Lane {
     Lane {
         width,
+        frame: Rect {
+            width,
+            height: 900,
+            ..Rect::default()
+        },
+        name: String::new(),
         workspaces: workspaces
             .map(|number| WorkspaceId::new(number).unwrap())
             .collect(),
@@ -42,16 +48,14 @@ fn app(bundle_id: &str, windows: usize) -> OpenApp {
 fn single(width: i32, apps: Vec<OpenApp>) -> Inventory {
     Inventory {
         apps,
-        main: lane(width, 1..=10),
-        secondary: None,
+        lanes: vec![lane(width, 1..=10)],
     }
 }
 
 fn dual(apps: Vec<OpenApp>) -> Inventory {
     Inventory {
         apps,
-        main: lane(LAPTOP, 1..=4),
-        secondary: Some(lane(WIDE, 5..=10)),
+        lanes: vec![lane(LAPTOP, 1..=4), lane(WIDE, 5..=10)],
     }
 }
 
@@ -147,7 +151,7 @@ fn one_display_gives_each_role_its_own_workspace() {
     assert!(
         plan.workspaces
             .iter()
-            .all(|entry| entry.screen == Screen::Main)
+            .all(|entry| entry.screen == Screen::MAIN)
     );
 }
 
@@ -309,13 +313,7 @@ fn two_displays_keep_web_and_code_on_main_and_the_rest_on_secondary() {
     let screens: Vec<_> = plan.workspaces.iter().map(|entry| entry.screen).collect();
     assert_eq!(
         screens,
-        vec![
-            Screen::Main,
-            Screen::Main,
-            Screen::Secondary,
-            Screen::Secondary,
-            Screen::Secondary,
-        ]
+        vec![Screen::MAIN, Screen::MAIN, Screen(1), Screen(1), Screen(1),]
     );
 
     // With little open, each display still shows its first two workspaces.
@@ -345,8 +343,7 @@ fn every_tile_is_placed_even_when_every_workspace_is_taken() {
             app("com.apple.Terminal", 2),
             app("com.tinyspeck.slackmacgap", 1),
         ],
-        main: lane(LAPTOP, 1..=3),
-        secondary: None,
+        lanes: vec![lane(LAPTOP, 1..=3)],
     };
     let plan = plan(&inventory);
     assert_eq!(plan.tile_count(), 12);
@@ -357,8 +354,7 @@ fn every_tile_is_placed_even_when_every_workspace_is_taken() {
 fn a_display_without_workspaces_plans_nothing_to_tile() {
     let inventory = Inventory {
         apps: vec![app("com.apple.Safari", 2), app("com.apple.Stickies", 1)],
-        main: Lane::default(),
-        secondary: None,
+        lanes: vec![Lane::default()],
     };
     let plan = plan(&inventory);
     assert!(plan.workspaces.is_empty());
@@ -536,7 +532,7 @@ fn nothing_built_from_an_observation_carries_a_window_title() {
             },
         ],
     };
-    let inventory = Inventory::from_observation(&observation, lane(LAPTOP, 1..=10), None);
+    let inventory = Inventory::from_observation(&observation, vec![lane(LAPTOP, 1..=10)]);
     assert_eq!(inventory.apps.len(), 2);
     assert_eq!(inventory.apps[0].windows.len(), 3);
     assert_eq!(
@@ -583,5 +579,40 @@ fn dwindle_halves_the_last_tiles_space_across_its_longer_side() {
     for count in 1..=6 {
         let area: f32 = dwindle(count).iter().map(|frame| frame[2] * frame[3]).sum();
         assert!((area - 1.0).abs() < 1e-5, "{count} tiles cover {area}");
+    }
+}
+
+#[test]
+fn three_displays_each_get_their_share() {
+    let inventory = Inventory {
+        apps: vec![
+            app("com.apple.Safari", 1),
+            app("com.apple.Terminal", 1),
+            app("com.tinyspeck.slackmacgap", 1),
+            app("com.apple.Notes", 1),
+            app("com.spotify.client", 1),
+        ],
+        lanes: vec![lane(LAPTOP, 1..=4), lane(WIDE, 5..=7), lane(WIDE, 8..=10)],
+    };
+    let plan = plan(&inventory);
+    let on = |screen: usize| {
+        plan.workspaces
+            .iter()
+            .filter(|entry| entry.screen == Screen(screen))
+            .flat_map(|entry| entry.tiles.clone())
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(on(0), vec!["com.apple.Safari", "com.apple.Terminal"]);
+    assert_eq!(on(1), vec!["com.tinyspeck.slackmacgap", "com.apple.Notes"]);
+    assert_eq!(on(2), vec!["com.spotify.client"]);
+    // Every display shows at least its first two workspaces.
+    for screen in 0..3 {
+        assert!(
+            plan.workspaces
+                .iter()
+                .filter(|entry| entry.screen == Screen(screen))
+                .count()
+                >= 2
+        );
     }
 }

@@ -10,7 +10,7 @@
 //! projects, and a rule would pull every later window of a browser or terminal back to one
 //! workspace.
 
-use crate::{AppObservation, NativeObservation, WorkspaceId};
+use crate::{AppObservation, NativeObservation, Rect, WorkspaceId};
 
 #[cfg(test)]
 mod tests;
@@ -42,9 +42,12 @@ pub struct OpenApp {
     pub windows: Vec<OpenWindow>,
 }
 
-/// A display: its usable width and the workspaces that show on it, in order.
+/// A display: its name, where it sits on the desk (its usable frame, y down), its usable width
+/// and the workspaces that show on it, in order.
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct Lane {
+    pub name: String,
+    pub frame: Rect,
     pub width: i32,
     pub workspaces: Vec<WorkspaceId>,
 }
@@ -60,23 +63,18 @@ impl Lane {
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct Inventory {
     pub apps: Vec<OpenApp>,
-    pub main: Lane,
-    pub secondary: Option<Lane>,
+    /// Every display with workspaces: the main one first, then the others left to right.
+    pub lanes: Vec<Lane>,
 }
 
 impl Inventory {
     /// The open apps of `observation`, merged by bundle ID in the order first seen. Only each
     /// window's size and resizability are read.
     #[must_use]
-    pub fn from_observation(
-        observation: &NativeObservation,
-        main: Lane,
-        secondary: Option<Lane>,
-    ) -> Self {
+    pub fn from_observation(observation: &NativeObservation, lanes: Vec<Lane>) -> Self {
         let mut inventory = Self {
             apps: Vec::new(),
-            main,
-            secondary,
+            lanes,
         };
         for application in &observation.applications {
             let AppObservation::Complete { app, windows, .. } = application else {
@@ -298,11 +296,12 @@ fn tile_count(app: &OpenApp) -> usize {
         .max(1)
 }
 
-/// Which display a planned workspace shows on.
+/// Which display a planned workspace shows on: its lane in the inventory, the main one `0`.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Screen {
-    Main,
-    Secondary,
+pub struct Screen(pub usize);
+
+impl Screen {
+    pub const MAIN: Self = Self(0);
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -383,32 +382,47 @@ fn chunk_sizes(count: usize, cap: usize) -> Vec<usize> {
         .collect()
 }
 
-/// The lane and the place in it where `role` starts.
-const fn home(role: Role, dual: bool) -> (usize, usize) {
-    match (dual, role) {
+/// The lane and the place in it where `role` starts, with `lanes` displays: Web and Code on the
+/// main one, Chat and Docs on the second, Media on a third when there is one.
+const fn home(role: Role, lanes: usize) -> (usize, usize) {
+    match (lanes, role) {
         (_, Role::Web) => (0, 0),
         (_, Role::Code) => (0, 1),
-        (false, Role::Chat) => (0, 2),
-        (false, Role::Docs | Role::Other) => (0, 3),
-        (false, Role::Media) => (0, 4),
-        (true, Role::Chat) => (1, 0),
-        (true, Role::Docs | Role::Other) => (1, 1),
-        (true, Role::Media) => (1, 2),
+        (0 | 1, Role::Chat) => (0, 2),
+        (0 | 1, Role::Docs | Role::Other) => (0, 3),
+        (0 | 1, Role::Media) => (0, 4),
+        (_, Role::Chat) => (1, 0),
+        (_, Role::Docs | Role::Other) => (1, 1),
+        (2, Role::Media) => (1, 2),
+        (_, Role::Media) => (2, 0),
     }
 }
 
 /// Suggests where the open windows go.
 #[must_use]
 pub fn plan(inventory: &Inventory) -> Plan {
-    let mut fills = vec![Fill::new(Screen::Main, &inventory.main)];
-    if let Some(secondary) = inventory
-        .secondary
-        .as_ref()
-        .filter(|lane| !lane.workspaces.is_empty())
-    {
-        fills.push(Fill::new(Screen::Secondary, secondary));
-    }
-    let dual = fills.len() == 2;
+    let Some(main) = inventory.lanes.first() else {
+        return Plan {
+            workspaces: Vec::new(),
+            floating: inventory
+                .apps
+                .iter()
+                .filter(|app| floats(app))
+                .map(|app| app.bundle_id.clone())
+                .collect(),
+        };
+    };
+    let mut fills = vec![Fill::new(Screen::MAIN, main)];
+    fills.extend(
+        inventory
+            .lanes
+            .iter()
+            .enumerate()
+            .skip(1)
+            .filter(|(_, lane)| !lane.workspaces.is_empty())
+            .map(|(index, lane)| Fill::new(Screen(index), lane)),
+    );
+    let lanes = fills.len();
     let floating: Vec<String> = inventory
         .apps
         .iter()
@@ -436,7 +450,7 @@ pub fn plan(inventory: &Inventory) -> Plan {
         if tiles.is_empty() {
             continue;
         }
-        let (lane, place) = home(role, dual);
+        let (lane, place) = home(role, lanes);
         let fill = &mut fills[lane];
         let place = place.min(fill.workspaces.len() - 1);
         let room = fill.cap.saturating_sub(fill.workspaces[place].1.len());
@@ -477,7 +491,7 @@ pub fn plan(inventory: &Inventory) -> Plan {
         fills[target.0].workspaces[target.1].1.extend(chunk);
     }
 
-    let shown = if dual { 2 } else { 4 };
+    let shown = if lanes > 1 { 2 } else { 4 };
     let workspaces = fills
         .into_iter()
         .flat_map(|fill| {
@@ -570,16 +584,14 @@ impl Plan {
         let Some(app) = inventory.app(bundle_id) else {
             return;
         };
-        let dual = self
-            .workspaces
-            .iter()
-            .any(|workspace| workspace.screen == Screen::Secondary);
-        let (lane, place) = home(role(bundle_id, app.category.as_deref()), dual);
-        let screen = if lane == 0 {
-            Screen::Main
-        } else {
-            Screen::Secondary
-        };
+        let mut screens: Vec<Screen> = Vec::new();
+        for workspace in &self.workspaces {
+            if !screens.contains(&workspace.screen) {
+                screens.push(workspace.screen);
+            }
+        }
+        let (lane, place) = home(role(bundle_id, app.category.as_deref()), screens.len());
+        let screen = screens.get(lane).copied().unwrap_or(Screen::MAIN);
         let lane_len = self
             .workspaces
             .iter()

@@ -42,10 +42,14 @@ impl<B: WorkspaceBackend> WorkspaceRuntime<B> {
                 .manages_selector(self.workspaces.assignment(workspace))
     }
 
-    /// The open windows by app, with each display's width and numbered workspaces. Only bundle
-    /// IDs, sizes and resizability leave here; an unreadable desktop is an empty inventory.
+    /// The open windows by app, with every display that has numbered workspaces: the main one
+    /// first, then the others left to right, each with its name, frame and workspaces. Only
+    /// bundle IDs, sizes and resizability leave here; an unreadable desktop is an empty
+    /// inventory.
     pub(super) fn inventory(&mut self, outputs: &macos::DisplayOutputs) -> Inventory {
         let lane = |display: &macos::DisplayOutput| Lane {
+            name: display.name.clone(),
+            frame: display.frame,
             width: display.frame.width,
             workspaces: self
                 .config
@@ -57,19 +61,23 @@ impl<B: WorkspaceBackend> WorkspaceRuntime<B> {
                 })
                 .collect(),
         };
-        let main = lane(outputs.main());
-        let secondary = outputs
-            .secondary()
-            .map(lane)
-            .filter(|lane| !lane.workspaces.is_empty());
+        let main = outputs.main();
+        let mut lanes = vec![lane(main)];
+        lanes.extend(
+            outputs
+                .ordered()
+                .into_iter()
+                .filter(|display| display.id != main.id)
+                .map(lane)
+                .filter(|lane| !lane.workspaces.is_empty()),
+        );
         let mut observation = match self.backend.snapshot(0, outputs) {
             Ok(observation) => observation,
             Err(error) => {
                 log_event!("setup inventory unavailable: {error}");
                 return Inventory {
                     apps: Vec::new(),
-                    main,
-                    secondary,
+                    lanes,
                 };
             }
         };
@@ -80,7 +88,7 @@ impl<B: WorkspaceBackend> WorkspaceRuntime<B> {
                 observed.extend(windows.iter().map(|window| window.id.clone()));
             }
         }
-        let mut inventory = Inventory::from_observation(&observation, main, secondary);
+        let mut inventory = Inventory::from_observation(&observation, lanes);
         // Windows parked on hidden workspaces are open too.
         let mut parked: Vec<_> = self
             .parked
