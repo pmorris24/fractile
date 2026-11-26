@@ -11,7 +11,7 @@ use super::{
 };
 use crate::{
     Ui,
-    map::{HEAD_GAP, HEAD_H, MapView, SLOP},
+    map::{HEAD_GAP, HEAD_H, MapView, SLOP, items::Item},
     panes::workspaces as screens,
     rules::Place,
 };
@@ -105,6 +105,9 @@ pub(in crate::map) fn fixture_drag(ui: &Ui) -> Option<ScreenDrag> {
         ui.card_w,
         &ui.displays,
         screens::remembered::displays(ui.known_displays.as_ref()),
+        ui.agent
+            .as_ref()
+            .map_or(&[], |agent| agent.windows.as_slice()),
         &[],
     );
     let panel = &layout.grid.panel;
@@ -322,9 +325,10 @@ impl MapView<'_> {
         self.card_apps(card, workspace, (w, h), Some(layer))
     }
 
-    /// The apps whose new windows open on `workspace`, in rows filling the card under its
-    /// number, with a count of the rest when they outgrow it. With the menu `layer` they drag
-    /// and take their menu; without it (the card following the pointer) they are only drawn.
+    /// The card's icons in rows under its number: each rule sending new windows to
+    /// `workspace` and each window open there, with a count of the rest when they outgrow it.
+    /// With the menu `layer` a rule's icon drags and takes its menu; without it (the card
+    /// following the pointer) they are only drawn.
     fn card_apps(
         self,
         mut card: El,
@@ -334,10 +338,15 @@ impl MapView<'_> {
     ) -> El {
         let c = &self.p.k.c;
         let rules = self.layout.rules_for(workspace);
+        let items = self.layout.items_for(workspace);
         let room = rule_room(size);
-        for (slot, rule) in rules.iter().enumerate() {
+        let name = |item: &Item| match item {
+            Item::Rule(index) => self.rule_label(&rules[*index]),
+            Item::Window(bundle) => self.window_name(bundle),
+        };
+        for (slot, item) in items.iter().enumerate() {
             let at = rule_offset(slot, size.0);
-            if rules.len() > room && slot == room - 1 {
+            if items.len() > room && slot == room - 1 {
                 card = card.child(
                     el().key("more")
                         .size(RULE_ICON, RULE_ICON)
@@ -345,14 +354,14 @@ impl MapView<'_> {
                         .fill(c.layer_03)
                         .center()
                         .help(
-                            rules[slot..]
+                            items[slot..]
                                 .iter()
-                                .map(|rule| self.rule_label(rule))
+                                .map(name)
                                 .collect::<Vec<_>>()
                                 .join(", "),
                         )
                         .child(
-                            text(format!("+{}", rules.len() - slot))
+                            text(format!("+{}", items.len() - slot))
                                 .font(self.p.tabular(self.p.tag()))
                                 .color(self.p.muted()),
                         )
@@ -360,14 +369,40 @@ impl MapView<'_> {
                 );
                 break;
             }
-            let icon = self.app_icon(rule, RULE_ICON);
-            let icon = match layer.as_deref_mut() {
-                Some(layer) => self.draggable(rule, icon, layer),
-                None => icon,
+            let icon = match item {
+                Item::Rule(index) => {
+                    let rule = &rules[*index];
+                    let icon = self.app_icon(rule, RULE_ICON);
+                    match layer.as_deref_mut() {
+                        Some(layer) => self.draggable(rule, icon, layer),
+                        None => icon,
+                    }
+                }
+                Item::Window(bundle) => self
+                    .window_icon(bundle, RULE_ICON)
+                    .key(format!("window-{slot}"))
+                    .help(format!("{} · open here now", self.window_name(bundle))),
             };
             card = card.child(icon.absolute(at.0, at.1));
         }
         card
+    }
+
+    fn window_name(self, bundle: &str) -> String {
+        self.ui.apps.cached(bundle).map_or_else(
+            || crate::apps::fallback_name(bundle),
+            |app| app.name.clone(),
+        )
+    }
+
+    /// An open window's app icon.
+    fn window_icon(self, bundle: &str, size: f32) -> El {
+        crate::controls::icon_or_initial(
+            self.p,
+            self.ui.apps.cached(bundle),
+            &self.window_name(bundle),
+            size,
+        )
     }
 
     /// A card's shape, shared by the card and the one following the pointer.

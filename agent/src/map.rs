@@ -12,13 +12,14 @@ mod arrangement;
 mod defaults;
 mod drag;
 mod filter;
+mod items;
 mod screen_menu;
 #[cfg(test)]
 mod tests;
 
 use rune::{Cursor, El, PointerPress, Tx, el, row, text};
 use rune_kit::{Menu as KitMenu, MenuItem, Placement};
-use spaceman::{WorkspaceId, config::LabFeature};
+use spaceman::{WorkspaceId, app::UiWorkspaceWindows, config::LabFeature};
 
 pub use arrangement::ScreenDrag;
 pub use defaults::{fixture_default_floats, poll as poll_default_floats};
@@ -118,6 +119,9 @@ pub(crate) const SCENES: &[Scene] = &[
             forgotten: Vec::new(),
         });
         ui.displays = arrangement::fixture_laptop_alone();
+        if let Some(agent) = ui.agent.as_mut() {
+            agent.windows = items::fixture();
+        }
     }),
     // A workspace number's menu: the screens it can show on.
     ("rules-screen-menu", |ui| {
@@ -153,6 +157,8 @@ struct Layout {
     workspaces: Vec<WorkspaceId>,
     /// Rules by workspace, parallel to `workspaces`, in file order.
     routed: Vec<Vec<Rule>>,
+    /// Each workspace's card icons, parallel to `workspaces`: its rules and its open windows.
+    items: Vec<Vec<items::Item>>,
     floating: Vec<Rule>,
     /// The built-in floats shown under the float box.
     defaults: Vec<DefaultFloat>,
@@ -173,7 +179,7 @@ impl Layout {
         displays: &[ConnectedDisplay],
         running: &[String],
     ) -> Layout {
-        Layout::with_known(doc, width, displays, &[], running)
+        Layout::with_known(doc, width, displays, &[], &[], running)
     }
 
     /// As `with_running`, with the `known` arrangement: screens in it that are unplugged keep
@@ -183,6 +189,7 @@ impl Layout {
         width: f32,
         displays: &[ConnectedDisplay],
         known: &[ConnectedDisplay],
+        windows: &[UiWorkspaceWindows],
         running: &[String],
     ) -> Layout {
         let rules = doc.rules();
@@ -197,16 +204,37 @@ impl Layout {
             &choices,
             doc.workspaces_with_referenced(WorkspaceId::numbered()),
         );
-        let panel = arrangement::Panel::new(&sections, &choices, desk, &away, width, |ws| {
-            rules
-                .iter()
-                .filter(|rule| rule.place == Place::Workspace(ws))
-                .count()
-        });
         let workspaces: Vec<WorkspaceId> = sections
             .iter()
             .flat_map(|section| section.workspaces.iter().copied())
             .collect();
+        let mut routed = vec![Vec::new(); workspaces.len()];
+        let mut floating = Vec::new();
+        for rule in rules {
+            match rule.place {
+                Place::Workspace(workspace) => {
+                    if let Some(index) = workspaces.iter().position(|ws| *ws == workspace) {
+                        routed[index].push(rule);
+                    }
+                }
+                Place::Float | Place::Pin | Place::Ignore => floating.push(rule),
+                // Tiling is the default, so a tile rule has no place on the map, except the
+                // one that tiles a built-in float: that shows on its default chip.
+                // `spaceman rules` and config.toml edit the others.
+                Place::Tile => {}
+            }
+        }
+        let items: Vec<Vec<items::Item>> = workspaces
+            .iter()
+            .zip(&routed)
+            .map(|(ws, rules)| items::items(rules, &items::open(windows, *ws)))
+            .collect();
+        let panel = arrangement::Panel::new(&sections, &choices, desk, &away, width, |ws| {
+            workspaces
+                .iter()
+                .position(|other| *other == ws)
+                .map_or(0, |index| items[index].len())
+        });
         // The panel shows every connected screen's workspaces; the sections below keep only
         // what it can't place, the workspaces saved for an unplugged display.
         let below: Vec<Section> = sections
@@ -227,22 +255,6 @@ impl Layout {
                 len: section.workspaces.len(),
             })
             .collect();
-        let mut routed = vec![Vec::new(); workspaces.len()];
-        let mut floating = Vec::new();
-        for rule in rules {
-            match rule.place {
-                Place::Workspace(workspace) => {
-                    if let Some(index) = workspaces.iter().position(|ws| *ws == workspace) {
-                        routed[index].push(rule);
-                    }
-                }
-                Place::Float | Place::Pin | Place::Ignore => floating.push(rule),
-                // Tiling is the default, so a tile rule has no place on the map, except the
-                // one that tiles a built-in float: that shows on its default chip.
-                // `spaceman rules` and config.toml edit the others.
-                Place::Tile => {}
-            }
-        }
         Layout {
             grid: DropGrid {
                 width,
@@ -254,6 +266,7 @@ impl Layout {
             choices,
             workspaces,
             routed,
+            items,
             floating,
             defaults,
         }
@@ -282,6 +295,9 @@ impl Layout {
                 return Some(((x + dx, y + dy), (ICON, ICON)));
             }
             let (x, y, w, h) = self.grid.panel.card(workspace)?;
+            let slot = self.items[index]
+                .iter()
+                .position(|item| *item == items::Item::Rule(slot))?;
             (slot < arrangement::rule_room((w, h))).then(|| {
                 let (dx, dy) = arrangement::rule_offset(slot, w);
                 (
@@ -290,6 +306,14 @@ impl Layout {
                 )
             })
         })
+    }
+
+    /// `workspace`'s card icons.
+    fn items_for(&self, workspace: WorkspaceId) -> &[items::Item] {
+        self.workspaces
+            .iter()
+            .position(|ws| *ws == workspace)
+            .map_or(&[], |index| self.items[index].as_slice())
     }
 
     /// The rules that send new windows to `workspace`, in file order.
@@ -484,6 +508,9 @@ pub fn pane(ui: &Ui, p: Paint, layer: &mut Vec<El>) -> El {
         ui.card_w,
         &ui.displays,
         crate::panes::workspaces::remembered::displays(ui.known_displays.as_ref()),
+        ui.agent
+            .as_ref()
+            .map_or(&[], |agent| agent.windows.as_slice()),
         &ui.default_floats,
     );
     let width = layout.grid.width;

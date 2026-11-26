@@ -717,7 +717,7 @@ fn unplugged_screens_keep_their_place_and_workspaces_in_the_arrangement() {
     let desk = arrangement::fixture_desk();
     let alone = arrangement::fixture_laptop_alone();
     let plugged = Layout::with_running(&ui.doc, WIDTH, &desk, &[]);
-    let unplugged = Layout::with_known(&ui.doc, WIDTH, &alone, &desk, &[]);
+    let unplugged = Layout::with_known(&ui.doc, WIDTH, &alone, &desk, &[], &[]);
     let (before, after) = (&plugged.grid.panel, &unplugged.grid.panel);
     assert_eq!(after.monitors.len(), desk.len());
     for (then, now) in before.monitors.iter().zip(&after.monitors) {
@@ -758,7 +758,7 @@ fn unplugged_screens_keep_their_place_and_workspaces_in_the_arrangement() {
         );
     }
     assert_eq!(ui.error, None);
-    let moved = Layout::with_known(&ui.doc, WIDTH, &alone, &desk, &[]);
+    let moved = Layout::with_known(&ui.doc, WIDTH, &alone, &desk, &[], &[]);
     assert_eq!(moved.grid.panel.monitor_of(workspace), Some(to));
 
     // Forgotten, an unplugged screen leaves the panel; a different desk shows only itself.
@@ -767,6 +767,6 @@ fn unplugged_screens_keep_their_place_and_workspaces_in_the_arrangement() {
         forgotten: Vec::new(),
     };
     known.forget(&after.monitors[to].id);
-    let fewer = Layout::with_known(&ui.doc, WIDTH, &alone, &known.displays, &[]);
+    let fewer = Layout::with_known(&ui.doc, WIDTH, &alone, &known.displays, &[], &[]);
     assert_eq!(fewer.grid.panel.monitors.len(), desk.len() - 1);
 }
