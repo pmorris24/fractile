@@ -1,11 +1,31 @@
 //! Dragging an app on the Rules map: from the press, through the slop that tells a drag from a
-//! click, to the drop that rewrites its rule.
+//! click, to the drop that rewrites its rule. Dropped on a workspace, the app's open windows go
+//! there too. An open window's icon with no rule behind it drags as a rule-to-be
+//! (`window_rule`): its drop writes one.
+
+use spaceman::WorkspaceId;
 
 use super::{Layout, SLOP, TILE_H};
 use crate::{
     Ui,
     rules::{Doc, Place, Rule},
 };
+
+/// Where the rule-to-be of an open window's icon numbers itself: past any real rule.
+pub(super) const WINDOW_BASE: usize = usize::MAX / 2;
+
+/// The rule an open window's icon drags as: its app sent to `workspace`, numbered by the
+/// icon's `slot` among the map's so no two icons share one and none is a real rule.
+pub(super) fn window_rule(bundle: &str, workspace: WorkspaceId, slot: usize) -> Rule {
+    Rule {
+        index: WINDOW_BASE + slot,
+        bundle_id: Some(bundle.to_owned()),
+        title: None,
+        title_contains: None,
+        place: Place::Workspace(workspace),
+        all_windows: false,
+    }
+}
 
 /// An app being dragged: its rule, where it started and how far the pointer has gone.
 #[derive(Clone, Debug, PartialEq)]
@@ -128,8 +148,24 @@ pub(super) fn drag_step(
                 || (target == Place::Float && matches!(current, Place::Ignore | Place::Pin));
             if unchanged {
                 ui.flush_pending_reload();
+                return;
+            }
+            let bundle = drag.snapshot.bundle_id.clone();
+            if drag.rule >= WINDOW_BASE {
+                let Some(bundle) = &bundle else {
+                    ui.flush_pending_reload();
+                    return;
+                };
+                ui.edit(|doc| doc.add_rule(bundle, None, target));
             } else {
                 ui.try_edit(|doc| doc.place_matching(&drag.snapshot, target));
+            }
+            // The app's windows open now follow it; a title rule's do not, as it sends only
+            // some of them.
+            if let (Place::Workspace(workspace), Some(bundle), true) =
+                (target, bundle, drag.snapshot.app_wide())
+            {
+                ui.move_app(&bundle, workspace);
             }
         }
     }

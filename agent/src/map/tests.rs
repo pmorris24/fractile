@@ -770,3 +770,59 @@ fn unplugged_screens_keep_their_place_and_workspaces_in_the_arrangement() {
     let fewer = Layout::with_known(&ui.doc, WIDTH, &alone, &known.displays, &[], &[]);
     assert_eq!(fewer.grid.panel.monitors.len(), desk.len() - 1);
 }
+
+#[test]
+fn an_open_windows_icon_dropped_on_another_workspace_sends_its_app_there() {
+    let mut ui = rules_ui();
+    ui.displays = arrangement::fixture_desk();
+    let windows = items::fixture();
+    let layout = Layout::with_known(&ui.doc, WIDTH, &ui.displays, &[], &windows, &[]);
+    // Firefox has no rule: its two windows on 2 show as icons of their own.
+    let firefox = "org.mozilla.firefox";
+    assert_eq!(
+        layout
+            .items_for(WorkspaceId::TWO)
+            .iter()
+            .filter(|item| **item == items::Item::Window(firefox.into()))
+            .count(),
+        2
+    );
+    let (_, (cx, cy, cw, ch)) = layout
+        .grid
+        .panel
+        .monitors
+        .iter()
+        .flat_map(|m| &m.cards)
+        .find(|(ws, _)| *ws == WorkspaceId::THREE)
+        .copied()
+        .unwrap();
+    let rule = super::drag::window_rule(firefox, WorkspaceId::TWO, 0);
+    let (origin, size) = ((0.0, 0.0), (20.0, 20.0));
+    let grab = (10.0, 10.0);
+    let delta = (
+        cx + cw / 2.0 - grab.0,
+        cy + ch / 2.0 + arrangement::TOP - grab.1,
+    );
+    for (phase, d) in [
+        (rune::Phase::Down, (0.0, 0.0)),
+        (rune::Phase::Move, delta),
+        (rune::Phase::Up, delta),
+    ] {
+        drag_step(
+            &mut ui,
+            phase,
+            grab,
+            d,
+            false,
+            &rule,
+            origin,
+            size,
+            |x, y| layout.grid.target_at(x, y),
+        );
+    }
+    assert_eq!(ui.error, None);
+    assert!(ui.doc.rules().iter().any(|rule| {
+        rule.bundle_id.as_deref() == Some(firefox)
+            && rule.place == Place::Workspace(WorkspaceId::THREE)
+    }));
+}

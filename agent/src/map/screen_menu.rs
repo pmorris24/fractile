@@ -9,11 +9,14 @@ use super::MapView;
 use crate::{Menu, Ui, panes::workspaces as screens};
 
 impl MapView<'_> {
-    /// A tile's number, pressed for the menu that moves the workspace to another screen.
+    /// A tile's number, pressed for the menu that moves the workspace to another screen. With
+    /// `chevron` it says so; without it (a card that drags to another screen) it is just the
+    /// number.
     pub(super) fn screen_menu(
         self,
         workspace: WorkspaceId,
         active: bool,
+        chevron: bool,
         layer: &mut Vec<El>,
     ) -> El {
         let c = &self.p.k.c;
@@ -40,7 +43,9 @@ impl MapView<'_> {
                         self.p.muted()
                     }),
             )
-            .child(rune::icon(&rune_theme_opencode::icons::CHEVRON_DOWN, 12.0).color(c.icon_muted));
+            .children(chevron.then(|| {
+                rune::icon(&rune_theme_opencode::icons::CHEVRON_DOWN, 12.0).color(c.icon_muted)
+            }));
         let mut menu = KitMenu::new(format!("screen-{workspace}-menu"))
             .trigger(trigger)
             .placement(Placement::BottomStart)

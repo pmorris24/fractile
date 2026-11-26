@@ -16,14 +16,14 @@ pub(super) use view::{TOP, fixture_drag};
 use crate::panes::workspaces::{Choice, ConnectedDisplay, Section, fixture_three};
 
 /// The panel's height bounds, and the space kept clear around the screens inside it; the
-/// bottom margin holds the hint.
+/// bottom margin matches the others.
 const MIN_H: f32 = 180.0;
 /// The most of the panel's height the screens take at their true scale, as a share of its
 /// width and at least `MAX_H`; a screen grows past its share only to fit its workspaces.
 const MAX_H: f32 = 420.0;
 const MAX_H_SHARE: f32 = 0.6;
 const PAD: f32 = 16.0;
-const PAD_BOTTOM: f32 = 32.0;
+const PAD_BOTTOM: f32 = 16.0;
 /// Between two screens that touch, so each reads as its own.
 const SEAM: f32 = 4.0;
 /// The menu bar along Main's top edge.

@@ -62,6 +62,8 @@ pub enum UiAction {
     SetHud(bool),
     SetPauseOnBuiltinDisplay(bool),
     SwitchWorkspace(WorkspaceId),
+    /// Settings › Screens: an app dropped on a workspace; its open windows move there.
+    MoveApp(String, WorkspaceId),
     Retile,
     MarkWrong,
 }
@@ -87,6 +89,9 @@ impl From<UiAction> for Action {
             UiAction::SetPauseOnBuiltinDisplay(enabled) => Self::SetPauseOnBuiltinDisplay(enabled),
             UiAction::SwitchWorkspace(workspace) => {
                 Self::Worker(WorkerAction::SelectWorkspace(workspace))
+            }
+            UiAction::MoveApp(bundle, workspace) => {
+                Self::Worker(WorkerAction::MoveApp(bundle, workspace))
             }
             UiAction::Retile => Self::Worker(WorkerAction::Retile),
             UiAction::MarkWrong => Self::Worker(WorkerAction::MarkWrong),

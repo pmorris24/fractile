@@ -64,8 +64,6 @@ const CHIPS_PER_ROW: usize = 4;
 const SLOP: f32 = 3.0;
 /// The dot a title rule's icon wears.
 const TITLE_DOT: f32 = 8.0;
-/// Beside the map's first label: what a workspace is. A rule is a default, never a fence.
-const INTRO: &str = "Each screen shows one of its workspaces at a time";
 
 pub(crate) const SCENES: &[Scene] = &[
     ("rules", fixture),
@@ -540,12 +538,7 @@ pub fn pane(ui: &Ui, p: Paint, layer: &mut Vec<El>) -> El {
         .key("map")
         .w(width)
         .h(layout.grid.height())
-        .child(heading(
-            "where",
-            "Where new windows open",
-            Some(controls::caption(p, INTRO)),
-            0.0,
-        ));
+        .child(heading("where", "Workspaces", None, 0.0));
     if !layout.grid.panel.is_empty() {
         map = map.child(view.arrangement(layer).absolute(0.0, arrangement::TOP));
     }
@@ -630,7 +623,7 @@ impl MapView<'_> {
             .border(border.0, border.1)
             .hover_group()
             .child(
-                self.screen_menu(workspace, active, layer)
+                self.screen_menu(workspace, active, true, layer)
                     .absolute(TILE_PAD - 6.0, 6.0),
             )
             .child(
@@ -811,10 +804,21 @@ impl MapView<'_> {
 
     /// `item` for `rule`, dragged to move it and right-clicked for its menu.
     fn draggable(self, rule: &Rule, item: El, layer: &mut Vec<El>) -> El {
-        let index = rule.index;
-        let Some((origin, size)) = self.layout.spot(rule) else {
+        let Some(spot) = self.layout.spot(rule) else {
             return item;
         };
+        self.draggable_at(rule, item, spot, layer)
+    }
+
+    /// `item`, at `spot` in the map, dragging `rule`.
+    fn draggable_at(
+        self,
+        rule: &Rule,
+        item: El,
+        (origin, size): ((f32, f32), (f32, f32)),
+        layer: &mut Vec<El>,
+    ) -> El {
+        let index = rule.index;
         let dragging = self
             .ui
             .drag
@@ -831,10 +835,14 @@ impl MapView<'_> {
             .opacity(if dragging { 0.3 } else { 1.0 })
             .on_drag(move |ui: &mut Ui, d: &mut rune::Drag, _: &mut Tx| {
                 drag::drag(ui, d, &drag_rule, origin, size, |x, y| grid.target_at(x, y))
-            })
-            .on_secondary_press(move |ui: &mut Ui, press: PointerPress, _: &mut Tx| {
-                ui.menu = Some(Menu::Rule(index, press));
             });
+        // An open window's icon has no rule yet, so no rule menu.
+        if index >= drag::WINDOW_BASE {
+            return item;
+        }
+        let item = item.on_secondary_press(move |ui: &mut Ui, press: PointerPress, _: &mut Tx| {
+            ui.menu = Some(Menu::Rule(index, press));
+        });
         let point = match self.ui.menu {
             Some(Menu::Rule(open, point)) if open == index => Some(point),
             _ => None,
@@ -896,7 +904,8 @@ impl MapView<'_> {
             .iter()
             .flatten()
             .chain(&self.layout.floating)
-            .find(|rule| rule.index == drag.rule)?;
+            .find(|rule| rule.index == drag.rule)
+            .unwrap_or(&drag.snapshot);
         let item = if drag.size.1 == CHIP_H {
             self.chip(rule)
         } else {

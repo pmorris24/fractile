@@ -295,6 +295,11 @@ impl Ui {
         }
     }
 
+    /// Moves every open window of the app `bundle` to `workspace`.
+    pub(crate) fn move_app(&self, bundle: &str, workspace: spaceman::WorkspaceId) {
+        self.send_action(UiAction::MoveApp(bundle.to_owned(), workspace));
+    }
+
     pub fn toggle_automatic(&self) {
         self.send_action(UiAction::ToggleAutomatic);
     }

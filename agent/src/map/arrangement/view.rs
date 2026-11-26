@@ -6,12 +6,11 @@ use rune::{Cursor, El, Tx, el, text};
 use spaceman::WorkspaceId;
 
 use super::{
-    CARD_PAD, Frame, INSET, MENU_BAR, Monitor, NAME_H, PAD_BOTTOM, Panel, RULE_ICON, rule_offset,
-    rule_room,
+    CARD_PAD, Frame, INSET, MENU_BAR, Monitor, NAME_H, Panel, RULE_ICON, rule_offset, rule_room,
 };
 use crate::{
     Ui,
-    map::{HEAD_GAP, HEAD_H, MapView, SLOP, items::Item},
+    map::{HEAD_GAP, HEAD_H, MapView, SLOP, drag, items::Item},
     panes::workspaces as screens,
     rules::Place,
 };
@@ -20,7 +19,6 @@ use crate::{
 pub(in crate::map) const TOP: f32 = HEAD_H + HEAD_GAP;
 /// The Forget button on an unplugged screen.
 const FORGET_W: f32 = 48.0;
-const HINT: &str = "Drag a workspace to another screen, or an app onto a workspace";
 
 /// A workspace card being dragged to another screen.
 #[derive(Clone, Debug, PartialEq)]
@@ -126,7 +124,7 @@ pub(in crate::map) fn fixture_drag(ui: &Ui) -> Option<ScreenDrag> {
 }
 
 impl MapView<'_> {
-    /// The panel: every screen where it sits, its workspace cards, and the hint under them.
+    /// The panel: every screen where it sits, and its workspace cards.
     pub(in crate::map) fn arrangement(self, layer: &mut Vec<El>) -> El {
         let c = &self.p.k.c;
         let panel = &self.layout.grid.panel;
@@ -141,13 +139,7 @@ impl MapView<'_> {
         for (index, monitor) in panel.monitors.iter().enumerate() {
             out = out.child(self.monitor(index, monitor, layer));
         }
-        out.child(
-            text(HINT)
-                .key("hint")
-                .font(self.p.meta())
-                .color(self.p.faint())
-                .absolute(INSET + CARD_PAD, panel.height - PAD_BOTTOM / 2.0 - 7.0),
-        )
+        out
     }
 
     fn monitor(self, index: usize, monitor: &Monitor, layer: &mut Vec<El>) -> El {
@@ -208,15 +200,19 @@ impl MapView<'_> {
             name_top += MENU_BAR;
         }
         if w > 2.0 * INSET && h > name_top + NAME_H {
-            let title = if monitor.connected {
-                monitor.title.clone()
+            let help = if monitor.connected {
+                format!("{} · {}", monitor.title, monitor.caption)
             } else {
-                format!("Unplugged · {}", monitor.title)
+                format!(
+                    "{} is unplugged. Its workspaces show on the screens left and return when \
+                     it is plugged in",
+                    monitor.title
+                )
             };
             out = out.child(
-                text(title)
+                text(monitor.title.clone())
                     .key("name")
-                    .help(format!("{} · {}", monitor.title, monitor.caption))
+                    .help(help)
                     .font(self.p.meta())
                     .color(self.p.muted())
                     .truncate()
@@ -267,6 +263,7 @@ impl MapView<'_> {
                     screens::remembered::save(known);
                 }
             })
+            .group_opacity(0.0, 1.0)
             .child(text("Forget").font(self.p.meta()).color(self.p.muted()))
     }
 
@@ -315,27 +312,33 @@ impl MapView<'_> {
                 );
             })
             .child(
-                self.screen_menu(workspace, active, layer)
+                self.screen_menu(workspace, active, false, layer)
                     .absolute(1.0, 1.0),
             )
             .child(
                 self.add_button(Place::Workspace(workspace), layer)
                     .absolute(w - 24.0, 2.0),
             );
-        self.card_apps(card, workspace, (w, h), Some(layer))
+        self.card_apps(card, workspace, (w, h), Some((layer, origin)))
     }
 
     /// The card's icons in rows under its number: each rule sending new windows to
     /// `workspace` and each window open there, with a count of the rest when they outgrow it.
-    /// With the menu `layer` a rule's icon drags and takes its menu; without it (the card
-    /// following the pointer) they are only drawn.
+    /// With the menu `layer` and the card's top-left in the map, every icon drags (a rule's
+    /// also takes its menu); without them (the card following the pointer) they are only drawn.
     fn card_apps(
         self,
         mut card: El,
         workspace: WorkspaceId,
         size: (f32, f32),
-        mut layer: Option<&mut Vec<El>>,
+        mut live: Option<(&mut Vec<El>, (f32, f32))>,
     ) -> El {
+        let position = self
+            .layout
+            .workspaces
+            .iter()
+            .position(|ws| *ws == workspace)
+            .unwrap_or_default();
         let c = &self.p.k.c;
         let rules = self.layout.rules_for(workspace);
         let items = self.layout.items_for(workspace);
@@ -373,15 +376,23 @@ impl MapView<'_> {
                 Item::Rule(index) => {
                     let rule = &rules[*index];
                     let icon = self.app_icon(rule, RULE_ICON);
-                    match layer.as_deref_mut() {
-                        Some(layer) => self.draggable(rule, icon, layer),
+                    match live.as_mut() {
+                        Some((layer, _)) => self.draggable(rule, icon, layer),
                         None => icon,
                     }
                 }
-                Item::Window(bundle) => self
-                    .window_icon(bundle, RULE_ICON)
-                    .key(format!("window-{slot}"))
-                    .help(format!("{} · open here now", self.window_name(bundle))),
+                Item::Window(bundle) => {
+                    let icon = self.window_icon(bundle, RULE_ICON);
+                    match live.as_mut() {
+                        Some((layer, (cx, cy))) => {
+                            let rule = drag::window_rule(bundle, workspace, position * 64 + slot);
+                            let spot = ((*cx + at.0, *cy + at.1), (RULE_ICON, RULE_ICON));
+                            self.draggable_at(&rule, icon, spot, layer)
+                                .help(format!("{} · open here now", self.window_name(bundle)))
+                        }
+                        None => icon,
+                    }
+                }
             };
             card = card.child(icon.absolute(at.0, at.1));
         }
