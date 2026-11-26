@@ -2,12 +2,12 @@
 //! same flow and view as the live overlay, so their motion can be tried without switching a
 //! real workspace.
 
-use rune::{Cursor, El, Play, Playground, col, el};
-use spaceman::{
+use fractile::{
     Rect, WorkspaceId,
     app::{UiHudDisplay, UiHudTile, UiHudWorkspace},
     config::{HudPosition, HudStyle},
 };
+use rune::{Cursor, El, Play, Playground, col, el};
 
 use super::{FRESH_MS, HudFlow, Icons, LEAVE_MS, grow, pill};
 use crate::{

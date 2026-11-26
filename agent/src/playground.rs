@@ -3,11 +3,11 @@
 
 use std::sync::OnceLock;
 
-use rune::{App, Playground};
-use spaceman::{
+use fractile::{
     WorkspaceId,
     app::{UiAgentSnapshot, UiLaunchAtLogin},
 };
+use rune::{App, Playground};
 
 use crate::{Pane, Ui, activity, controls::WINDOW, hud, map, onboarding, panes, rules::Doc};
 
@@ -27,7 +27,7 @@ pub fn attach(app: App<Ui>) -> App<Ui> {
         .bar(false)
         .scenes(|name| name.contains('/'))
         .sizes(&[
-            ("Spaceman window", WINDOW.size),
+            ("Fractile window", WINDOW.size),
             ("Smallest window", WINDOW.min),
             ("Wide window", (1200.0, 840.0)),
         ]);
@@ -200,9 +200,9 @@ mod tests {
     #[test]
     fn command_shortcuts_follow_sidebar_pane_order() {
         // Every pane is registered; a Lab pane takes a digit only while its switch is on.
-        let labs = spaceman::config::LabsConfig {
+        let labs = fractile::config::LabsConfig {
             activity: true,
-            ..spaceman::config::LabsConfig::default()
+            ..fractile::config::LabsConfig::default()
         };
         assert_eq!(Pane::from_shortcut('0', labs), None);
         for (index, expected) in Pane::ALL.into_iter().enumerate() {

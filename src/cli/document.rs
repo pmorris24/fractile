@@ -4,8 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use serde::{Deserialize, Serialize};
-use spaceman::{
+use fractile::{
     DisplaySelector, WorkspaceId, Workspaces,
     config::{
         Config, HudPosition, HudStyle, LabFeature, LayoutMode, MenuBarIcon, MouseFollowsFocus,
@@ -13,6 +12,7 @@ use spaceman::{
     },
     spacing::{Spacing, SpacingKey, check_outer},
 };
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -20,7 +20,7 @@ pub(crate) struct ConfigDoc {
     pub version: u32,
     #[serde(default, skip_serializing_if = "SettingsDoc::is_empty")]
     pub settings: SettingsDoc,
-    /// `[labs]`: the Lab switches, edited by `spaceman config set|reset labs.<key>`.
+    /// `[labs]`: the Lab switches, edited by `fractile config set|reset labs.<key>`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub labs: Option<LabsDoc>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]

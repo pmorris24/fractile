@@ -248,7 +248,7 @@ fn utilities_and_fixed_size_windows_float_beside_the_tiles() {
     assert_eq!(tiles(&plan)[0], (1, vec!["com.google.Chrome"]));
     assert_eq!(tiles(&plan)[1], (2, vec!["com.apple.Terminal"]));
     assert_eq!(plan.tile_count(), 2);
-    // Only a floating app Spaceman would otherwise tile needs a rule: these utilities float by
+    // Only a floating app Fractile would otherwise tile needs a rule: these utilities float by
     // default, and the panel can't be resized.
     assert!(plan.float_rules(&inventory).is_empty());
     assert!(plan.tile_rules(&inventory).is_empty());

@@ -89,7 +89,7 @@ mod tests {
     fn replaces_contents_and_keeps_permissions() {
         use std::os::unix::fs::PermissionsExt;
         let directory =
-            std::env::temp_dir().join(format!("spaceman-state-file-{}", std::process::id()));
+            std::env::temp_dir().join(format!("fractile-state-file-{}", std::process::id()));
         let path = directory.join("nested").join("state.json");
         write_atomic(&path, b"one").unwrap();
         fs::set_permissions(&path, fs::Permissions::from_mode(0o600)).unwrap();
@@ -108,7 +108,7 @@ mod tests {
     fn owner_only_writes_are_0600_even_over_a_wider_file() {
         use std::os::unix::fs::PermissionsExt;
         let directory =
-            std::env::temp_dir().join(format!("spaceman-owner-only-{}", std::process::id()));
+            std::env::temp_dir().join(format!("fractile-owner-only-{}", std::process::id()));
         let path = directory.join("step");
         write_atomic(&path, b"one").unwrap();
         fs::set_permissions(&path, fs::Permissions::from_mode(0o644)).unwrap();

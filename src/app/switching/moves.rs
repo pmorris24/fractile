@@ -125,7 +125,7 @@ impl<B: WorkspaceBackend> WorkspaceRuntime<B> {
         status.ok_or_else(|| format!("No managed window found for {bundle_id}"))
     }
 
-    /// Every window of the bundle Spaceman owns: its tiles, then its floats.
+    /// Every window of the bundle Fractile owns: its tiles, then its floats.
     fn windows_for_bundle(&self, bundle_id: &str) -> Vec<crate::PhysicalWindowId> {
         let mut floating: Vec<_> = self
             .workspaces
@@ -187,7 +187,7 @@ impl<B: WorkspaceBackend> WorkspaceRuntime<B> {
             self.cycle(outputs.clone(), cancelled)?;
             self.workspaces
                 .workspace_of_any(&window)
-                .ok_or("Window is not managed by Spaceman")?
+                .ok_or("Window is not managed by Fractile")?
         };
         if source == target {
             return Ok(MoveWindowOutcome::Moved(self.status(0, &outputs)));

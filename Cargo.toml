@@ -1,13 +1,13 @@
 [package]
-name = "spaceman"
-version = "0.3.5"
+name = "fractile"
+version = "0.1.0"
 edition = "2024"
 rust-version = "1.100"
 license = "MIT"
 description = "A macOS tiling window manager with stable logical windows"
-repository = "https://github.com/anomalyco/spaceman"
+repository = "https://github.com/pmorris24/fractile"
 publish = false
-default-run = "spaceman"
+default-run = "fractile"
 
 [build-dependencies]
 cc = "1"

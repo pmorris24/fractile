@@ -316,7 +316,7 @@ impl DisplayOutputs {
 pub fn outputs() -> Result<DisplayOutputs, SnapshotError> {
     autoreleasepool(|_| {
         let marker = MainThreadMarker::new().ok_or(SnapshotError::MainThreadRequired)?;
-        // Without an initialized `NSApplication` (e.g. in the standalone `spaceman displays`
+        // Without an initialized `NSApplication` (e.g. in the standalone `fractile displays`
         // CLI), AppKit reports `screensHaveSeparateSpaces == false` and includes secondary
         // displays' menu bars inside `NSScreen::visibleFrame` (#357).
         let _ = NSApplication::sharedApplication(marker);

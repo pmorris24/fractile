@@ -1,6 +1,6 @@
 use super::*;
 
-const SOURCE: &str = r#"# Spaceman configuration.
+const SOURCE: &str = r#"# Fractile configuration.
 version = 1
 
 [[rules]]
@@ -54,7 +54,7 @@ fn moving_a_rule_keeps_comments_and_the_rest_of_the_file() {
     let rules = Doc::parse(&source).rules();
     assert_eq!(rules[0].place, Place::Workspace(ws("3")));
     assert_eq!(rules[1].place, Place::Float);
-    assert!(spaceman::config::Config::parse(&source).is_ok());
+    assert!(fractile::config::Config::parse(&source).is_ok());
     assert!(
         source.contains("workspace = 3\n"),
         "numbers stay integers:\n{source}"
@@ -80,7 +80,7 @@ fn adds_and_removes_rules() {
 fn adds_to_an_empty_file() {
     let mut doc = Doc::parse(EMPTY);
     doc.add("anomaly.hex", Place::Float);
-    assert!(spaceman::config::Config::parse(&doc.source()).is_ok());
+    assert!(fractile::config::Config::parse(&doc.source()).is_ok());
     assert_eq!(doc.rules().len(), 1);
 }
 
@@ -119,7 +119,7 @@ fn a_tile_rule_reads_back_and_the_hud_float_replaces_it_in_place() {
     assert_eq!(doc.rules()[0].place, Place::Float);
     doc.place(0, Place::Tile);
     assert!(doc.source().contains("action = \"tile\""));
-    assert!(spaceman::config::Config::parse(&doc.source()).is_ok());
+    assert!(fractile::config::Config::parse(&doc.source()).is_ok());
 }
 
 #[test]
@@ -149,19 +149,19 @@ fn hud_setting_round_trips_and_cleans_up_default_table() {
     doc.set_hud(false);
     assert!(!doc.hud());
     let disabled = doc.source();
-    assert!(!spaceman::config::Config::parse(&disabled).unwrap().hud());
+    assert!(!fractile::config::Config::parse(&disabled).unwrap().hud());
     assert!(disabled.contains("# OpenCode Browser's agent window."));
 
     doc.set_hud(true);
     assert!(doc.hud());
     let enabled = doc.source();
-    assert!(spaceman::config::Config::parse(&enabled).unwrap().hud());
+    assert!(fractile::config::Config::parse(&enabled).unwrap().hud());
     assert!(!enabled.contains("[settings]"));
 }
 
 #[test]
 fn hud_style_round_trips_and_leaves_the_default_out() {
-    use spaceman::config::{Config, HudStyle};
+    use fractile::config::{Config, HudStyle};
     let mut doc = Doc::parse(SOURCE);
     assert_eq!(doc.hud_style(), HudStyle::Icons);
     doc.set_hud_style(HudStyle::Layouts);
@@ -184,7 +184,7 @@ fn hud_style_round_trips_and_leaves_the_default_out() {
 
 #[test]
 fn hud_position_round_trips_and_leaves_bottom_out() {
-    use spaceman::config::{Config, HudPosition, HudStyle};
+    use fractile::config::{Config, HudPosition, HudStyle};
     let mut doc = Doc::parse(SOURCE);
     assert_eq!(doc.hud_position(), HudPosition::Bottom);
     doc.set_hud_position(HudPosition::Top);
@@ -215,7 +215,7 @@ fn hud_position_round_trips_and_leaves_bottom_out() {
 
 #[test]
 fn mouse_follows_focus_round_trips_preserving_comments_and_leaves_off_out() {
-    use spaceman::config::{Config, MouseFollowsFocus};
+    use fractile::config::{Config, MouseFollowsFocus};
     let mut doc = Doc::parse(SOURCE);
     assert_eq!(doc.mouse_follows_focus(), MouseFollowsFocus::Off);
     doc.set_mouse_follows_focus(MouseFollowsFocus::Display);
@@ -245,7 +245,7 @@ fn mouse_follows_focus_round_trips_preserving_comments_and_leaves_off_out() {
 
 #[test]
 fn spacing_round_trips_and_leaves_the_file_as_it_was() {
-    use spaceman::{config::Config, spacing::Spacing};
+    use fractile::{config::Config, spacing::Spacing};
     let mut doc = Doc::parse(SOURCE);
     assert_eq!(doc.spacing(), Spacing::NONE);
     let spacing = Spacing {
@@ -272,7 +272,7 @@ fn spacing_round_trips_and_leaves_the_file_as_it_was() {
 
 #[test]
 fn spacing_lands_beside_existing_settings_and_keeps_their_comments() {
-    use spaceman::{config::Config, spacing::Spacing};
+    use fractile::{config::Config, spacing::Spacing};
     let source = format!(
         "[settings]\n# Quiet.\nhud = false\n\n{}",
         &SOURCE[SOURCE.find("[[rules]]").unwrap()..]
@@ -316,7 +316,7 @@ fn inline_rules_array_reads_adds_moves_and_removes_without_losing_entries() {
             "]\n",
         ),
         concat!(
-            "# Spaceman configuration.\n",
+            "# Fractile configuration.\n",
             "version = 1\n",
             "\n",
             "rules = [\n",
@@ -343,7 +343,7 @@ fn inline_rules_array_reads_adds_moves_and_removes_without_losing_entries() {
         doc.add("com.example.Third", Place::Float);
         let after_add = doc.source();
         assert!(
-            spaceman::config::Config::parse(&after_add).is_ok(),
+            fractile::config::Config::parse(&after_add).is_ok(),
             "invalid TOML after add:\n{after_add}"
         );
         let rules = Doc::parse(&after_add).rules();
@@ -358,7 +358,7 @@ fn inline_rules_array_reads_adds_moves_and_removes_without_losing_entries() {
         doc.place(1, Place::Float);
         let after_move = doc.source();
         assert!(
-            spaceman::config::Config::parse(&after_move).is_ok(),
+            fractile::config::Config::parse(&after_move).is_ok(),
             "invalid TOML after move:\n{after_move}"
         );
         let moved = Doc::parse(&after_move).rules();
@@ -370,13 +370,13 @@ fn inline_rules_array_reads_adds_moves_and_removes_without_losing_entries() {
         // Removing every rule empties the key cleanly.
         doc.remove(1);
         assert_eq!(doc.rules().len(), 2);
-        assert!(spaceman::config::Config::parse(&doc.source()).is_ok());
+        assert!(fractile::config::Config::parse(&doc.source()).is_ok());
         doc.remove(1);
         doc.remove(0);
         let empty = doc.source();
         assert!(doc.rules().is_empty());
         assert!(!empty.contains("rules"), "rules key should drop:\n{empty}");
-        assert!(spaceman::config::Config::parse(&empty).is_ok());
+        assert!(fractile::config::Config::parse(&empty).is_ok());
     }
 }
 
@@ -388,7 +388,7 @@ fn empty_inline_rules_array_supports_adding_an_app() {
     doc.add("com.example.Only", Place::Workspace(ws("2")));
     let saved = doc.source();
     assert!(
-        spaceman::config::Config::parse(&saved).is_ok(),
+        fractile::config::Config::parse(&saved).is_ok(),
         "invalid TOML:\n{saved}"
     );
     let rules = Doc::parse(&saved).rules();
@@ -402,7 +402,7 @@ fn inline_workspaces_array_reads_updates_adds_and_clears_assignments() {
     let variants = [
         "version = 1\nworkspaces = [{ workspace = 9, monitor = \"main\" }]\n",
         concat!(
-            "# Spaceman configuration.\n",
+            "# Fractile configuration.\n",
             "version = 1\n",
             "\n",
             "workspaces = [\n",
@@ -422,7 +422,7 @@ fn inline_workspaces_array_reads_updates_adds_and_clears_assignments() {
         doc.set_monitor(ws("2"), Some("secondary"));
         let after_add = doc.source();
         assert!(
-            spaceman::config::Config::parse(&after_add).is_ok(),
+            fractile::config::Config::parse(&after_add).is_ok(),
             "invalid TOML after adding workspace:\n{after_add}"
         );
         let reloaded = Doc::parse(&after_add);
@@ -434,7 +434,7 @@ fn inline_workspaces_array_reads_updates_adds_and_clears_assignments() {
         doc.set_monitor(ws("D"), Some("secondary"));
         let after_update = doc.source();
         assert!(
-            spaceman::config::Config::parse(&after_update).is_ok(),
+            fractile::config::Config::parse(&after_update).is_ok(),
             "invalid TOML after update:\n{after_update}"
         );
         let reloaded = Doc::parse(&after_update);
@@ -450,7 +450,7 @@ fn inline_workspaces_array_reads_updates_adds_and_clears_assignments() {
         assert_eq!(doc.monitor(ws("9")), None);
         assert_eq!(doc.monitor(ws("D")).as_deref(), Some("main"));
         assert_eq!(doc.named_workspaces(), vec![ws("D")]);
-        assert!(spaceman::config::Config::parse(&doc.source()).is_ok());
+        assert!(fractile::config::Config::parse(&doc.source()).is_ok());
 
         // Once a route rule references D, clearing drops the now-redundant entry cleanly.
         doc.add("com.example.App", Place::Workspace(ws("D")));
@@ -461,7 +461,7 @@ fn inline_workspaces_array_reads_updates_adds_and_clears_assignments() {
             !empty.contains("workspaces"),
             "workspaces key should drop:\n{empty}"
         );
-        assert!(spaceman::config::Config::parse(&empty).is_ok());
+        assert!(fractile::config::Config::parse(&empty).is_ok());
     }
 }
 
@@ -479,9 +479,9 @@ fn choosing_main_in_settings_retains_solely_declared_named_workspace() {
         // Choosing Main in Settings passes `None` to `set_monitor`.
         doc.set_monitor(d, None);
         let saved = doc.source();
-        let config = spaceman::config::Config::parse(&saved)
+        let config = fractile::config::Config::parse(&saved)
             .unwrap_or_else(|err| panic!("invalid TOML ({err}):\n{saved}"));
-        let mut workspaces = spaceman::Workspaces::default();
+        let mut workspaces = fractile::Workspaces::default();
         config.configure_workspaces(&mut workspaces);
         assert!(
             workspaces.is_enabled(d),
@@ -489,7 +489,7 @@ fn choosing_main_in_settings_retains_solely_declared_named_workspace() {
         );
         assert_eq!(
             workspaces.assignment(d),
-            &spaceman::DisplaySelector::Main,
+            &fractile::DisplaySelector::Main,
             "{saved}"
         );
         let reloaded = Doc::parse(&saved);
@@ -521,8 +521,8 @@ fn choosing_main_in_settings_retains_solely_declared_named_workspace() {
     routed.set_monitor(d, None);
     let saved = routed.source();
     assert!(!saved.contains("[[workspaces]]"), "{saved}");
-    let config = spaceman::config::Config::parse(&saved).unwrap();
-    let mut workspaces = spaceman::Workspaces::default();
+    let config = fractile::config::Config::parse(&saved).unwrap();
+    let mut workspaces = fractile::Workspaces::default();
     config.configure_workspaces(&mut workspaces);
     assert!(workspaces.is_enabled(d));
     assert!(
@@ -537,7 +537,7 @@ fn doc_edit_and_save_preserves_external_edits_symlinks_and_detects_conflicts() {
     use std::sync::atomic::{AtomicU64, Ordering};
     static NEXT: AtomicU64 = AtomicU64::new(0);
     let dir = std::env::temp_dir().join(format!(
-        "spaceman-agent-doc-{}-{}",
+        "fractile-agent-doc-{}-{}",
         std::process::id(),
         NEXT.fetch_add(1, Ordering::Relaxed)
     ));
@@ -588,7 +588,7 @@ fn doc_edit_and_save_preserves_external_edits_symlinks_and_detects_conflicts() {
             .is_symlink()
     );
     let on_disk = std::fs::read_to_string(&target).unwrap();
-    let parsed = spaceman::config::Config::parse(&on_disk).unwrap();
+    let parsed = fractile::config::Config::parse(&on_disk).unwrap();
     assert!(
         !parsed.hud(),
         "external hud = false must survive:\n{on_disk}"
@@ -655,7 +655,7 @@ fn doc_edit_and_save_preserves_external_edits_symlinks_and_detects_conflicts() {
     );
     let disk_after_conflict = std::fs::read_to_string(&target).unwrap();
     assert!(
-        spaceman::config::Config::parse(&disk_after_conflict)
+        fractile::config::Config::parse(&disk_after_conflict)
             .unwrap()
             .hud()
     );
@@ -672,7 +672,7 @@ fn empty_inline_workspaces_array_supports_assigning_a_display() {
     doc.set_monitor(ws("2"), Some("secondary"));
     let saved = doc.source();
     assert!(
-        spaceman::config::Config::parse(&saved).is_ok(),
+        fractile::config::Config::parse(&saved).is_ok(),
         "invalid TOML:\n{saved}"
     );
     assert_eq!(
@@ -691,7 +691,7 @@ fn removing_a_rule_keeps_a_commented_out_rule() {
     assert!(source.contains("Disabled for now"), "{source}");
     assert!(source.contains("My window rules"), "{source}");
     assert!(
-        spaceman::config::Config::parse(&source).is_ok(),
+        fractile::config::Config::parse(&source).is_ok(),
         "invalid TOML:\n{source}"
     );
     assert_eq!(Doc::parse(&source).rules().len(), 1);
@@ -705,7 +705,7 @@ fn removing_the_first_rule_keeps_the_heading_comment() {
     assert!(source.contains("My window rules"), "{source}");
     assert!(source.contains("Disabled for now"), "{source}");
     assert!(
-        spaceman::config::Config::parse(&source).is_ok(),
+        fractile::config::Config::parse(&source).is_ok(),
         "invalid TOML:\n{source}"
     );
     let rules = Doc::parse(&source).rules();
@@ -733,7 +733,7 @@ fn removing_all_rules_or_rules_before_another_section_keeps_detached_comments_in
         assert!(source.contains("My window rules"), "{source}");
         assert!(source.contains("Disabled for now"), "{source}");
         assert!(
-            spaceman::config::Config::parse(&source).is_ok(),
+            fractile::config::Config::parse(&source).is_ok(),
             "invalid TOML:\n{source}"
         );
     }
@@ -747,7 +747,7 @@ fn removing_all_rules_or_rules_before_another_section_keeps_detached_comments_in
         source.find("Disabled for now").unwrap() < source.find("[shortcuts.bindings]").unwrap(),
         "comment should stay before following section:\n{source}"
     );
-    assert!(spaceman::config::Config::parse(&source).is_ok());
+    assert!(fractile::config::Config::parse(&source).is_ok());
 
     // A comment directly above a removed rule (no blank line) goes with it, while a heading
     // separated by a blank line above it survives.
@@ -767,7 +767,7 @@ fn removing_all_rules_or_rules_before_another_section_keeps_detached_comments_in
     let source = doc.source();
     assert!(source.contains("Section heading"), "{source}");
     assert!(!source.contains("Float app A"), "{source}");
-    assert!(spaceman::config::Config::parse(&source).is_ok());
+    assert!(fractile::config::Config::parse(&source).is_ok());
 
     // A trailing comment at EOF after the only rule survives removing that rule.
     let eof_comment = concat!(
@@ -787,7 +787,7 @@ fn removing_all_rules_or_rules_before_another_section_keeps_detached_comments_in
         source.find("Heading.").unwrap() < source.find("Footer at EOF.").unwrap(),
         "{source}"
     );
-    assert!(spaceman::config::Config::parse(&source).is_ok());
+    assert!(fractile::config::Config::parse(&source).is_ok());
 
     // Detached comments around and inside an inline rules array also survive rule removal.
     let inline = concat!(
@@ -807,7 +807,7 @@ fn removing_all_rules_or_rules_before_another_section_keeps_detached_comments_in
     assert!(source.contains("Inline rules heading."), "{source}");
     assert!(source.contains("First block."), "{source}");
     assert!(source.contains("Disabled inline rule:"), "{source}");
-    assert!(spaceman::config::Config::parse(&source).is_ok());
+    assert!(fractile::config::Config::parse(&source).is_ok());
     doc.remove(0);
     let empty_inline = doc.source();
     assert!(
@@ -819,7 +819,7 @@ fn removing_all_rules_or_rules_before_another_section_keeps_detached_comments_in
         empty_inline.contains("Disabled inline rule:"),
         "{empty_inline}"
     );
-    assert!(spaceman::config::Config::parse(&empty_inline).is_ok());
+    assert!(fractile::config::Config::parse(&empty_inline).is_ok());
 }
 
 #[test]
@@ -834,7 +834,7 @@ fn workspace_display_edits_preserve_key_and_detached_comments() {
     assert!(doc.source().contains("# Unchanged workspace key."));
     assert!(doc.source().contains("# Display note."));
     assert_eq!(doc.monitor(nine).as_deref(), Some("main"));
-    assert!(spaceman::config::Config::parse(&doc.source()).is_ok());
+    assert!(fractile::config::Config::parse(&doc.source()).is_ok());
 
     // 2. Clearing a [[workspaces]] table preserves detached heading comments above it.
     let mut doc = Doc::parse(
@@ -843,7 +843,7 @@ fn workspace_display_edits_preserve_key_and_detached_comments() {
     doc.set_monitor(nine, None);
     assert!(doc.source().contains("# Display note."));
     assert_eq!(doc.monitor(nine), None);
-    assert!(spaceman::config::Config::parse(&doc.source()).is_ok());
+    assert!(fractile::config::Config::parse(&doc.source()).is_ok());
 
     // 3. Clearing the last entry of an inline workspaces array preserves detached comments.
     let mut doc = Doc::parse(
@@ -852,7 +852,7 @@ fn workspace_display_edits_preserve_key_and_detached_comments() {
     doc.set_monitor(nine, None);
     assert!(doc.source().contains("# Display note."));
     assert_eq!(doc.monitor(nine), None);
-    assert!(spaceman::config::Config::parse(&doc.source()).is_ok());
+    assert!(fractile::config::Config::parse(&doc.source()).is_ok());
 
     // 4. Control: an attached comment with no blank line above a removed entry still goes with it.
     let mut doc = Doc::parse(
@@ -860,7 +860,7 @@ fn workspace_display_edits_preserve_key_and_detached_comments() {
     );
     doc.set_monitor(nine, None);
     assert!(!doc.source().contains("# Display note."));
-    assert!(spaceman::config::Config::parse(&doc.source()).is_ok());
+    assert!(fractile::config::Config::parse(&doc.source()).is_ok());
 }
 
 #[test]
@@ -871,7 +871,7 @@ fn rule_placement_and_settings_edits_preserve_retained_key_comments() {
     let mut doc = Doc::parse(SOURCE);
     doc.place(0, Place::Workspace(WorkspaceId::new(3).unwrap()));
     let saved = doc.source();
-    assert!(spaceman::config::Config::parse(&saved).is_ok());
+    assert!(fractile::config::Config::parse(&saved).is_ok());
     assert!(saved.contains("# Detached rules heading."));
     assert!(saved.contains("# Bundle note."));
     assert!(saved.contains("# Action note."));
@@ -885,7 +885,7 @@ fn rule_placement_and_settings_edits_preserve_retained_key_comments() {
     let mut doc = Doc::parse(SOURCE);
     doc.place(0, Place::Float);
     let saved = doc.source();
-    assert!(spaceman::config::Config::parse(&saved).is_ok());
+    assert!(fractile::config::Config::parse(&saved).is_ok());
     assert!(!saved.contains("workspace ="));
     assert!(saved.contains("# Bundle note."));
     assert!(saved.contains("# Action note."));
@@ -895,18 +895,18 @@ fn rule_placement_and_settings_edits_preserve_retained_key_comments() {
     let mut doc = Doc::parse(
         "version = 1\n\n[settings]\n# Mode note.\nmouse_follows_focus = \"display\"\n\n[settings.gaps]\n# Gap note.\ninner = 8\n\n[shortcuts]\n# Modifier note.\nmodifier = \"control\"\n",
     );
-    doc.set_mouse_follows_focus(spaceman::config::MouseFollowsFocus::Window);
+    doc.set_mouse_follows_focus(fractile::config::MouseFollowsFocus::Window);
     let mut spacing = doc.spacing();
-    spaceman::spacing::SpacingKey::Inner.set(&mut spacing, 12);
+    fractile::spacing::SpacingKey::Inner.set(&mut spacing, 12);
     doc.set_spacing(spacing);
-    doc.set_shortcut_modifier(spaceman::shortcuts::Modifiers {
+    doc.set_shortcut_modifier(fractile::shortcuts::Modifiers {
         control: true,
         option: true,
         command: false,
         shift: false,
     });
     let saved = doc.source();
-    assert!(spaceman::config::Config::parse(&saved).is_ok());
+    assert!(fractile::config::Config::parse(&saved).is_ok());
     assert!(saved.contains("# Mode note."));
     assert!(saved.contains("# Gap note."));
     assert!(saved.contains("# Modifier note."));
@@ -914,13 +914,13 @@ fn rule_placement_and_settings_edits_preserve_retained_key_comments() {
 
 #[test]
 fn clearing_last_layout_spacing_preserves_detached_section_headings() {
-    use spaceman::spacing::Spacing;
+    use fractile::spacing::Spacing;
     let width_source =
         "version = 1\n\n# Layout notes.\n\n[settings]\nsingle_window_max_width = 1680\n";
     let mut doc = Doc::parse(width_source);
     doc.set_spacing(Spacing::NONE);
     let saved = doc.source();
-    assert!(spaceman::config::Config::parse(&saved).is_ok(), "{saved}");
+    assert!(fractile::config::Config::parse(&saved).is_ok(), "{saved}");
     assert!(saved.contains("# Layout notes."), "{saved}");
     assert!(!saved.contains("[settings]"), "{saved}");
 
@@ -928,7 +928,7 @@ fn clearing_last_layout_spacing_preserves_detached_section_headings() {
     let mut doc = Doc::parse(gaps_source);
     doc.set_spacing(Spacing::NONE);
     let saved = doc.source();
-    assert!(spaceman::config::Config::parse(&saved).is_ok(), "{saved}");
+    assert!(fractile::config::Config::parse(&saved).is_ok(), "{saved}");
     assert!(saved.contains("# Gap notes."), "{saved}");
     assert!(!saved.contains("[settings.gaps]"), "{saved}");
 }
@@ -941,15 +941,15 @@ fn gaps(gaps: &str) -> Doc {
 }
 
 /// What the running agent would tile with once `doc` is saved.
-fn saved_spacing(doc: &Doc) -> spaceman::spacing::Spacing {
-    spaceman::config::Config::parse(&doc.source())
+fn saved_spacing(doc: &Doc) -> fractile::spacing::Spacing {
+    fractile::config::Config::parse(&doc.source())
         .unwrap()
         .spacing()
 }
 
 #[test]
 fn spacing_shows_the_edges_outer_resolves_to() {
-    use spaceman::spacing::Spacing;
+    use fractile::spacing::Spacing;
     let doc = gaps("inner = 6\nouter = 8\ntop = 0\n");
     assert_eq!(
         doc.spacing(),
@@ -964,7 +964,7 @@ fn spacing_shows_the_edges_outer_resolves_to() {
 
 #[test]
 fn unrelated_edits_keep_outer_and_its_explicit_edges() {
-    use spaceman::spacing::Spacing;
+    use fractile::spacing::Spacing;
     for source in [
         "inner = 6\nouter = 8 # Everywhere.\ntop = 0\nleft = 8\n",
         "inner = 6\nouter = 0\ntop = 0\nleft = 8\n",
@@ -1007,7 +1007,7 @@ fn unrelated_edits_keep_outer_and_its_explicit_edges() {
 
 #[test]
 fn an_edge_set_to_zero_does_not_fall_back_to_outer() {
-    use spaceman::spacing::{Spacing, SpacingKey};
+    use fractile::spacing::{Spacing, SpacingKey};
     for key in SpacingKey::EDGES {
         let mut doc = gaps("outer = 8\n");
         let mut spacing = doc.spacing();
@@ -1041,7 +1041,7 @@ fn an_edge_set_to_zero_does_not_fall_back_to_outer() {
 
 #[test]
 fn editing_one_edge_leaves_the_others_following_outer() {
-    use spaceman::spacing::Spacing;
+    use fractile::spacing::Spacing;
     let mut doc = gaps("inner = 6\nouter = 8\n");
     doc.set_spacing(Spacing {
         top: 30,
@@ -1059,7 +1059,7 @@ fn editing_one_edge_leaves_the_others_following_outer() {
 
 #[test]
 fn inline_settings_keep_outer_when_something_else_changes() {
-    use spaceman::spacing::Spacing;
+    use fractile::spacing::Spacing;
     for source in [
         "version = 1\n[settings]\nhud = true\ngaps = { inner = 6, outer = 8, top = 0 }\n",
         "version = 1\nsettings = { hud = true, gaps = { inner = 6, outer = 8, top = 0 } }\n",
@@ -1079,7 +1079,7 @@ fn inline_settings_keep_outer_when_something_else_changes() {
         doc.set_hud(false);
         assert_eq!(saved_spacing(&doc), wider, "{}", doc.source());
         assert!(
-            !spaceman::config::Config::parse(&doc.source())
+            !fractile::config::Config::parse(&doc.source())
                 .unwrap()
                 .hud()
         );
@@ -1102,7 +1102,7 @@ fn inline_settings_keep_outer_when_something_else_changes() {
 
 #[test]
 fn spacing_without_outer_still_drops_an_edge_set_to_zero() {
-    use spaceman::spacing::Spacing;
+    use fractile::spacing::Spacing;
     let mut doc = gaps("inner = 6\nleft = 20\n");
     doc.set_spacing(Spacing {
         left: 0,
@@ -1115,7 +1115,7 @@ fn spacing_without_outer_still_drops_an_edge_set_to_zero() {
 
 #[test]
 fn unrelated_edits_leave_an_explicit_zero_for_a_later_outer() {
-    use spaceman::spacing::Spacing;
+    use fractile::spacing::Spacing;
     for source in [
         "version = 1\n\n[settings] # Displays.\n\n[settings.gaps]\ninner = 6\ntop = 0\n",
         "version = 1\n\n[settings] # Displays.\ngaps = { inner = 6, top = 0 } # Flush.\n",
@@ -1142,7 +1142,7 @@ fn unrelated_edits_leave_an_explicit_zero_for_a_later_outer() {
 
 #[test]
 fn edits_keep_the_comments_around_outer() {
-    use spaceman::spacing::Spacing;
+    use fractile::spacing::Spacing;
     for source in [
         "version = 1\n[settings.gaps]\nouter = 8 # Around.\n# Between.\ninner = 6 # Tight.\ntop = 0\n",
         "version = 1\n[settings]\ngaps = {\n  outer = 8, # Around.\n  inner = 6, # Tight.\n  top = 0,\n}\n",
@@ -1183,7 +1183,7 @@ fn all_new_windows_writes_windows_all_and_turns_its_lab_on() {
     let source = doc.source();
     assert!(source.contains("windows = \"all\""), "{source}");
     assert!(doc.lab(LabFeature::RouteAllWindows), "{source}");
-    let config = spaceman::config::Config::parse(&source).unwrap();
+    let config = fractile::config::Config::parse(&source).unwrap();
     assert!(config.labs().route_all_windows);
     let rule = doc.rules().remove(0);
     assert!(rule.all_windows);
@@ -1203,5 +1203,5 @@ fn all_new_windows_writes_windows_all_and_turns_its_lab_on() {
     let rule = doc.rules().remove(0);
     doc.place_matching(&rule, Place::Float).unwrap();
     assert!(!doc.rules()[0].all_windows);
-    spaceman::config::Config::parse(&doc.source()).unwrap();
+    fractile::config::Config::parse(&doc.source()).unwrap();
 }

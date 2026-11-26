@@ -29,7 +29,7 @@ impl<B: WorkspaceBackend> WorkspaceRuntime<B> {
             .current_focus()
             .ok_or("Focused window is unavailable")?;
         if u32::try_from(window.app.pid).is_ok_and(|pid| pid == std::process::id()) {
-            // Spaceman's own Settings or setup window is never managed: nothing to float.
+            // Fractile's own Settings or setup window is never managed: nothing to float.
             return Ok(self.status(0, &outputs));
         }
         if self.workspaces.workspace_of_any(&window).is_none() {
@@ -39,7 +39,7 @@ impl<B: WorkspaceBackend> WorkspaceRuntime<B> {
         let workspace = self
             .workspaces
             .workspace_of_any(&window)
-            .ok_or("Focused window is not managed by Spaceman")?;
+            .ok_or("Focused window is not managed by Fractile")?;
         if !self.is_visible(workspace, &outputs) {
             return Err("Focused window is not on an active workspace".into());
         }

@@ -333,7 +333,7 @@ fn move_workspace_preserves_fullscreen_layout_and_focused_tile() {
 #[test]
 fn move_workspace_persisted_assignment_survives_config_reload() {
     let dir = std::env::temp_dir().join(format!(
-        "spaceman-move-ws-test-{}-{}",
+        "fractile-move-ws-test-{}-{}",
         std::process::id(),
         crate::config::now().as_nanos()
     ));

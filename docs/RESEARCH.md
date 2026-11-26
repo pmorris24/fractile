@@ -20,7 +20,7 @@ Primary reports:
 
 This behavior motivates physical replacement, but native evidence does not create a perfect tab-group
 identifier. Close-plus-create and tab replacement can be observationally identical if both happen
-between snapshots. Spaceman must record fixtures, match conservatively, and preserve ambiguous state.
+between snapshots. Fractile must record fixtures, match conservatively, and preserve ambiguous state.
 
 ## AeroSpace PR #2206 Proposes Slot-Preserving Replacement
 
@@ -55,7 +55,7 @@ macOS interfaces. Relevant implementation evidence includes:
 - Event-tap callback pinning and timeout re-enable behavior in `src/platform/input.rs`.
 - Same-app full-frame matching as a native-tab signal in its layout tests.
 
-Paneru proves Rust viability, but Spaceman should not copy its Bevy/ECS architecture, relaxed AX
+Paneru proves Rust viability, but Fractile should not copy its Bevy/ECS architecture, relaxed AX
 thread traits, or broad private WindowServer surface. Its geometric tab grouping is corroborating
 heuristic evidence, not universal identity.
 
@@ -68,7 +68,7 @@ event-tap ownership, and direct `_AXUIElementGetWindow` use.
 one isolated AX actor/run-loop lane per target application. A blocked or unresponsive app does not
 freeze the manager or other apps.
 
-Spaceman combines the coherent modern binding family with per-application isolation from its first
+Fractile combines the coherent modern binding family with per-application isolation from its first
 native observation milestone.
 
 Cross-thread lane commands require an explicit wake mechanism. The narrow implementation sends plain
@@ -100,8 +100,8 @@ ownership models and unnecessary conversions.
 Apple exposes no public AX-to-`CGWindowID` bridge. Mature window managers use
 `_AXUIElementGetWindow`, exported by ApplicationServices/HIServices but absent from public headers.
 
-Spaceman dynamically resolves that symbol, validates both the returned status and nonzero ID, and
-isolates the call in one native module. If unavailable, Spaceman reports an unsupported capability and
+Fractile dynamically resolves that symbol, validates both the returned status and nonzero ID, and
+isolates the call in one native module. If unavailable, Fractile reports an unsupported capability and
 does not guess identity from title or geometry.
 
 The private symbol rules out Mac App Store distribution. It does not require disabling SIP.
@@ -125,7 +125,7 @@ It does not provide:
 - Reliable global hotkeys.
 - Agent activation-policy configuration.
 
-The pinned macOS platform forces regular activation policy during launch. Spaceman resets
+The pinned macOS platform forces regular activation policy during launch. Fractile resets
 `NSApplication` to accessory policy inside GPUI's launch callback and proves the behavior before
 window management begins. A minimal vendored platform patch remains the fallback if that reset causes
 Dock flicker or future regressions.
@@ -144,14 +144,14 @@ Relevant GPUI source evidence:
 
 ## Global Hotkeys Need A Capability Spike
 
-GPUI key bindings work only while a GPUI window receives input. Spaceman needs OS-level hotkeys.
+GPUI key bindings work only while a GPUI window receives input. Fractile needs OS-level hotkeys.
 
 Carbon `RegisterEventHotKey` is simple and avoids Input Monitoring permission, but reports indicate
 that some self-drawn frontmost applications consume combinations before Carbon dispatch. A dedicated
 `CGEventTap` is more controllable but adds Input Monitoring, callback timeout, and teardown concerns.
 
-Milestone 0 tests Carbon under the exact foreground applications Spaceman users care about: Ghostty,
-Zed, Electron, and ordinary AppKit apps. If it fails, Spaceman adopts a dedicated event-tap lane with
+Milestone 0 tests Carbon under the exact foreground applications Fractile users care about: Ghostty,
+Zed, Electron, and ordinary AppKit apps. If it fails, Fractile adopts a dedicated event-tap lane with
 explicit permission diagnostics and timeout re-enable handling. The plan does not choose by folklore.
 
 ## AX Observers Need Run-Loop Ownership
@@ -181,7 +181,7 @@ observation preserves that application's logical slots. Process termination is c
 
 `NSRunningApplication.launchDate` supplies process-start evidence alongside PID. This prevents a
 reused PID from inheriting the prior process incarnation's logical continuity. If launch date is
-unavailable, Spaceman must conservatively create a new local incarnation after discontinuous lifecycle
+unavailable, Fractile must conservatively create a new local incarnation after discontinuous lifecycle
 evidence rather than assuming PID continuity.
 
 This rule prevents one hung application from collapsing its tiles or contaminating other complete
@@ -218,8 +218,8 @@ apply frames. Mature tools use a defensive starting sequence:
 4. Read back actual position and size.
 5. Retry only after readback proves a mismatch.
 
-Spaceman applies only changed frames and reports constrained results. AX move/resize notifications do
-not carry Spaceman transaction IDs, so the MVP converges idempotently instead of pretending those
+Fractile applies only changed frames and reports constrained results. AX move/resize notifications do
+not carry Fractile transaction IDs, so the MVP converges idempotently instead of pretending those
 events can be tagged.
 
 [Rectangle](https://github.com/rxhanson/Rectangle) and AeroSpace provide relevant frame-write prior
@@ -231,8 +231,8 @@ macOS has no supported public interface for creating, enumerating, or moving win
 Control Spaces. Yabai gains deeper control through private APIs and a scripting addition that can
 require reduced SIP protections.
 
-Spaceman manages only on-screen eligible windows on the main display in the MVP. A native Space
-change invalidates current observations; it does not imply that Spaceman owns Space membership.
+Fractile manages only on-screen eligible windows on the main display in the MVP. A native Space
+change invalidates current observations; it does not imply that Fractile owns Space membership.
 
 Post-MVP virtual workspaces require a separate design. Off-screen parking is one candidate, not an
 assumed consequence.
@@ -244,7 +244,7 @@ References:
 
 ## `cutman-rs` Supplies A Proven Local App Workflow
 
-Spaceman can reuse the shape of Cutman's scripts without copying media-specific behavior:
+Fractile can reuse the shape of Cutman's scripts without copying media-specific behavior:
 
 - Build a complete app bundle.
 - Compile an asset catalog.
@@ -253,7 +253,7 @@ Spaceman can reuse the shape of Cutman's scripts without copying media-specific 
 - Verify a stable designated requirement.
 - Terminate the prior installed binary before replacement.
 
-Spaceman adds `LSUIElement` validation and removes document, microphone, screen-capture, and Swift
+Fractile adds `LSUIElement` validation and removes document, microphone, screen-capture, and Swift
 runtime assumptions. Public release work adds Developer ID signing, hardened runtime, notarization,
 and stapling.
 
@@ -272,7 +272,7 @@ and stapling.
 
 ## Research Conclusion
 
-The smallest credible Spaceman is one Rust package with GPUI as foreground ownership and optional UI.
+The smallest credible Fractile is one Rust package with GPUI as foreground ownership and optional UI.
 `MacWindows` turns inconsistent native state into immutable observations and idempotent commands.
 `Reconciler` converts observations into stable logical slots and decisions. `Layout` partitions the
 main display. Direct AppKit adapters provide only the status item and native callbacks GPUI lacks.

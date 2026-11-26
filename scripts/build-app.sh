@@ -1,13 +1,13 @@
 #!/bin/sh
-# Builds target/Spaceman.app and signs it with a Developer ID identity
-# (SPACEMAN_CODESIGN_IDENTITY, or the first one in the keychain).
+# Builds target/Fractile.app and signs it with a Developer ID identity
+# (FRACTILE_CODESIGN_IDENTITY, or the first one in the keychain).
 set -eu
 
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-bundle="$root/target/Spaceman.app"
+bundle="$root/target/Fractile.app"
 icon_output="$root/target/AppIcon.assets"
 icon_info="$root/target/AppIcon-info.plist"
-identity=${SPACEMAN_CODESIGN_IDENTITY:-}
+identity=${FRACTILE_CODESIGN_IDENTITY:-}
 deployment_target=$(/usr/bin/plutil -extract LSMinimumSystemVersion raw "$root/app/Info.plist")
 sdk_version=$(/usr/bin/xcrun --sdk macosx --show-sdk-version)
 cargo_bin=${CARGO:-}
@@ -29,13 +29,13 @@ if [ -z "$identity" ]; then
     | head -1)
 fi
 if [ -z "$identity" ]; then
-  echo "No Developer ID Application identity found; set SPACEMAN_CODESIGN_IDENTITY." >&2
+  echo "No Developer ID Application identity found; set FRACTILE_CODESIGN_IDENTITY." >&2
   exit 1
 fi
 case "$identity" in
   "Developer ID Application:"*) ;;
   *)
-    echo "SPACEMAN_CODESIGN_IDENTITY must be a Developer ID Application identity, not '$identity'." >&2
+    echo "FRACTILE_CODESIGN_IDENTITY must be a Developer ID Application identity, not '$identity'." >&2
     exit 1
     ;;
 esac
@@ -45,7 +45,7 @@ CARGO_TARGET_DIR="$root/target" \
 # A global MACOSX_DEPLOYMENT_TARGET also applies to host-side proc-macro
 # dylibs, which must remain loadable by the build host. Set the deployment
 # command only on the final app executables before they are signed.
-for executable in spaceman-agent spaceman; do
+for executable in fractile-agent fractile; do
   path="$root/target/release/$executable"
   patched="$path.deployment-target"
   /usr/bin/vtool -set-build-version macos "$deployment_target" "$sdk_version" \
@@ -55,8 +55,8 @@ for executable in spaceman-agent spaceman; do
 done
 rm -rf "$bundle"
 mkdir -p "$bundle/Contents/MacOS" "$bundle/Contents/Resources"
-cp "$root/target/release/spaceman-agent" "$bundle/Contents/MacOS/spaceman-agent"
-cp "$root/target/release/spaceman" "$bundle/Contents/MacOS/spaceman"
+cp "$root/target/release/fractile-agent" "$bundle/Contents/MacOS/fractile-agent"
+cp "$root/target/release/fractile" "$bundle/Contents/MacOS/fractile"
 cp "$root/app/Info.plist" "$bundle/Contents/Info.plist"
 rm -rf "$icon_output"
 mkdir -p "$icon_output"
@@ -78,11 +78,11 @@ else
 fi
 plutil -lint "$bundle/Contents/Info.plist" >/dev/null
 codesign --force --timestamp --options runtime --sign "$identity" \
-  "$bundle/Contents/MacOS/spaceman-agent"
+  "$bundle/Contents/MacOS/fractile-agent"
 codesign --force --timestamp --options runtime --sign "$identity" \
-  "$bundle/Contents/MacOS/spaceman"
+  "$bundle/Contents/MacOS/fractile"
 codesign --force --timestamp --options runtime --sign "$identity" \
-  --identifier anomaly.spaceman \
+  --identifier app.fractile \
   "$bundle"
 codesign --verify --deep --strict "$bundle"
 

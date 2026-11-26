@@ -24,8 +24,8 @@ pub use demo::Move;
 pub use flow::{Effect, Flow, Input, SetupState, Step, launch_step};
 pub use view::overlay;
 
+use fractile::{app::UiLaunchAtLogin, onboarding_plan::Inventory, shortcuts::Modifiers};
 use rune::Tx;
-use spaceman::{app::UiLaunchAtLogin, onboarding_plan::Inventory, shortcuts::Modifiers};
 
 use crate::{
     Pane, Ui, apps,
@@ -37,7 +37,7 @@ const ADVANCE_BEAT: Duration = Duration::from_millis(700);
 
 pub struct Tour {
     pub flow: Flow,
-    /// What is on and would fight Spaceman, read as the permission step opens.
+    /// What is on and would fight Fractile, read as the permission step opens.
     pub conflicts: Vec<Conflict>,
     /// The Arrange step's plan.
     pub board: Board,
@@ -315,7 +315,7 @@ fn sync(ui: &mut Ui) {
 #[cfg(target_os = "macos")]
 fn listen_on_try_it(ui: &mut Ui, step: Step) {
     let trying = step == Step::TryIt;
-    let presses = trying.then(|| demo::presses(&demo::chords(ui), spaceman::macos::key_press));
+    let presses = trying.then(|| demo::presses(&demo::chords(ui), fractile::macos::key_press));
     let window = ui.window.clone();
     let Some(tour) = &mut ui.tour else {
         return;
@@ -388,7 +388,7 @@ fn apply(ui: &mut Ui, effect: Effect) {
 }
 
 /// Arrange & start: the open windows move to the plan's workspaces and tiling starts. The
-/// only things saved are a `float` rule for each app the plan floats that Spaceman would tile,
+/// only things saved are a `float` rule for each app the plan floats that Fractile would tile,
 /// and a `tile` rule for each built-in floating utility the plan tiles; no window is routed by
 /// rule, so a browser's or a terminal's next window opens where you are.
 fn arrange_and_start(ui: &mut Ui) {

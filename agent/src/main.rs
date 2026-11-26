@@ -1,4 +1,4 @@
-//! Spaceman's single-process macOS agent (`spaceman-agent`): runs the window
+//! Fractile's single-process macOS agent (`fractile-agent`): runs the window
 //! manager, native status bar item, Settings window, and Rune
 //! Playground (`⇧⌘D` / `--playground`) on one AppKit + Rune event loop.
 
@@ -23,10 +23,10 @@ mod view;
 
 use std::sync::Arc;
 
+use fractile::app::{UiAction, UiAgentSnapshot, UiBridge};
 pub use panes::Pane;
 use rules::{Doc, Place};
 use rune::{AppSpec, KeyEvent, PointerPress, Tx, Waker};
-use spaceman::app::{UiAction, UiAgentSnapshot, UiBridge};
 
 /// The one modal sheet that is open.
 #[derive(Clone, Debug)]
@@ -44,10 +44,10 @@ pub enum Menu {
     Add(Place),
     /// A rule's context menu, at the secondary press.
     Rule(usize, PointerPress),
-    /// A built-in float's choices, by its place in `spaceman::defaults::FLOATING_BUNDLES`.
+    /// A built-in float's choices, by its place in `fractile::defaults::FLOATING_BUNDLES`.
     Default(usize),
     /// The screens a workspace can show on, from its tile's number in Settings › Screens.
-    Screen(spaceman::WorkspaceId),
+    Screen(fractile::WorkspaceId),
 }
 
 pub struct Ui {
@@ -71,7 +71,7 @@ pub struct Ui {
     /// The width cards have in the pane on screen, as last laid out.
     pub(crate) card_w: f32,
     pub running: Vec<apps::Running>,
-    /// The running apps Spaceman floats with no rule, as Settings › Rules lists them, and when
+    /// The running apps Fractile floats with no rule, as Settings › Rules lists them, and when
     /// they were last read on Rune's clock.
     pub(crate) default_floats: Vec<String>,
     pub(crate) default_floats_at: Option<f64>,
@@ -85,16 +85,16 @@ pub struct Ui {
     /// The last arrangement of displays seen, which Settings › Screens keeps drawing after some
     /// of them are unplugged; read from disk once, on the first display read.
     pub(crate) known_displays: Option<panes::workspaces::remembered::Record>,
-    /// Lab slug requested by a `spaceman://labs/<slug>` deep link, preserved
+    /// Lab slug requested by a `fractile://labs/<slug>` deep link, preserved
     /// cleanly for Labs cards to highlight.
     pub highlight_lab: Option<String>,
-    /// Setting or feature slug requested by a `spaceman://` deep link.
+    /// Setting or feature slug requested by a `fractile://` deep link.
     pub highlight_feature: Option<String>,
     /// The last save that failed.
     pub error: Option<String>,
     /// Settings › Layout while a slider is held: the preview follows it, the file waits for
     /// the release.
-    pub(crate) spacing_draft: Option<spaceman::spacing::Spacing>,
+    pub(crate) spacing_draft: Option<fractile::spacing::Spacing>,
     /// Whether the four edge sliders show, once someone opened or closed them.
     pub(crate) per_edge: Option<bool>,
     /// Settings › Shortcuts' recorder.
@@ -147,7 +147,7 @@ impl Ui {
         bridge: UiBridge,
         initial_tour: Option<onboarding::Step>,
         accessibility: bool,
-        initial_target: Option<spaceman::deep_link::OpenTarget>,
+        initial_target: Option<fractile::deep_link::OpenTarget>,
     ) -> Ui {
         let mut ui = Ui::new(doc, Some(bridge));
         ui.look_up_apps();
@@ -207,11 +207,11 @@ impl Ui {
         }
     }
 
-    /// Opens Settings onto a validated `spaceman://` deep-link target.
+    /// Opens Settings onto a validated `fractile://` deep-link target.
     ///
     /// Security invariant: only changes UI pane selection and highlight state;
     /// never mutates `self.doc` or enables any setting/Lab.
-    pub fn open_target(&mut self, target: spaceman::deep_link::OpenTarget) {
+    pub fn open_target(&mut self, target: fractile::deep_link::OpenTarget) {
         onboarding::dismiss(self);
         self.hud_preview = None;
         let pane = match target.pane {
@@ -219,7 +219,7 @@ impl Ui {
                 Some(pane) if pane.visible(self.doc.labs()) => pane,
                 Some(pane) => {
                     let line = format!(
-                        "spaceman: deep link pane '{}' is behind an off [labs] switch; opening General\n",
+                        "fractile: deep link pane '{}' is behind an off [labs] switch; opening General\n",
                         pane.key()
                     );
                     drop(std::io::Write::write_all(
@@ -230,7 +230,7 @@ impl Ui {
                 }
                 None => {
                     let line = format!(
-                        "spaceman: deep link pane '{}' is not registered in this build; opening General\n",
+                        "fractile: deep link pane '{}' is not registered in this build; opening General\n",
                         deep_pane.as_str()
                     );
                     drop(std::io::Write::write_all(
@@ -242,7 +242,7 @@ impl Ui {
             },
             None => {
                 if let Some(note) = &target.diagnostic {
-                    let line = format!("spaceman: deep link: {note}\n");
+                    let line = format!("fractile: deep link: {note}\n");
                     drop(std::io::Write::write_all(
                         &mut std::io::stderr().lock(),
                         line.as_bytes(),
@@ -272,7 +272,7 @@ impl Ui {
     }
 
     /// Starts tiling with the open windows moved onto the plan's workspaces.
-    pub fn arrange(&self, arrangement: spaceman::onboarding_plan::Arrangement) {
+    pub fn arrange(&self, arrangement: fractile::onboarding_plan::Arrangement) {
         self.send_action(UiAction::Arrange(arrangement));
     }
 
@@ -281,7 +281,7 @@ impl Ui {
         self.send_action(UiAction::UndoArrangement);
     }
 
-    /// Restores every window, then quits Spaceman.
+    /// Restores every window, then quits Fractile.
     pub fn quit(&self) {
         self.send_action(UiAction::Quit);
     }
@@ -295,7 +295,7 @@ impl Ui {
     }
 
     /// Moves every open window of the app `bundle` to `workspace`.
-    pub(crate) fn move_app(&self, bundle: &str, workspace: spaceman::WorkspaceId) {
+    pub(crate) fn move_app(&self, bundle: &str, workspace: fractile::WorkspaceId) {
         self.send_action(UiAction::MoveApp(bundle.to_owned(), workspace));
     }
 
@@ -320,7 +320,7 @@ impl Ui {
     }
 
     /// Sets the Workspace HUD off (`None`) or on with `style` (`Some(style)`).
-    pub fn set_hud(&mut self, mode: Option<spaceman::config::HudStyle>) {
+    pub fn set_hud(&mut self, mode: Option<fractile::config::HudStyle>) {
         let enabled = mode.is_some();
         self.edit(|doc| {
             doc.set_hud(enabled);
@@ -351,7 +351,7 @@ impl Ui {
     }
 
     /// Saves where the Workspace HUD capsule sits, then moves every panel to that edge.
-    pub fn set_hud_position(&mut self, position: spaceman::config::HudPosition) {
+    pub fn set_hud_position(&mut self, position: fractile::config::HudPosition) {
         self.edit(|doc| doc.set_hud_position(position));
         if self.error.is_none()
             && let Some(driver) = &self.hud_driver
@@ -362,7 +362,7 @@ impl Ui {
 
     /// Saves gaps, edge padding and the single-window width, then retiles so every display
     /// takes them at once.
-    pub fn set_spacing(&mut self, spacing: spaceman::spacing::Spacing) {
+    pub fn set_spacing(&mut self, spacing: fractile::spacing::Spacing) {
         self.spacing_draft = None;
         if self.doc.spacing() == spacing {
             return;
@@ -503,7 +503,7 @@ fn poll(ui: &mut Ui, clock: f64, tx: &mut Tx) -> bool {
     if !ui.fixture && !ui.frame_remembered {
         // Named for the size Settings opens at, so a frame saved at the old, smaller one does
         // not hold the window there.
-        ui.frame_remembered = rune_mac::remember_frame("Spaceman 1180");
+        ui.frame_remembered = rune_mac::remember_frame("Fractile 1180");
     }
     let mut changed = onboarding::poll(ui, tx);
     changed |= panes::workspaces::poll_displays(ui, clock);
@@ -610,7 +610,7 @@ fn on_reopen(ui: &mut Ui, _has_visible_windows: bool, _tx: &mut Tx) -> bool {
 
 #[cfg(target_os = "macos")]
 fn on_open_url(ui: &mut Ui, link: &str, _tx: &mut Tx) {
-    match spaceman::deep_link::parse_url(link) {
+    match fractile::deep_link::parse_url(link) {
         Ok(parsed) => {
             ui.open_target(parsed.resolve());
             if let Some(window) = &ui.window {
@@ -618,7 +618,7 @@ fn on_open_url(ui: &mut Ui, link: &str, _tx: &mut Tx) {
             }
         }
         Err(error) => {
-            let line = format!("spaceman: ignored deep link ({error})\n");
+            let line = format!("fractile: ignored deep link ({error})\n");
             drop(std::io::Write::write_all(
                 &mut std::io::stderr().lock(),
                 line.as_bytes(),
@@ -629,7 +629,7 @@ fn on_open_url(ui: &mut Ui, link: &str, _tx: &mut Tx) {
 
 fn spec() -> AppSpec<Ui> {
     AppSpec {
-        title: "Spaceman",
+        title: "Fractile",
         size: controls::WINDOW.size,
         min_size: Some(controls::WINDOW.min),
         init: playground::blank_fixture,
@@ -679,10 +679,10 @@ fn base_app() -> rune::App<Ui> {
 
 #[cfg(target_os = "macos")]
 pub(crate) fn live_app(
-    bridge: spaceman::app::UiBridge,
+    bridge: fractile::app::UiBridge,
     initial_tour: Option<onboarding::Step>,
     accessibility: bool,
-    initial_target: Option<spaceman::deep_link::OpenTarget>,
+    initial_target: Option<fractile::deep_link::OpenTarget>,
 ) -> rune::App<Ui> {
     let doc = Doc::load();
     let initial_hud = doc.hud();
@@ -726,7 +726,7 @@ fn main() {
     if let Err(error) = host::run() {
         drop(std::io::Write::write_all(
             &mut std::io::stderr(),
-            format!("Spaceman failed: {error}\n").as_bytes(),
+            format!("Fractile failed: {error}\n").as_bytes(),
         ));
         std::process::exit(1);
     }
@@ -737,7 +737,7 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use spaceman::deep_link::parse_url;
+    use fractile::deep_link::parse_url;
 
     #[test]
     fn the_settings_window_grows_but_never_below_the_panes() {
@@ -766,7 +766,7 @@ mod tests {
         assert_eq!(playground::blank_fixture().pane, Pane::General);
 
         let mut ui = playground::blank_fixture();
-        ui.open_target(parse_url("spaceman://settings/rules").unwrap().resolve());
+        ui.open_target(parse_url("fractile://settings/rules").unwrap().resolve());
         assert_eq!(ui.pane, Pane::Rules);
     }
 
@@ -776,7 +776,7 @@ mod tests {
         let initial_hud = ui.doc.hud();
         let initial_rules = ui.doc.rules().len();
 
-        let workspaces = parse_url("spaceman://settings/workspaces")
+        let workspaces = parse_url("fractile://settings/workspaces")
             .unwrap()
             .resolve();
         ui.open_target(workspaces);
@@ -785,7 +785,7 @@ mod tests {
         assert_eq!(ui.highlight_lab, None);
         assert_eq!(ui.highlight_feature, None);
 
-        let lab = parse_url("spaceman://labs/scrolling-strip")
+        let lab = parse_url("fractile://labs/scrolling-strip")
             .unwrap()
             .resolve();
         ui.open_target(lab);
@@ -795,9 +795,9 @@ mod tests {
         assert_eq!(ui.highlight_feature.as_deref(), Some("scrolling-strip"));
 
         for (url, expected_feature) in [
-            ("spaceman://settings/layout", None),
-            ("spaceman://features/gaps", Some("gaps")),
-            ("spaceman://features/max-width", Some("max-width")),
+            ("fractile://settings/layout", None),
+            ("fractile://features/gaps", Some("gaps")),
+            ("fractile://features/max-width", Some("max-width")),
         ] {
             let target = parse_url(url).unwrap().resolve();
             ui.open_target(target);
@@ -806,7 +806,7 @@ mod tests {
             assert_eq!(ui.highlight_feature.as_deref(), expected_feature, "{url}");
         }
 
-        let hud_feature = parse_url("spaceman://features/hud").unwrap().resolve();
+        let hud_feature = parse_url("fractile://features/hud").unwrap().resolve();
         ui.open_target(hud_feature);
         assert_eq!(ui.pane, Pane::General);
         assert_eq!(ui.highlight_lab, None);
@@ -832,7 +832,7 @@ mod tests {
 
     #[test]
     fn activity_deep_link_opens_its_pane_only_with_the_lab_on() {
-        let activity = parse_url("spaceman://settings/activity").unwrap().resolve();
+        let activity = parse_url("fractile://settings/activity").unwrap().resolve();
 
         let mut ui = playground::blank_fixture();
         ui.open_target(activity.clone());
@@ -868,15 +868,15 @@ mod tests {
             include_str!("../fixtures/config.toml"),
             "\n[labs]\nscratchpad = true\nactivity = true\n"
         ));
-        assert!(doc.lab(spaceman::config::LabFeature::Scratchpad));
-        assert!(doc.lab(spaceman::config::LabFeature::Activity));
+        assert!(doc.lab(fractile::config::LabFeature::Scratchpad));
+        assert!(doc.lab(fractile::config::LabFeature::Activity));
         ui.doc = doc;
         assert!(ui.doc.labs().activity);
     }
 
     #[test]
     fn a_labs_switch_turns_on_and_off_without_touching_the_others() {
-        use spaceman::config::LabFeature;
+        use fractile::config::LabFeature;
         let mut ui = playground::blank_fixture();
         ui.edit(|doc| doc.set_lab(LabFeature::PhysicalDisplays, true));
         assert!(ui.doc.labs().physical_displays);

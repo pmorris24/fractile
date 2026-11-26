@@ -5,11 +5,11 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>en</string>
     <key>CFBundleDisplayName</key>
-    <string>Spaceman</string>
+    <string>Fractile</string>
     <key>CFBundleExecutable</key>
-    <string>spaceman-agent</string>
+    <string>fractile-agent</string>
     <key>CFBundleIdentifier</key>
-    <string>anomaly.spaceman</string>
+    <string>app.fractile</string>
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>CFBundleIconName</key>
@@ -17,29 +17,29 @@
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
-    <string>Spaceman</string>
+    <string>Fractile</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleURLTypes</key>
     <array>
         <dict>
             <key>CFBundleURLName</key>
-            <string>anomaly.spaceman.url</string>
+            <string>app.fractile.url</string>
             <key>CFBundleURLSchemes</key>
             <array>
-                <string>spaceman</string>
+                <string>fractile</string>
             </array>
         </dict>
     </array>
     <key>CFBundleShortVersionString</key>
-    <string>0.3.5</string>
+    <string>0.1.0</string>
     <key>CFBundleVersion</key>
-    <string>14</string>
+    <string>1</string>
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
     <key>LSUIElement</key>
     <true/>
     <key>NSAccessibilityUsageDescription</key>
-    <string>Spaceman uses Accessibility access to observe and tile application windows.</string>
+    <string>Fractile uses Accessibility access to observe and tile application windows.</string>
 </dict>
 </plist>

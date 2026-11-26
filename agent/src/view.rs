@@ -76,7 +76,7 @@ fn sidebar(ui: &Ui, p: Paint) -> El {
         .child(nav)
         .child(el().key("spacer").grow(1.0))
         .child(
-            text(format!("Version {}", spaceman::build_version()))
+            text(format!("Version {}", fractile::build_version()))
                 .key("version")
                 .font(p.tabular(p.meta()))
                 .color(p.faint())
@@ -190,7 +190,7 @@ fn pane_header(p: Paint, title: &str, max: f32) -> El {
         )
 }
 
-/// A save that failed, a config file Spaceman can't read, or an agent error such as
+/// A save that failed, a config file Fractile can't read, or an agent error such as
 /// unavailable hotkeys, which used to be visible only through the control socket.
 fn error_banner(ui: &Ui, p: Paint) -> Option<El> {
     let agent_error = ui

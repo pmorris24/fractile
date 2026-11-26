@@ -1,6 +1,6 @@
-# Spaceman Design System
+# Fractile Design System
 
-Spaceman's Settings window, its modals and its shortcut keys are drawn with
+Fractile's Settings window, its modals and its shortcut keys are drawn with
 [Rune](https://github.com/anomalyco/rune) in OpenCode's design language, the same as Hex's wherever
 both apps have the same object:
 
@@ -9,7 +9,7 @@ both apps have the same object:
 - **`rune-theme-opencode`** provides every colour, elevation, radius, type style and motion token
   (`rune_theme_opencode::kit(dark)`). Settings follows the system appearance, so every view works
   in light and dark.
-- **[`agent/src/controls.rs`](../agent/src/controls.rs)** and `controls/` hold Spaceman's own
+- **[`agent/src/controls.rs`](../agent/src/controls.rs)** and `controls/` hold Fractile's own
   pieces and its layout tokens ([`controls/tokens.rs`](../agent/src/controls/tokens.rs)).
 
 The window follows OpenCode Desktop's layout: a deep-background sidebar and a raised, rounded
@@ -103,7 +103,7 @@ two styles of the same size side by side. Views name a role, never `p.k.ty.*`.
 | Tag, small heading | `p.tag()` (11/530/12) | `p.faint()` |
 | A number that changes in place or stacks in a column | `p.tabular(style)` (`'tnum' 1`) | as its role |
 
-## Spaceman pieces
+## Fractile pieces
 
 | Job | Piece |
 |---|---|
@@ -153,7 +153,7 @@ Shortcut rows show the chord the base modifier produces, never a hard-coded ⌥.
 ## Copy
 
 - Sentence case for every label, button, title and section label: "Reset to defaults", "Launch at
-  login". Proper nouns keep their capitals: Spaceman, Finder, System
+  login". Proper nouns keep their capitals: Fractile, Finder, System
   Settings, Workspace HUD, Dwindle.
 - Use "…" (one character) for progress ("Restoring windows…") and for a button that opens a
   further choice ("Customize…").
@@ -163,7 +163,7 @@ Shortcut rows show the chord the base modifier produces, never a hard-coded ⌥.
   that repeats a label.
 - Say a thing once: the version lives in the sidebar foot.
 - Exception: the native menu bar menu (`src/status_item.rs`) follows the macOS title-case
-  convention ("Launch at Login", "Quit Spaceman").
+  convention ("Launch at Login", "Quit Fractile").
 
 ## Enforcement
 
@@ -177,17 +177,17 @@ Shortcut rows show the chord the base modifier produces, never a hard-coded ⌥.
   (and `playground.rs`).
 - A file may exceed zero only up to its ceiling in
   [`scripts/design-token-exceptions.txt`](../scripts/design-token-exceptions.txt), which is empty
-  today. Ceilings only go down: `SPACEMAN_UPDATE_TOKEN_CEILINGS=1 cargo test -p spaceman-agent
+  today. Ceilings only go down: `FRACTILE_UPDATE_TOKEN_CEILINGS=1 cargo test -p fractile-agent
   design_tokens` rewrites the file and refuses to raise a number.
 
 ## Verification
 
 ```sh
 # The named fixture scenes (`SCENES` in agent/src/panes.rs):
-cargo run --locked -p spaceman-agent -- --list-scenes
+cargo run --locked -p fractile-agent -- --list-scenes
 # One scene, headless:
-cargo run --locked -p spaceman-agent -- --size 920x660 --scene hud-customize --snap /tmp/hud.png
-cargo run --locked -p spaceman-agent -- --scene general --theme light --snap /tmp/general-light.png
+cargo run --locked -p fractile-agent -- --size 920x660 --scene hud-customize --snap /tmp/hud.png
+cargo run --locked -p fractile-agent -- --scene general --theme light --snap /tmp/general-light.png
 # Several scenes, sizes and themes into one folder (<scene>-<width>[-light].png):
 OUT=captures/after SIZES="860x580 920x660 1200x840" THEMES="dark light" \
   scripts/snap-set.sh general hud-customize layout rules workspaces shortcuts activity

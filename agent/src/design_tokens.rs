@@ -7,7 +7,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 const EXCEPTIONS: &str = "scripts/design-token-exceptions.txt";
-const UPDATE_ENV: &str = "SPACEMAN_UPDATE_TOKEN_CEILINGS";
+const UPDATE_ENV: &str = "FRACTILE_UPDATE_TOKEN_CEILINGS";
 
 /// The spacing scale. A literal outside it is a one-off.
 const SCALE: [f64; 13] = [
@@ -190,7 +190,7 @@ fn failures(counts: &BTreeMap<String, usize>, ceilings: &BTreeMap<String, usize>
         let count = counts.get(path).copied().unwrap_or(0);
         if count < *ceiling {
             failures.push(format!(
-                "{path}: ceiling {ceiling} but only {count} left. Lower it: {UPDATE_ENV}=1 cargo test -p spaceman-agent design_tokens"
+                "{path}: ceiling {ceiling} but only {count} left. Lower it: {UPDATE_ENV}=1 cargo test -p fractile-agent design_tokens"
             ));
         }
     }
@@ -213,7 +213,7 @@ fn tightened(
     let mut text = String::from(
         "# Hand-typed measurements left in the Settings UI, per file (agent/src/design_tokens.rs).\n\
          # A ceiling only goes down: fix the file, then run\n\
-         #   SPACEMAN_UPDATE_TOKEN_CEILINGS=1 cargo test -p spaceman-agent design_tokens\n",
+         #   FRACTILE_UPDATE_TOKEN_CEILINGS=1 cargo test -p fractile-agent design_tokens\n",
     );
     for (path, count) in counts.iter().filter(|(_, count)| **count > 0) {
         text.push_str(&format!("{path} {count}\n"));

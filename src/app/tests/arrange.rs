@@ -338,7 +338,7 @@ fn the_setup_inventory_carries_no_titles_and_counts_parked_windows() {
 }
 
 #[test]
-fn toggle_float_on_spacemans_own_window_does_nothing() {
+fn toggle_float_on_fractiles_own_window_does_nothing() {
     // The setup tour asks for the float shortcut while its own window has focus.
     let own = app_window(i32::try_from(std::process::id()).unwrap(), 1);
     let mut backend = FakeBackend {

@@ -1,5 +1,5 @@
 use super::*;
-use spaceman::{DisplaySelector, config::save_workspace_monitor_at};
+use fractile::{DisplaySelector, config::save_workspace_monitor_at};
 
 #[test]
 fn parses_pause_on_builtin_display_with_false_default_and_preserves_on_workspace_save() {

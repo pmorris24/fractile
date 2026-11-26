@@ -1,12 +1,12 @@
 use std::path::{Path, PathBuf};
 
-use serde::Serialize;
-use spaceman::{
+use fractile::{
     config::{
         HudPosition, HudStyle, LabFeature, LayoutMode, MenuBarIcon, MouseFollowsFocus, load_path,
     },
     spacing::{self, SpacingKey},
 };
+use serde::Serialize;
 
 use super::{
     Outcome,
@@ -350,7 +350,7 @@ fn run_show(args: &[&str], path_override: Option<&Path>) -> Result<String, Strin
 fn run_get(args: &[&str], path_override: Option<&Path>) -> Result<String, String> {
     let (json, positional) = split_json_flag(args)?;
     let [raw_key] = positional.as_slice() else {
-        return Err("usage: spaceman config get <key> [--json]".into());
+        return Err("usage: fractile config get <key> [--json]".into());
     };
     let key = Key::parse(raw_key)?;
     let path = resolve_config_path(path_override)?;
@@ -465,7 +465,7 @@ impl SettingValue {
 fn run_set(args: &[&str], path_override: Option<&Path>) -> Result<String, String> {
     let (json, positional) = split_json_flag(args)?;
     let [raw_key, raw_value] = positional.as_slice() else {
-        return Err("usage: spaceman config set <key> <value> [--json]".into());
+        return Err("usage: fractile config set <key> <value> [--json]".into());
     };
     let key = Key::parse(raw_key)?;
     let parsed_value = match key {
@@ -578,7 +578,7 @@ fn run_set(args: &[&str], path_override: Option<&Path>) -> Result<String, String
 fn run_reset(args: &[&str], path_override: Option<&Path>) -> Result<String, String> {
     let (json, positional) = split_json_flag(args)?;
     let [raw_key] = positional.as_slice() else {
-        return Err("usage: spaceman config reset <key> [--json]".into());
+        return Err("usage: fractile config reset <key> [--json]".into());
     };
     let key = Key::parse(raw_key)?;
     let path = resolve_config_path(path_override)?;
@@ -645,7 +645,7 @@ fn run_check(args: &[&str], path_override: Option<&Path>) -> Result<String, Stri
     let (path, explicit): (PathBuf, bool) = match positional.as_slice() {
         [] => (resolve_config_path(path_override)?, false),
         [target] => (PathBuf::from(target), true),
-        _ => return Err("usage: spaceman config check [path] [--json]".into()),
+        _ => return Err("usage: fractile config check [path] [--json]".into()),
     };
 
     let exists = if explicit {

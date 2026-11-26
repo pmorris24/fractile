@@ -414,7 +414,7 @@ impl<B: PresenterBackend> InteractivePresenter<B> {
         let shared = Arc::clone(&self.shared);
         let lane_mailbox = Arc::clone(&mailbox);
         let thread = thread::Builder::new()
-            .name(format!("spaceman-presenter-{id}"))
+            .name(format!("fractile-presenter-{id}"))
             .spawn(move || run_lane(&shared, &lane_mailbox))
             .ok()?;
         self.next_lane += 1;

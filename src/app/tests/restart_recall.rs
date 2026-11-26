@@ -116,7 +116,7 @@ fn every_window_reopened_at_a_parking_spot_is_rescued_and_recalled() {
 }
 
 #[test]
-fn a_window_parked_by_spaceman_is_never_rescued() {
+fn a_window_parked_by_fractile_is_never_rescued() {
     let tile = outputs().main().frame;
     let owned = window(10);
     let mut runtime = runtime(FakeBackend {
@@ -226,8 +226,8 @@ fn same_size_reopened_windows_match_by_document_and_fuzzy_title_in_reverse_order
                 workspace: workspace(2),
                 frame: tile,
                 floating: false,
-                document: Some("file:///Users/example/code/spaceman".into()),
-                title: Some("spaceman — Cargo.toml".into()),
+                document: Some("file:///Users/example/code/fractile".into()),
+                title: Some("fractile — Cargo.toml".into()),
             },
             RememberedWindow {
                 workspace: workspace(3),
@@ -247,8 +247,8 @@ fn same_size_reopened_windows_match_by_document_and_fuzzy_title_in_reverse_order
     );
     if let crate::AppObservation::Complete { windows, .. } = &mut observation.applications[0] {
         windows[0].title = Some("Inbox (4) - Gmail".into());
-        windows[1].document = Some("file:///Users/example/code/spaceman".into());
-        windows[1].title = Some("spaceman — src/window_memory.rs".into());
+        windows[1].document = Some("file:///Users/example/code/fractile".into());
+        windows[1].title = Some("fractile — src/window_memory.rs".into());
     }
     let mut runtime = runtime(FakeBackend {
         frames: HashMap::from([(gmail.clone(), tile), (editor.clone(), tile)]),
@@ -270,7 +270,7 @@ fn same_size_reopened_windows_match_by_document_and_fuzzy_title_in_reverse_order
     for event in &runtime.backend.journal {
         let json = serde_json::to_string(event).unwrap();
         assert!(!json.contains("Gmail"), "{json}");
-        assert!(!json.contains("spaceman —"), "{json}");
+        assert!(!json.contains("fractile —"), "{json}");
         assert!(!json.contains("file:///Users/example"), "{json}");
     }
 }

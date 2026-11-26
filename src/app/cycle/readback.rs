@@ -8,7 +8,7 @@ use super::*;
 pub(in crate::app) const ASYNC_BOUNCE_SETTLE: Duration = Duration::from_millis(500);
 
 /// Consecutive bounced or rejected applications for the same target frame
-/// before Spaceman stops retrying that target (even when rejected frames vary
+/// before Fractile stops retrying that target (even when rejected frames vary
 /// each cycle), preventing infinite resize-fight flicker loops.
 pub(in crate::app) const APPLY_ATTEMPT_LIMIT: u8 = 3;
 

@@ -1,11 +1,11 @@
 //! The Layouts style: each workspace as its layout, an app icon in every tile, the one you are
 //! on larger than the rest.
 
-use rune::{Cursor, El, Spring, Tx, el, row};
-use spaceman::{
+use fractile::{
     Rect, WorkspaceId,
     app::{HUD_PREVIEW_RECT, UiHudWorkspace, hud_preview_rect},
 };
+use rune::{Cursor, El, Spring, Tx, el, row};
 
 use super::pill::{INNER, Icons, ROW, Track, app_icon, presence, rgba};
 use crate::controls::Paint;

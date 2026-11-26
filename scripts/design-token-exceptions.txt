@@ -1,3 +1,3 @@
 # Hand-typed measurements left in the Settings UI, per file (agent/src/design_tokens.rs).
 # A ceiling only goes down: fix the file, then run
-#   SPACEMAN_UPDATE_TOKEN_CEILINGS=1 cargo test -p spaceman-agent design_tokens
+#   FRACTILE_UPDATE_TOKEN_CEILINGS=1 cargo test -p fractile-agent design_tokens

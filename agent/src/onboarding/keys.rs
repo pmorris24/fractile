@@ -7,7 +7,7 @@
 //! miniature and no real window; with another window in front the real shortcut runs as usual
 //! and the miniature follows along.
 
-use spaceman::macos::KeyMonitor;
+use fractile::macos::KeyMonitor;
 
 use super::demo::{self, Move, Presses};
 use crate::Ui;

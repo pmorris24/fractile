@@ -5,12 +5,12 @@ use std::{
     thread,
 };
 
-use serde_json::Value;
-use spaceman::{
+use fractile::{
     WorkspaceId,
     config::{Config, HudStyle, WindowDisposition},
     shortcuts::{Command, Key, Modifiers},
 };
+use serde_json::Value;
 
 use super::{TempConfig, run_cli, sample_window};
 
@@ -118,11 +118,11 @@ fn concurrent_mixed_cli_config_mutations_preserve_every_edit() {
             WindowDisposition::Route(WorkspaceId::TWO),
             "attempt {attempt}:\n{saved}"
         );
-        let mut workspaces = spaceman::Workspaces::default();
+        let mut workspaces = fractile::Workspaces::default();
         parsed.configure_workspaces(&mut workspaces);
         assert_eq!(
             workspaces.assignment(WorkspaceId::new(3).unwrap()),
-            &spaceman::DisplaySelector::Secondary,
+            &fractile::DisplaySelector::Secondary,
             "attempt {attempt}:\n{saved}"
         );
     }
@@ -284,7 +284,7 @@ fn config_show_includes_shortcuts_and_labs_in_toml_and_json() {
     assert_eq!(show_toml.exit_code, 0, "stderr: {:?}", show_toml.stderr);
     let rendered = show_toml.stdout.unwrap();
 
-    // Shown TOML validates with both Config::parse and `spaceman config check <file>\`.
+    // Shown TOML validates with both Config::parse and `fractile config check <file>\`.
     let shown_file = temp.dir.join("shown.toml");
     fs::write(&shown_file, &rendered).unwrap();
     let recheck = temp.run(&["config", "check", shown_file.to_str().unwrap()]);
@@ -422,7 +422,7 @@ fn config_gets_sets_and_resets_layout() {
     assert_eq!(set_columns.stdout.as_deref(), Some("set layout = columns"));
     assert_eq!(
         Config::parse(&temp.read()).unwrap().layout(),
-        spaceman::config::LayoutMode::Columns
+        fractile::config::LayoutMode::Columns
     );
     assert!(temp.read().contains("hud_style = \"layouts\""));
 
@@ -448,7 +448,7 @@ fn config_gets_sets_and_resets_layout() {
     assert!(source.contains("hud_style = \"layouts\""), "{source}");
     assert_eq!(
         Config::parse(&source).unwrap().layout(),
-        spaceman::config::LayoutMode::Dwindle
+        fractile::config::LayoutMode::Dwindle
     );
 
     temp.write("version = 1\n[settings]\nlayout = \"columns\"\n");

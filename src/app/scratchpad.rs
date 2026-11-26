@@ -54,7 +54,7 @@ impl<B: WorkspaceBackend> WorkspaceRuntime<B> {
         let workspace = self
             .workspaces
             .workspace_of_any(&window)
-            .ok_or("Focused window is not managed by Spaceman")?;
+            .ok_or("Focused window is not managed by Fractile")?;
         if !self.is_visible(workspace, &outputs) {
             return Err("Focused window is not on an active workspace".into());
         }

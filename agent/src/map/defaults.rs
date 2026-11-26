@@ -1,11 +1,11 @@
-//! The apps Spaceman floats with no rule (`spaceman::defaults`), as Settings › Rules shows them: a
+//! The apps Fractile floats with no rule (`fractile::defaults`), as Settings › Rules shows them: a
 //! quiet chip for each one that is running, or that a rule tiles, under the float box. They are
 //! not rules, so they have no fill and can't be dragged. A chip's menu writes the one rule that
 //! overrides the default: `action = "tile"`, or `action = "pin"` for every workspace.
 
+use fractile::defaults::{FLOATING_BUNDLES, floats_by_default};
 use rune::{El, col, row, text};
 use rune_kit::{Menu as KitMenu, MenuItem, Placement};
-use spaceman::defaults::{FLOATING_BUNDLES, floats_by_default};
 
 use super::{BOX_PAD, CHIP_GAP, CHIP_H, CHIP_ICON, HEAD_GAP, MapView, SECTION_GAP};
 use crate::{

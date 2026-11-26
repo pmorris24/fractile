@@ -5,12 +5,12 @@
 mod preview;
 mod slider;
 
-use rune::{El, Tx, icon, text};
-use rune_kit::SegmentedControl;
-use spaceman::{
+use fractile::{
     config::{LabFeature, LayoutMode},
     spacing::{Spacing, SpacingKey},
 };
+use rune::{El, Tx, icon, text};
+use rune_kit::SegmentedControl;
 
 use crate::{
     Ui,
@@ -107,7 +107,7 @@ pub(crate) fn customize_open(ui: &Ui, spacing: &Spacing) -> bool {
     ui.per_edge.unwrap_or(!uniform(spacing))
 }
 
-/// Which section or row on Layout a `spaceman://` deep link highlights, if any.
+/// Which section or row on Layout a `fractile://` deep link highlights, if any.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum Highlight {
     Gaps,
@@ -410,23 +410,23 @@ mod tests {
 
     #[test]
     fn gaps_deep_link_highlights_gaps_while_ordinary_layout_link_does_not() {
-        use spaceman::deep_link::parse_url;
+        use fractile::deep_link::parse_url;
 
         let p = Paint::new(true, 2.0);
         let mut ui = crate::playground::blank_fixture();
 
-        ui.open_target(parse_url("spaceman://features/gaps").unwrap().resolve());
+        ui.open_target(parse_url("fractile://features/gaps").unwrap().resolve());
         assert_eq!(ui.pane, crate::Pane::Layout);
         assert_eq!(highlight_target(&ui), Some(Highlight::Gaps));
         let _ = pane(&ui, p);
 
-        ui.open_target(parse_url("spaceman://settings/layout").unwrap().resolve());
+        ui.open_target(parse_url("fractile://settings/layout").unwrap().resolve());
         assert_eq!(ui.pane, crate::Pane::Layout);
         assert_eq!(highlight_target(&ui), None);
         let _ = pane(&ui, p);
 
         ui.open_target(
-            parse_url("spaceman://features/max-width")
+            parse_url("fractile://features/max-width")
                 .unwrap()
                 .resolve(),
         );
@@ -449,7 +449,7 @@ mod tests {
         assert!(columns.contains("layout = \"columns\""), "{columns}");
         assert!(columns.contains("# Keep me."), "{columns}");
         assert_eq!(
-            spaceman::config::Config::parse(&columns).unwrap().layout(),
+            fractile::config::Config::parse(&columns).unwrap().layout(),
             LayoutMode::Columns
         );
 
@@ -460,7 +460,7 @@ mod tests {
         assert!(!dwindle.contains("[settings]"), "{dwindle}");
         assert!(dwindle.contains("# Keep me."), "{dwindle}");
         assert_eq!(
-            spaceman::config::Config::parse(&dwindle).unwrap().layout(),
+            fractile::config::Config::parse(&dwindle).unwrap().layout(),
             LayoutMode::Dwindle
         );
 

@@ -349,7 +349,7 @@ fn swipe(
     backend.calls.clear();
 }
 
-/// Every frame Spaceman wrote to `window`.
+/// Every frame Fractile wrote to `window`.
 fn writes_to(
     runtime: &WorkspaceRuntime<FakeBackend>,
     window: &crate::PhysicalWindowId,

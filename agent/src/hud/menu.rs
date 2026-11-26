@@ -2,8 +2,8 @@
 //! Always open on a workspace), and the macOS secondary-click bridge for non-activating overlay
 //! panels.
 
+use fractile::WorkspaceId;
 use rune::{PopupItem, PopupMenu};
-use spaceman::WorkspaceId;
 
 use crate::rules::Place;
 
@@ -40,18 +40,18 @@ impl HudSink for NoopHudSink {
     }
 }
 
-/// Live sink wired into the running `spaceman-agent`: routes workspace switches and Settings
+/// Live sink wired into the running `fractile-agent`: routes workspace switches and Settings
 /// opens through `UiBridge` and edits per-app rules through `rules::Doc`.
 #[cfg(target_os = "macos")]
 pub struct LiveHudSink {
-    bridge: spaceman::app::UiBridge,
+    bridge: fractile::app::UiBridge,
     window: rune::AppHandle<crate::Ui>,
 }
 
 #[cfg(target_os = "macos")]
 impl LiveHudSink {
     #[must_use]
-    pub fn new(bridge: spaceman::app::UiBridge, window: rune::AppHandle<crate::Ui>) -> Self {
+    pub fn new(bridge: fractile::app::UiBridge, window: rune::AppHandle<crate::Ui>) -> Self {
         Self { bridge, window }
     }
 }
@@ -60,7 +60,7 @@ impl LiveHudSink {
 impl HudSink for LiveHudSink {
     fn switch_workspace(&self, workspace: WorkspaceId) {
         self.bridge
-            .send(spaceman::app::UiAction::SwitchWorkspace(workspace));
+            .send(fractile::app::UiAction::SwitchWorkspace(workspace));
     }
 
     fn app_place(&self, bundle_id: &str) -> Option<Place> {
@@ -71,7 +71,7 @@ impl HudSink for LiveHudSink {
         let mut doc = crate::rules::Doc::load();
         doc.set_app_place(bundle_id, place);
         doc.save()?;
-        self.bridge.send(spaceman::app::UiAction::Retile);
+        self.bridge.send(fractile::app::UiAction::Retile);
         self.window.update_if(|ui, _| {
             if ui.drag.is_some() {
                 return false;
@@ -84,7 +84,7 @@ impl HudSink for LiveHudSink {
     }
 }
 
-/// Whether `bundle_id`'s windows float: by its own rule, else by Spaceman's built-in default. A
+/// Whether `bundle_id`'s windows float: by its own rule, else by Fractile's built-in default. A
 /// `route` rule only says where windows open, so a built-in float still floats there.
 fn floats(current: Option<Place>, floats_by_default: bool) -> bool {
     match current {
@@ -167,7 +167,7 @@ pub fn resolve_app_menu_pick(
 /// Rune's macOS overlay host forwards left clicks through winit but drops `MouseButton::Right`.
 /// Installing a process-local AppKit monitor scoped strictly to our HUD panels' window numbers
 /// keeps normal windows (like Settings) untouched while opening the native `NSMenu` right at the
-/// pointer without activating Spaceman.
+/// pointer without activating Fractile.
 #[cfg(target_os = "macos")]
 pub(super) fn install_secondary_click_monitor(
     handles: Vec<rune::OverlayHandle<super::HudOverlay>>,

@@ -21,7 +21,7 @@ const STEP_ENTER: Spring = Spring::new(0.3, 0.0);
 const STEP_EXIT: Spring = Spring::new(0.25, 0.0);
 
 static ACCESSIBILITY_ICON: Icon = Icon {
-    name: "spaceman-accessibility",
+    name: "fractile-accessibility",
     view: 16.0,
     body: include_str!("../../assets/layout.svg"),
 };
@@ -69,7 +69,7 @@ pub fn overlay(ui: &Ui, p: Paint, still: bool) -> Option<El> {
         col()
             .key("tour")
             .role("dialog")
-            .label("Spaceman setup")
+            .label("Fractile setup")
             .absolute(0.0, 0.0)
             .w_full()
             .h_full()
@@ -267,7 +267,7 @@ fn welcome(p: Paint) -> El {
         ))
 }
 
-/// Spaceman's split-tile mark inside a concentric halo ring.
+/// Fractile's split-tile mark inside a concentric halo ring.
 fn welcome_hero(p: Paint) -> El {
     let c = &p.k.c;
     let badge_ink = rune::oklch(0.21, 0.012, 265.0);
@@ -325,7 +325,7 @@ fn welcome_hero(p: Paint) -> El {
 }
 
 /// The permission step asks for one thing. Under it, one quiet row for each thing that would
-/// fight Spaceman for the same windows and is really on; nothing when none is.
+/// fight Fractile for the same windows and is really on; nothing when none is.
 fn setup(p: Paint, view: &View, conflicts: &[Conflict]) -> El {
     let waiting = view.accessibility == controls::PermissionControl::Waiting;
     let access_desc = if view.ready {
@@ -334,7 +334,7 @@ fn setup(p: Paint, view: &View, conflicts: &[Conflict]) -> El {
             p.muted(),
         )
     } else if waiting {
-        (spaceman::permission_guide::add_instructions(), p.warning())
+        (fractile::permission_guide::add_instructions(), p.warning())
     } else {
         (
             "Needed to move windows and register Option shortcuts.".to_owned(),
@@ -350,7 +350,7 @@ fn setup(p: Paint, view: &View, conflicts: &[Conflict]) -> El {
         p,
         "setup-accessibility",
         &ACCESSIBILITY_ICON,
-        spaceman::permission_guide::list_name(),
+        fractile::permission_guide::list_name(),
         Some(access_desc),
         controls::permission_control(p, "setup-grant", view.accessibility, access_kind, |ui| {
             input(ui, Input::GrantAccessibility);
@@ -378,7 +378,7 @@ fn setup(p: Paint, view: &View, conflicts: &[Conflict]) -> El {
     col()
         .key("setup")
         .gap(24.0)
-        .child(title_block(p, "Give Spaceman window access", None))
+        .child(title_block(p, "Give Fractile window access", None))
         .child(
             col()
                 .key("setup-cards")

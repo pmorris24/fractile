@@ -74,7 +74,7 @@ fn hover_changes_nothing_with_the_lab_off() {
 }
 
 #[test]
-fn hover_is_dropped_once_the_pointer_moved_on_or_spaceman_put_it_there() {
+fn hover_is_dropped_once_the_pointer_moved_on_or_fractile_put_it_there() {
     // The pointer left before the worker got to the hover.
     let mut rt = two_displays(LAB, (300, 200));
     hover(&mut rt, &window(60), (1200, 200));

@@ -4,8 +4,8 @@
 
 use std::f32::consts::PI;
 
+use fractile::{Rect, config::LayoutMode, spacing::Spacing};
 use rune::{Color, El, Shadow, Spring, col, el, oklch, oklcha, row};
-use spaceman::{Rect, config::LayoutMode, spacing::Spacing};
 
 use crate::controls::{self, Paint};
 

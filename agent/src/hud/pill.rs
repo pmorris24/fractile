@@ -21,12 +21,12 @@
 
 use std::collections::{BTreeSet, HashMap};
 
-use rune::{Color, El, Pixels, Spring, Transition, col, el, row, text, tok::motion::pair::SETTLE};
-use spaceman::{
+use fractile::{
     WorkspaceId,
     app::{UiHudDisplay, UiHudToast, UiHudWorkspace},
     config::{HudPosition, HudStyle},
 };
+use rune::{Color, El, Pixels, Spring, Transition, col, el, row, text, tok::motion::pair::SETTLE};
 
 use super::{grow, icons};
 use crate::controls::Paint;

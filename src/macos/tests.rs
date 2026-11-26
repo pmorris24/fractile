@@ -458,7 +458,7 @@ fn hover_focuses_only_an_ordinary_window_in_front_of_the_pointer() {
         hover_target(&[menu_bar, hud, tile], (100, 100), own),
         Some(20)
     );
-    // The menu bar, and Spaceman's own HUD or Settings, are not hovers.
+    // The menu bar, and Fractile's own HUD or Settings, are not hovers.
     assert_eq!(hover_target(&[menu_bar, hud, tile], (100, 10), own), None);
     assert_eq!(hover_target(&[menu_bar, hud, tile], (350, 350), own), None);
     // Nothing under the pointer.

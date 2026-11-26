@@ -167,9 +167,9 @@ pub(super) fn mail(focused: bool) -> El {
                         .child(rule("rule2"))
                         .child(message(
                             "mail3",
-                            "Spaceman",
+                            "Fractile",
                             "Yesterday",
-                            "Welcome to Spaceman",
+                            "Welcome to Fractile",
                             "Your windows have a place now. Press Option and a number to switch workspaces.",
                             false,
                             false,

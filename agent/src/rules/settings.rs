@@ -1,6 +1,6 @@
 //! `[settings]` and `[labs]` scalar accessors on `Doc`.
 
-use spaceman::config::{
+use fractile::config::{
     HudPosition, HudStyle, LabFeature, LayoutMode, MenuBarIcon, MouseFollowsFocus,
 };
 use toml_edit::{Item, Table, value};
@@ -92,7 +92,7 @@ impl Doc {
         );
     }
 
-    /// Whether Spaceman moves the pointer on explicit focus changes, from
+    /// Whether Fractile moves the pointer on explicit focus changes, from
     /// `settings.mouse_follows_focus` (defaults to off).
     pub fn mouse_follows_focus(&self) -> MouseFollowsFocus {
         self.doc
@@ -144,7 +144,7 @@ impl Doc {
         self.set_setting("trackpad_swipe", (!enabled).then(|| value(false)));
     }
 
-    /// Whether Spaceman auto-pauses when only a built-in display is connected and resumes
+    /// Whether Fractile auto-pauses when only a built-in display is connected and resumes
     /// when an external display reconnects, from `settings.pause_on_builtin_display`
     /// (defaults to false).
     pub fn pause_on_builtin_display(&self) -> bool {

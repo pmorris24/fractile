@@ -1,9 +1,9 @@
 //! A workspace tile's number: pressed, it opens the menu of screens the workspace can show on,
 //! and picking one writes the workspace's `monitor` to config.toml.
 
+use fractile::WorkspaceId;
 use rune::{El, row, text};
 use rune_kit::{Menu as KitMenu, MenuItem, Placement};
-use spaceman::WorkspaceId;
 
 use super::MapView;
 use crate::{Menu, Ui, panes::workspaces as screens};

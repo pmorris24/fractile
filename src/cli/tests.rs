@@ -4,11 +4,11 @@ use std::{
     sync::atomic::{AtomicU64, Ordering},
 };
 
-use serde_json::Value;
-use spaceman::{
+use fractile::{
     AppInstanceId, ObservedWindow, PhysicalWindowId, Rect, WorkspaceId,
     config::{Config, HudPosition, HudStyle, MouseFollowsFocus, WindowDisposition},
 };
+use serde_json::Value;
 
 mod builtin_display;
 mod labs;
@@ -26,7 +26,7 @@ impl TempConfig {
         static NEXT: AtomicU64 = AtomicU64::new(0);
         let id = NEXT.fetch_add(1, Ordering::Relaxed);
         let dir = std::env::temp_dir().join(format!(
-            "spaceman-cli-test-{label}-{}-{id}",
+            "fractile-cli-test-{label}-{}-{id}",
             std::process::id()
         ));
         let path = dir.join("config.toml");
@@ -55,7 +55,7 @@ impl Drop for TempConfig {
 
 fn run_cli(args: &[&str], config_path: Option<&Path>) -> Outcome {
     let (&command, rest) = args.split_first().expect("args must be non-empty");
-    try_run_with_config_path("spaceman", command, rest, config_path)
+    try_run_with_config_path("fractile", command, rest, config_path)
         .expect("command should be handled by cli module")
 }
 
@@ -116,7 +116,7 @@ fn help_and_version_exit_zero_on_stdout() {
         assert!(outcome.stderr.is_none());
     }
 
-    let expected_version = format!("spaceman {}", spaceman::build_version());
+    let expected_version = format!("fractile {}", fractile::build_version());
     for flag in ["--version", "-V"] {
         let outcome = run_cli(&[flag], None);
         assert_eq!(outcome.exit_code, 0);
@@ -425,7 +425,7 @@ fn config_gets_sets_and_shows_spacing() {
     assert_eq!(Config::parse(&temp.read()).unwrap().spacing().right, 12);
 }
 
-/// `spaceman config get <key>`, which must succeed.
+/// `fractile config get <key>`, which must succeed.
 fn get(temp: &TempConfig, key: &str) -> String {
     let got = temp.run(&["config", "get", key]);
     assert_eq!(got.exit_code, 0, "{:?}", got.stderr);
@@ -915,11 +915,11 @@ fn workspaces_list_assign_and_clear_round_trip() {
     assert_eq!(update_9.exit_code, 0);
 
     let parsed = Config::parse(&temp.read()).unwrap();
-    let mut workspaces = spaceman::Workspaces::default();
+    let mut workspaces = fractile::Workspaces::default();
     parsed.configure_workspaces(&mut workspaces);
     assert_eq!(
         workspaces.assignment(WorkspaceId::named('D').unwrap()),
-        &spaceman::DisplaySelector::Preferred("Studio Display".into())
+        &fractile::DisplaySelector::Preferred("Studio Display".into())
     );
 
     // List now includes workspace D

@@ -272,7 +272,7 @@ pub enum Key {
     Code(u16),
 }
 
-/// What a binding does. The vocabulary is `spaceman ctl`'s.
+/// What a binding does. The vocabulary is `fractile ctl`'s.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Command {
     Switch(WorkspaceId),
@@ -460,7 +460,7 @@ const FUNCTION_KEY_CODES: [u16; 12] = [
     0x7a, 0x78, 0x63, 0x76, 0x60, 0x61, 0x62, 0x64, 0x65, 0x6d, 0x67, 0x6f,
 ];
 
-/// Parses a command in `spaceman ctl` syntax, or `none` to unbind.
+/// Parses a command in `fractile ctl` syntax, or `none` to unbind.
 pub fn parse_command(source: &str) -> Result<Option<Command>, String> {
     let trimmed = source.trim();
     if let Some(rest) = trimmed

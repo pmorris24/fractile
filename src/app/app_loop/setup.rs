@@ -79,7 +79,7 @@ impl MainThreadAgent {
     }
 
     /// Ends a first-run tour's hold without starting tiling: windows stay where they are
-    /// until tiling is turned on from the menu bar or Settings, or Spaceman next launches.
+    /// until tiling is turned on from the menu bar or Settings, or Fractile next launches.
     pub(super) fn skip_setup(&mut self) {
         self.startup_tiling.setup_finished();
         self.setup.arrangement = None;

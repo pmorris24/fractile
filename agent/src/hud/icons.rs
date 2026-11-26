@@ -2,8 +2,8 @@
 //! Nothing changes size; a concentric pill marker glides to the active group while inactive
 //! groups sit calmly dimmed.
 
+use fractile::{WorkspaceId, app::UiHudWorkspace};
 use rune::{Cursor, El, Spring, TextStyle, Tx, col, el, row, text};
-use spaceman::{WorkspaceId, app::UiHudWorkspace};
 
 use super::pill::{INNER, Icons, Track, app_icon, presence, rgba, srgb};
 use crate::controls::Paint;

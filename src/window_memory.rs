@@ -5,7 +5,7 @@
 //! ownership across one. This memory keys on the bundle identifier instead and
 //! records, per application, each managed window's workspace, tiling kind, last
 //! on-screen frame, and optional local `AXDocument` path and window title (stored
-//! strictly in mode-`0600` `window-memory.json`, never in logs, `spaceman doctor`,
+//! strictly in mode-`0600` `window-memory.json`, never in logs, `fractile doctor`,
 //! debug output, HUD output, fixtures, snapshots, or control responses).
 //!
 //! A relaunched application's new windows claim those placements in order:
@@ -19,7 +19,7 @@
 //!
 //! Normally only a relaunch (an update or restart) recalls these placements;
 //! an app the user opens mid-session opens where they are. Once the user moves
-//! one of an app's windows back by hand right after Spaceman opened it on the
+//! one of an app's windows back by hand right after Fractile opened it on the
 //! active workspace, that app is marked returning and every new instance of it
 //! recalls its placements, however long it was closed.
 //!
@@ -680,7 +680,7 @@ fn fuzzy_segments_score(left: &[String], right: &[String]) -> Option<u32> {
     };
 
     // Multi-segment titles sharing their leading or trailing project/site segment
-    // (e.g. "spaceman — Cargo.toml" vs "spaceman — main.rs").
+    // (e.g. "fractile — Cargo.toml" vs "fractile — main.rs").
     if left.len() >= 2 && right.len() >= 2 {
         let matched_anchor = if left.first() == right.first() {
             left.first()
@@ -788,8 +788,8 @@ mod tests {
             placed_with(
                 1,
                 0,
-                Some("file:///Users/example/code/spaceman"),
-                Some("spaceman — Cargo.toml"),
+                Some("file:///Users/example/code/fractile"),
+                Some("fractile — Cargo.toml"),
             ),
             placed_with(
                 3,
@@ -812,8 +812,8 @@ mod tests {
                 cand(
                     20,
                     same,
-                    Some("file:///Users/example/code/spaceman"),
-                    Some("spaceman — src/main.rs"),
+                    Some("file:///Users/example/code/fractile"),
+                    Some("fractile — src/main.rs"),
                 ),
             ],
         );
@@ -824,14 +824,14 @@ mod tests {
     fn exact_normalized_title_wins_over_same_size_windows_in_reverse_order() {
         let same = frame(0);
         let remembered = [
-            placed_with(1, 0, None, Some("Spaceman Docs")),
+            placed_with(1, 0, None, Some("Fractile Docs")),
             placed_with(4, 0, None, Some("Linear — Roadmap")),
         ];
         let assignments = assign(
             &remembered,
             &[
                 cand(10, same, None, Some("  linear — roadmap  ")),
-                cand(20, same, None, Some("SPACEMAN DOCS")),
+                cand(20, same, None, Some("FRACTILE DOCS")),
             ],
         );
         assert_eq!(assignments, vec![(10, 1), (20, 0)]);
@@ -843,8 +843,8 @@ mod tests {
             fuzzy_title_score("Inbox (4) - Gmail", "Inbox (3) - Gmail"),
             Some(1000)
         );
-        assert!(fuzzy_title_score("spaceman — Cargo.toml", "spaceman — main.rs").is_some());
-        assert!(fuzzy_title_score("Cargo.toml — spaceman", "main.rs — spaceman").is_some());
+        assert!(fuzzy_title_score("fractile — Cargo.toml", "fractile — main.rs").is_some());
+        assert!(fuzzy_title_score("Cargo.toml — fractile", "main.rs — fractile").is_some());
 
         // Unrelated titles and generic placeholders must not match.
         assert_eq!(
@@ -863,12 +863,12 @@ mod tests {
         let same = frame(0);
         let remembered = [
             placed_with(2, 0, None, Some("Inbox (3) - Gmail")),
-            placed_with(5, 0, None, Some("spaceman — Cargo.toml")),
+            placed_with(5, 0, None, Some("fractile — Cargo.toml")),
         ];
         let assignments = assign(
             &remembered,
             &[
-                cand(10, same, None, Some("spaceman — main.rs")),
+                cand(10, same, None, Some("fractile — main.rs")),
                 cand(20, same, None, Some("Inbox (4) - Gmail")),
             ],
         );

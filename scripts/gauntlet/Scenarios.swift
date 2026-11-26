@@ -1,5 +1,5 @@
-// The scenarios. Each step drives Spaceman the way a user would and asserts on both the window
-// server and Spaceman's own state.
+// The scenarios. Each step drives Fractile the way a user would and asserts on both the window
+// server and Fractile's own state.
 import Foundation
 
 extension Gauntlet {
@@ -54,7 +54,7 @@ extension Gauntlet {
 
     func boot() throws {
         scenario = "boot"
-        try step("Spaceman starts in automatic mode with isolated state") {
+        try step("Fractile starts in automatic mode with isolated state") {
             if let error = agent.launch() {
                 throw StepFailure(reason: error, outcome: Outcome(expected: "launch", measured: error))
             }
@@ -224,14 +224,14 @@ extension Gauntlet {
                 }
                 try require(settled.problem, expected: "\(target.label) off screen, the rest cover the display", measured: frames(windows))
                 try require(wait { tilingProblem(rest) }.problem, expected: "2 tiles", measured: frames(windows))
-                // The budget is Spaceman's share: macOS's own minimize animation runs first, and its
+                // The budget is Fractile's share: macOS's own minimize animation runs first, and its
                 // length depends on the machine and the Dock's effect setting.
                 let refill = refilledAt!
-                let spaceman = max(0, refill - leftScreen!)
-                let measured = "Spaceman re-filled \(Int(spaceman)) ms after macOS took the window off screen (\(Int(leftScreen!)) ms after the command; \(Int(refill)) ms total): \(frames(rest))"
+                let fractile = max(0, refill - leftScreen!)
+                let measured = "Fractile re-filled \(Int(fractile)) ms after macOS took the window off screen (\(Int(leftScreen!)) ms after the command; \(Int(refill)) ms total): \(frames(rest))"
                 return Outcome(
                     expected: "≤ \(Int(budget)) ms after the window leaves the screen", measured: measured,
-                    overBudget: spaceman > budget ? "re-fill took \(Int(spaceman)) ms, budget \(Int(budget)) ms" : nil)
+                    overBudget: fractile > budget ? "re-fill took \(Int(fractile)) ms, budget \(Int(budget)) ms" : nil)
             }
             try step("\(undo) \(target.label): three tiles again") {
                 target.send(undo)
@@ -340,7 +340,7 @@ extension Gauntlet {
             let focused = wait {
                 guard let now = agent.debug()?.focused, now != target.id,
                     let window = windows.first(where: { $0.id == now })
-                else { return "Spaceman reports \(label(agent.debug()?.focused)) focused" }
+                else { return "Fractile reports \(label(agent.debug()?.focused)) focused" }
                 landed = window
                 return focusProblem(window)
             }

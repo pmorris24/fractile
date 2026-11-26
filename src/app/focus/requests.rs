@@ -1,4 +1,4 @@
-//! The runtime's side of the focus automaton: every focus Spaceman requests
+//! The runtime's side of the focus automaton: every focus Fractile requests
 //! and every departure it guards goes through here, on the worker's clock.
 
 use super::super::*;

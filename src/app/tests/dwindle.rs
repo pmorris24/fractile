@@ -693,7 +693,7 @@ fn legacy_saved_layout_without_split_origin_loads_and_keeps_direction() {
     let (rt, ws) = open_dwindle_windows(&outputs, &[10, 11, 12], Config::default());
 
     // Strip all `auto_axis` keys from the serialized state to simulate a state file
-    // saved by an earlier Spaceman build before split origins were recorded.
+    // saved by an earlier Fractile build before split origins were recorded.
     let mut value = serde_json::to_value(rt.workspaces.state()).unwrap();
     fn strip_auto_axis(value: &mut serde_json::Value) {
         match value {

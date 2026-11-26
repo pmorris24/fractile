@@ -1,8 +1,8 @@
-use spaceman::shortcuts::parse_chord;
+use fractile::shortcuts::parse_chord;
 
 use super::*;
 
-const SOURCE: &str = r#"# Spaceman configuration.
+const SOURCE: &str = r#"# Fractile configuration.
 version = 1
 
 [[rules]]
@@ -27,7 +27,7 @@ fn bound(doc: &Doc, source: &str) -> Option<Option<String>> {
 
 fn saved(doc: &Doc) -> Doc {
     let source = doc.source();
-    spaceman::config::Config::parse(&source).expect("Spaceman reads the edit");
+    fractile::config::Config::parse(&source).expect("Fractile reads the edit");
     Doc::parse(&source)
 }
 
@@ -177,7 +177,7 @@ fn reset_removes_the_table_and_keeps_everything_else() {
     let doc = saved(&doc);
     let source = doc.source();
     assert!(!source.contains("shortcuts"), "{source}");
-    assert!(source.contains("# Spaceman configuration."), "{source}");
+    assert!(source.contains("# Fractile configuration."), "{source}");
     assert_eq!(doc.shortcuts(), Shortcuts::default());
 }
 
@@ -220,7 +220,7 @@ fn clearing_or_rebinding_explicit_built_in_shortcut_preserves_retained_key_comme
     let mut cleared = Doc::parse(source);
     cleared.set_shortcut("focus left", Some(default), None);
     let saved = cleared.source();
-    assert!(spaceman::config::Config::parse(&saved).is_ok());
+    assert!(fractile::config::Config::parse(&saved).is_ok());
     assert!(saved.contains("\"alt+h\" = \"none\""));
     assert!(saved.contains("# Focus note."));
     assert!(saved.contains("# Balance note."));
@@ -233,7 +233,7 @@ fn clearing_or_rebinding_explicit_built_in_shortcut_preserves_retained_key_comme
         Some(parse_chord("ctrl+cmd+h").unwrap()),
     );
     let saved = rebound.source();
-    assert!(spaceman::config::Config::parse(&saved).is_ok());
+    assert!(fractile::config::Config::parse(&saved).is_ok());
     assert!(saved.contains("\"alt+h\" = \"none\""));
     assert!(saved.contains("\"ctrl+cmd+h\" = \"focus left\""));
     assert!(saved.contains("# Focus note."));

@@ -1,4 +1,4 @@
-//! Pinned floats at runtime: `spaceman ctl pin` and the parking exemption a pin carries.
+//! Pinned floats at runtime: `fractile ctl pin` and the parking exemption a pin carries.
 //!
 //! Ownership lives in [`crate::workspace::Workspaces`]; this module only decides what a pin
 //! means for parking and focus: a pinned window is never parked by a switch (so it shows on
@@ -72,7 +72,7 @@ impl<B: WorkspaceBackend> WorkspaceRuntime<B> {
         let workspace = self
             .workspaces
             .workspace_of_any(&window)
-            .ok_or("Focused window is not managed by Spaceman")?;
+            .ok_or("Focused window is not managed by Fractile")?;
         if self.workspaces.is_pinned_by_hand(&window) {
             self.workspaces.unpin(&window);
             // Keep it where it is seen: the workspace now showing it on its display owns it.

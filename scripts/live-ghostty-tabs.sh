@@ -2,7 +2,7 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
-output="${TMPDIR:-/tmp}/spaceman-ghostty-live.json"
+output="${TMPDIR:-/tmp}/fractile-ghostty-live.json"
 initial_output="${output%.json}-initial.json"
 baseline_pids="$(mktemp)"
 baseline_workspaces="$(mktemp)"
@@ -96,9 +96,9 @@ APPLESCRIPT
 }
 trap restore_environment EXIT
 
-aerospace workspace spaceman-test >/dev/null 2>&1
-aerospace move-workspace-to-monitor --workspace spaceman-test "$test_monitor" 2>/dev/null
-aerospace workspace spaceman-test
+aerospace workspace fractile-test >/dev/null 2>&1
+aerospace move-workspace-to-monitor --workspace fractile-test "$test_monitor" 2>/dev/null
+aerospace workspace fractile-test
 open -na /Applications/Ghostty.app
 
 attempt=0
@@ -124,8 +124,8 @@ if [[ ! "$window_id" =~ ^[1-9][0-9]*$ ]]; then
   echo "FAIL: could not discover the disposable Ghostty window" >&2
   exit 1
 fi
-aerospace move-node-to-workspace --window-id "$window_id" spaceman-test 2>/dev/null
-aerospace workspace spaceman-test 2>/dev/null
+aerospace move-node-to-workspace --window-id "$window_id" fractile-test 2>/dev/null
+aerospace workspace fractile-test 2>/dev/null
 actual_monitor="$(aerospace list-windows --all --format '%{window-id}|%{monitor-id}' \
   | awk -F '|' -v window_id="$window_id" '$1 == window_id { print $2 }')"
 if [[ "$actual_monitor" != "$test_monitor" ]]; then

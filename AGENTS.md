@@ -1,22 +1,22 @@
-# Spaceman Contributor Guide
+# Fractile Contributor Guide
 
 This file is the current engineering contract. README and `docs/` describe current user behavior;
 `PLAN.md` and `docs/RESEARCH.md` are historical records.
 
 ## Working Here
 
-- Agents merge their own Spaceman PRs and redeploy (build and install) without asking.
+- Agents merge their own Fractile PRs and redeploy (build and install) without asking.
 - CI's macOS checks run only on dispatch and tags, so run `scripts/check` locally before merging
   and say so in the PR.
-- Spaceman installs only from source: `scripts/install-app.sh` builds the signed bundle and
+- Fractile installs only from source: `scripts/install-app.sh` builds the signed bundle and
   installs it to `/Applications`; `scripts/dev --once` does the same once.
 - Dev loop: `scripts/dev` rebuilds and reinstalls on every save; restart restores every window and
   resumes tiling.
 - Release notes are one file per version in `changelog/<version>.md` (frontmatter `date` and
   `summary`, then `## Major`, `## Improvements`, and `## Fixes`). `.github/` changes require
   CODEOWNERS review.
-- Bundle ID is `anomaly.spaceman` (was `com.kitlangton.spaceman` through 0.3.0). State and config
-  paths (`~/Library/Application Support/Spaceman`, `~/.config/spaceman`) don't depend on it.
+- Bundle ID is `app.fractile`. State and config
+  paths (`~/Library/Application Support/Fractile`, `~/.config/fractile`) don't depend on it.
 - Code shape: keep Rust files under 800 non-test lines (1,500 hard cap, 1,000 for test files;
   `scripts/file-size.sh`) and move prefix families (`x.rs` + 2+ `x_*.rs`, or 3+ `x_*.rs`) into `x/`
   (`scripts/folder-shape.sh`).
@@ -24,7 +24,7 @@ This file is the current engineering contract. README and `docs/` describe curre
 ## Architecture Map
 
 - `agent/`, `src/app.rs`, `src/app/app_loop.rs`, `src/app/app_loop/`, `src/app/worker.rs`,
-  `src/app/bridge.rs`: single-process Rune host (`spaceman-agent`), owner-only capped logging, 25 ms
+  `src/app/bridge.rs`: single-process Rune host (`fractile-agent`), owner-only capped logging, 25 ms
   `NSTimer` foreground pump, action queue, status, restore-before-exit coordination, in-process
   Settings window (`General`, `Layout`, `Rules`, `Workspaces`, `Shortcuts`, `Activity`, `Labs`), first-run onboarding
   tour (`agent/src/onboarding.rs`, `agent/src/onboarding/`), non-activating Workspace HUD overlay (`agent/src/hud.rs`),
@@ -49,7 +49,7 @@ This file is the current engineering contract. README and `docs/` describe curre
 - `src/window_memory.rs`, `src/app/memory.rs`: advisory per-bundle placement memory and relaunch
   recall (storing local `title` and `AXDocument` in mode-`0600` `window-memory.json`).
   `src/journal.rs`, `src/journal/doctor.rs`, `src/app/journal.rs`: bounded arrangement/anomaly
-  journal and the `spaceman doctor` summary.
+  journal and the `fractile doctor` summary.
 - `src/app/input.rs`: bounded ordered user input and geometry-based gesture tracking, independent
   of preview-worker availability. Main-thread pointer sampling must not make synchronous AX calls.
 - `src/status_item.rs`, `src/login_item.rs`, `src/termination.rs`: main-thread
@@ -116,7 +116,7 @@ This file is the current engineering contract. README and `docs/` describe curre
   display context, plus pressing the focused app's own "Move Tab to New Window" menu item when the
   user runs `move-tab`. Never require SIP to be disabled.
 - Window titles and `AXDocument` paths may be stored locally in mode-`0600` `window-memory.json`
-  solely for matching multi-window apps across restarts, and must never enter logs, `spaceman
+  solely for matching multi-window apps across restarts, and must never enter logs, `fractile
   doctor`, debug output, HUD output, fixtures, serialized snapshots, or control responses.
 - No telemetry, network access, or update checks without explicit product and security review.
 - Keep `control.sock` and `control.lock` at mode `0600`, bound under the user's Application Support
@@ -146,16 +146,16 @@ This file is the current engineering contract. README and `docs/` describe curre
   scoped live tests.
 - Read live harnesses before running them. Confirm expected displays, preserve baseline workspace and
   focus, and verify cleanup. Never experiment on unrelated user windows.
-- Live harness state must use the internal `SPACEMAN_APPLICATION_SUPPORT` override and must never read
+- Live harness state must use the internal `FRACTILE_APPLICATION_SUPPORT` override and must never read
   or mutate the user's normal workspace or parked-window state.
-- Preserve `~/Library/Application Support/Spaceman/parked-windows.json` until pause/quit restoration is
+- Preserve `~/Library/Application Support/Fractile/parked-windows.json` until pause/quit restoration is
   confirmed. If a test crashes, reopen the same app and recover before cleaning state.
 
 ## Verification
 
 ```sh
-scripts/check            # fmt, file-size, folder-shape, metadata, clippy, tests, audit, CA roots, replay, config, website
-scripts/check --no-web   # the same without the website
+scripts/check            # fmt, file-size, folder-shape, metadata, clippy, tests, audit, CA roots, replay, config
+
 ```
 
 A Settings UI change also renders its scenes before and after with `scripts/snap-set.sh` (see

@@ -46,7 +46,7 @@ pub(super) struct Recall {
     claimed: HashMap<crate::PhysicalWindowId, RecalledPlacement>,
 }
 
-/// Where and why Spaceman put a window it just saw, kept for
+/// Where and why Fractile put a window it just saw, kept for
 /// [`CORRECTION_WINDOW`] so a hand move can be recognized as a correction.
 pub(super) struct Placement {
     source: PlacementSource,
@@ -63,7 +63,7 @@ pub(super) struct MemoryState {
     /// may have its ownership recorded.
     pub(super) bundles: HashMap<AppInstanceId, String>,
     /// When window memory was restored for this agent run. Placement recall
-    /// applies only during the startup window after Spaceman launches.
+    /// applies only during the startup window after Fractile launches.
     pub(super) started_at: Option<Instant>,
     /// Bundles already seen in this session; mid-session launches open on
     /// the active workspace instead of recalling historical placements.
@@ -259,7 +259,7 @@ impl<B: WorkspaceBackend> WorkspaceRuntime<B> {
         );
     }
 
-    /// The user moved `window` from `from` to `to` by hand. Soon after Spaceman
+    /// The user moved `window` from `from` to `to` by hand. Soon after Fractile
     /// placed it there, that placement was wrong: journal it, and when the
     /// window had opened on the active workspace, make its app return to its
     /// remembered placements from now on.

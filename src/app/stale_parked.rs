@@ -1,4 +1,4 @@
-//! Windows an application reopened at a Spaceman parking spot.
+//! Windows an application reopened at a Fractile parking spot.
 //!
 //! Quitting an app while some of its windows are parked lets macOS save those parked frames, so
 //! the relaunched app reopens them one pixel inside a display corner. Their centers are off
@@ -73,7 +73,7 @@ impl UnmovableStale {
 }
 
 impl<B: WorkspaceBackend> WorkspaceRuntime<B> {
-    /// Reveal every window sitting exactly at a display's parking spot that Spaceman neither
+    /// Reveal every window sitting exactly at a display's parking spot that Fractile neither
     /// parked nor owns.
     pub(super) fn recover_stale_parked_windows(
         &mut self,
@@ -85,7 +85,7 @@ impl<B: WorkspaceBackend> WorkspaceRuntime<B> {
         let parked_ids: HashSet<u32> = self.parked.keys().map(|window| window.window_id).collect();
         let now = self.backend.now();
         self.unmovable_stale.refresh(&displays, server_frames);
-        // Almost every window is on screen or parked by Spaceman: both are skipped before any
+        // Almost every window is on screen or parked by Fractile: both are skipped before any
         // geometry or window-server lookup. Menu-bar strips (more than the parking strip, give
         // or take its one-pixel tolerance, shows on a screen), one-pixel and empty windows are
         // never at a parking spot.
@@ -118,7 +118,7 @@ impl<B: WorkspaceBackend> WorkspaceRuntime<B> {
         if stale.is_empty() {
             return;
         }
-        // A window Spaceman owns but did not park (an app holding it off screen itself) is never
+        // A window Fractile owns but did not park (an app holding it off screen itself) is never
         // rescued; leave it out before asking the window server, so it costs nothing per cycle.
         let owned: HashSet<u32> = WorkspaceId::all()
             .flat_map(|workspace| self.workspaces.windows(workspace))

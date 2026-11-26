@@ -431,12 +431,12 @@ pub(super) fn recover_startup_metadata(
     let config = match config {
         Ok(config) => config,
         Err(error) => {
-            log_event!("ignoring invalid Spaceman config during recovery: {error}");
+            log_event!("ignoring invalid Fractile config during recovery: {error}");
             return (Config::default(), None);
         }
     };
     let workspace_state = workspace_state.unwrap_or_else(|error| {
-        log_event!("ignoring invalid Spaceman workspace state during recovery: {error}");
+        log_event!("ignoring invalid Fractile workspace state during recovery: {error}");
         None
     });
     (config, workspace_state)

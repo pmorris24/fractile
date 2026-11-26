@@ -1,7 +1,7 @@
 use std::path::Path;
 
+use fractile::{WorkspaceId, config::RouteWindows};
 use serde::Serialize;
-use spaceman::{WorkspaceId, config::RouteWindows};
 
 use super::{
     Outcome,
@@ -431,7 +431,7 @@ fn parse_remove_args(args: &[&str]) -> Result<(RemoveTarget, bool), String> {
             }
         }
         (None, _) => Err(
-            "usage: spaceman rules remove (<index-or-bundle-id> | --app <bundle-id>) [--json]"
+            "usage: fractile rules remove (<index-or-bundle-id> | --app <bundle-id>) [--json]"
                 .into(),
         ),
     }

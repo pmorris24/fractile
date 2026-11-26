@@ -1,8 +1,8 @@
-// Spaceman live gauntlet. Built and run by scripts/gauntlet.sh; see docs/development.md.
+// Fractile live gauntlet. Built and run by scripts/gauntlet.sh; see docs/development.md.
 import Foundation
 
 let usage = """
-    usage: gauntlet run --app Spaceman.app --out DIR [--only boot,switch,focus,reflow,float,scratchpad,crash]
+    usage: gauntlet run --app Fractile.app --out DIR [--only boot,switch,focus,reflow,float,scratchpad,crash]
                         [--reflow-budget-ms N]
            gauntlet windows            window-server ground truth as JSON (titles never read)
            gauntlet window --label L --dir DIR --title T    one disposable test window (internal)
@@ -36,17 +36,17 @@ case "windows":
 case "run":
     guard let app = value(arguments, "--app"), let out = value(arguments, "--out") else { fail(usage) }
     let bundle = Bundle.main.bundleURL
-    guard bundle.pathExtension == "app" else { fail("run gauntlet from the SpacemanGauntlet.app that scripts/gauntlet.sh builds") }
+    guard bundle.pathExtension == "app" else { fail("run gauntlet from the FractileGauntlet.app that scripts/gauntlet.sh builds") }
     let appURL = URL(fileURLWithPath: app).standardizedFileURL
-    for binary in ["spaceman", "spaceman-agent"] {
+    for binary in ["fractile", "fractile-agent"] {
         guard FileManager.default.isExecutableFile(atPath: appURL.appendingPathComponent("Contents/MacOS/\(binary)").path) else {
             fail("\(app) has no Contents/MacOS/\(binary); build it with scripts/build-app.sh")
         }
     }
-    // Two window managers fight over frames, and the user's own Spaceman must never be touched.
-    for name in ["spaceman-agent", "AeroSpace", "yabai", "Amethyst"] {
+    // Two window managers fight over frames, and the user's own Fractile must never be touched.
+    for name in ["fractile-agent", "AeroSpace", "yabai", "Amethyst"] {
         if run("/usr/bin/pgrep", ["-x", name]).status == 0 {
-            fail("\(name) is running. Quit it first: the gauntlet runs its own Spaceman and must be the only window manager.")
+            fail("\(name) is running. Quit it first: the gauntlet runs its own Fractile and must be the only window manager.")
         }
     }
     var options = Options(app: appURL, out: URL(fileURLWithPath: out).standardizedFileURL)
@@ -71,7 +71,7 @@ case "run":
         _ = Unmanaged.passRetained(source)
     }
 
-    print("Spaceman gauntlet · Spaceman \(gauntlet.agent.version) · state \(gauntlet.agent.state.path)")
+    print("Fractile gauntlet · Fractile \(gauntlet.agent.version) · state \(gauntlet.agent.state.path)")
     let scenarios: [(String, () throws -> Void)] = [
         ("switch", gauntlet.switching), ("focus", gauntlet.focus), ("reflow", gauntlet.reflow),
         ("float", gauntlet.float), ("scratchpad", gauntlet.scratchpad), ("crash", gauntlet.crash),

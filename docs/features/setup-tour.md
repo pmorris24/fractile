@@ -26,7 +26,7 @@ Your workspaces                                                      // tour.arr
 ├── Click an icon -> next workspace; drag it -> any other card, or the Floating line
 ├── "Floating: Calculator · Stickies" only when such utilities are open; press a name to tile it
 ├── Arrange & start -> the open windows move, tiling starts; no routes. Saves a float rule only
-│   for a floated app Spaceman would tile, and a tile rule for a tiled built-in float
+│   for a floated app Fractile would tile, and a tile rule for a tiled built-in float
 │   (src/defaults.rs, the same table the board floats by)
 ├── Skip -> tour ends, every window where it was, tiling paused until Resume or next launch
 └── One window or none -> "Nothing to arrange yet", primary reads Start tiling
@@ -37,7 +37,7 @@ Try it                                                               // tour.try
 │   switch, float, Fullscreen Layout and cycle
 ├── Seven lessons, one prompt at a time, by key only: ⌥2 (workspace 2), ⌥1 (back), ⌥⇧Space
 │   (float), ⌥⇧Space (tile again), ⌥⇧F (Fullscreen Layout), ⌥1 again (cycle to the window
-│   behind, as a repeat press does in Spaceman), ⌥⇧F (back to tiles)
+│   behind, as a repeat press does in Fractile), ⌥⇧F (back to tiles)
 │   ├── The press asked for ticks, plays a soft sound and brings up the next; seven -> "You're ready"
 │   ├── Any of the four shortcuts moves the miniature whichever lesson is up, and afterwards;
 │   │   the workspace's own number focuses its next window (none while one floats)
@@ -58,7 +58,7 @@ Try it                                                               // tour.try
 └── Done
 
 Leave without the menu bar                                           // tour.leave
-└── Settings › General: Quit Spaceman (Pause & restore windows · Quit)
+└── Settings › General: Quit Fractile (Pause & restore windows · Quit)
 ```
 
 Unit, `src/onboarding_plan/tests.rs` (the classifier, pure):
@@ -71,7 +71,7 @@ Unit (FakeBackend), `src/app/tests/arrange.rs`:
 `arranging_again_moves_windows_a_workspace_already_owns`,
 `an_arrangement_leaves_ignored_windows_and_unmanaged_workspaces_alone`,
 `the_setup_inventory_carries_no_titles_and_counts_parked_windows`,
-`toggle_float_on_spacemans_own_window_does_nothing`.
+`toggle_float_on_fractiles_own_window_does_nothing`.
 
 Unit, `agent/src/onboarding/tests.rs` (flow, board and fixtures):
 `the_permission_step_has_no_launch_at_login_and_try_it_holds_it`,

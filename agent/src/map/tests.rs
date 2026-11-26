@@ -74,16 +74,16 @@ fn rules_map_includes_workspace_10_by_default_and_once_when_referenced() {
     // Adding an app to tile 10 writes a valid route to workspace 10 and keeps 10 once.
     doc.add("com.example.Editor", Place::Workspace(ws10));
     let source = doc.source();
-    let config = spaceman::config::Config::parse(&source).unwrap();
-    let sample_window = spaceman::ObservedWindow {
-        id: spaceman::PhysicalWindowId {
-            app: spaceman::AppInstanceId {
+    let config = fractile::config::Config::parse(&source).unwrap();
+    let sample_window = fractile::ObservedWindow {
+        id: fractile::PhysicalWindowId {
+            app: fractile::AppInstanceId {
                 pid: 1,
                 launched_at: 1,
             },
             window_id: 1,
         },
-        frame: spaceman::Rect {
+        frame: fractile::Rect {
             x: 0,
             y: 0,
             width: 800,
@@ -95,7 +95,7 @@ fn rules_map_includes_workspace_10_by_default_and_once_when_referenced() {
     };
     assert_eq!(
         config.disposition("com.example.Editor", &sample_window),
-        spaceman::config::WindowDisposition::Route(ws10)
+        fractile::config::WindowDisposition::Route(ws10)
     );
     let after_add = Layout::new(&doc, WIDTH);
     assert_eq!(after_add.grid.tiles, expected_numbered);
@@ -139,7 +139,7 @@ fn rule_drag_preserves_external_save_and_flushes_deferred_reload_on_cancel() {
     use std::sync::atomic::{AtomicU64, Ordering};
     static NEXT: AtomicU64 = AtomicU64::new(0);
     let dir = std::env::temp_dir().join(format!(
-        "spaceman-map-drag-{}-{}",
+        "fractile-map-drag-{}-{}",
         std::process::id(),
         NEXT.fetch_add(1, Ordering::Relaxed)
     ));
@@ -222,7 +222,7 @@ fn rule_drag_preserves_external_save_and_flushes_deferred_reload_on_cancel() {
     assert_eq!(ui.error, None);
     assert!(!ui.doc.reload_pending());
     let saved = std::fs::read_to_string(&path).unwrap();
-    let parsed = spaceman::config::Config::parse(&saved).unwrap();
+    let parsed = fractile::config::Config::parse(&saved).unwrap();
     assert!(!parsed.hud(), "external hud = false must survive:\n{saved}");
     assert_eq!(ui.doc.rules()[0].place, Place::Workspace(WorkspaceId::TWO));
     assert!(saved.contains("workspace = 2"), "{saved}");
@@ -285,7 +285,7 @@ fn pin_and_title_contains_rules_round_trip_as_non_app_wide_floats() {
     let source = doc.source();
     assert!(source.contains("title_contains = \"Work\""), "{source}");
     assert!(source.contains("action = \"pin\""), "{source}");
-    spaceman::config::Config::parse(&source).unwrap();
+    fractile::config::Config::parse(&source).unwrap();
 }
 
 const SAFARI: &str = "com.apple.Safari";
@@ -299,16 +299,16 @@ fn rules_ui() -> Ui {
     ui
 }
 
-fn disposition(doc: &Doc, bundle_id: &str) -> spaceman::config::WindowDisposition {
-    let window = spaceman::ObservedWindow {
-        id: spaceman::PhysicalWindowId {
-            app: spaceman::AppInstanceId {
+fn disposition(doc: &Doc, bundle_id: &str) -> fractile::config::WindowDisposition {
+    let window = fractile::ObservedWindow {
+        id: fractile::PhysicalWindowId {
+            app: fractile::AppInstanceId {
                 pid: 1,
                 launched_at: 1,
             },
             window_id: 1,
         },
-        frame: spaceman::Rect {
+        frame: fractile::Rect {
             x: 0,
             y: 0,
             width: 800,
@@ -318,7 +318,7 @@ fn disposition(doc: &Doc, bundle_id: &str) -> spaceman::config::WindowDispositio
         title: None,
         document: None,
     };
-    spaceman::config::Config::parse(&doc.source())
+    fractile::config::Config::parse(&doc.source())
         .unwrap()
         .disposition(bundle_id, &window)
 }
@@ -379,13 +379,13 @@ fn a_second_rule_for_an_app_takes_a_title_filter_that_starts_blank() {
     assert!(ui.sheet.is_some());
     assert_eq!(ui.doc.source(), before);
 
-    // Typed, it writes a rule Spaceman's own parser accepts, ahead of the every-window rule.
+    // Typed, it writes a rule Fractile's own parser accepts, ahead of the every-window rule.
     ui.title_filter = rune::TextEdit::new("  Claude ");
     ui.commit_filter();
     assert!(ui.sheet.is_none());
     assert_eq!(ui.error, None);
     let source = ui.doc.source();
-    spaceman::config::Config::parse(&source).unwrap();
+    fractile::config::Config::parse(&source).unwrap();
     assert!(
         source.contains(concat!(
             "[[rules]]\n",
@@ -455,7 +455,7 @@ fn the_filter_sheet_mounts_over_rules_whatever_the_hud_setting() {
 
 #[test]
 fn built_in_floats_are_default_chips_and_take_a_tile_or_pin_override() {
-    use spaceman::config::WindowDisposition;
+    use fractile::config::WindowDisposition;
 
     let mut ui = rules_ui();
     ui.default_floats = [STICKIES, CALCULATOR, "com.apple.systempreferences", SAFARI]

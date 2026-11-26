@@ -1,5 +1,5 @@
 //! Focus intent as one automaton. Accessibility reports focus asynchronously:
-//! after Spaceman asks for a window it can keep reporting the window focus
+//! after Fractile asks for a window it can keep reporting the window focus
 //! left (or nothing) for a few cycles, and a hidden window can keep focus
 //! after its workspace is switched away. Every reader asks the tracker what
 //! focus *effectively* is, so commands, focus follow, history and diagnostics
@@ -27,7 +27,7 @@ pub(super) const FOCUS_SETTLE: Duration = Duration::from_millis(250);
 /// How long after a failed focus follow a macOS Space change may still explain it.
 pub(super) const FAILED_FOLLOW_RETRY_WINDOW: Duration = Duration::from_secs(3);
 
-/// Focus Spaceman just requested, until Accessibility reports it.
+/// Focus Fractile just requested, until Accessibility reports it.
 #[derive(Clone, Debug)]
 pub(super) struct FocusRequest {
     pub(super) target: PhysicalWindowId,
@@ -50,10 +50,10 @@ pub(super) struct DepartureGuard {
 
 #[derive(Clone, Debug, Default)]
 pub(super) enum FocusPhase {
-    /// Accessibility and Spaceman agree; an outside activation is followed.
+    /// Accessibility and Fractile agree; an outside activation is followed.
     #[default]
     Synced,
-    /// Spaceman asked for the request's target; reports it explains stand for it.
+    /// Fractile asked for the request's target; reports it explains stand for it.
     InFlight {
         request: FocusRequest,
         departure: Option<DepartureGuard>,
@@ -142,7 +142,7 @@ impl FocusTracker {
         self.last_warp = Some(point);
     }
 
-    /// Whether the pointer resting at `point` is where Spaceman last warped it.
+    /// Whether the pointer resting at `point` is where Fractile last warped it.
     pub(super) fn warped_to(&self, point: (i32, i32)) -> bool {
         self.last_warp == Some(point)
     }
@@ -192,7 +192,7 @@ impl FocusTracker {
         effective
     }
 
-    /// Records that Spaceman focused the target, superseding any request still
+    /// Records that Fractile focused the target, superseding any request still
     /// settling: its target and stale reports become stale for this one, along
     /// with what Accessibility may keep reporting (left).
     pub(super) fn request(
@@ -214,7 +214,7 @@ impl FocusTracker {
             }
         };
         stale.extend(left);
-        // Spaceman focused a window, which ends any choice of an empty workspace.
+        // Fractile focused a window, which ends any choice of an empty workspace.
         self.empty_choice = None;
         let mut unique = Vec::with_capacity(stale.len());
         for entry in stale {

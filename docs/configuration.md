@@ -1,15 +1,15 @@
 # Configuration
 
-Spaceman loads configuration when `spaceman-agent` starts and reloads it automatically whenever the
+Fractile loads configuration when `fractile-agent` starts and reloads it automatically whenever the
 file changes on disk:
 
 ```text
-~/Library/Application Support/Spaceman/config.toml
+~/Library/Application Support/Fractile/config.toml
 ```
 
-Set `SPACEMAN_CONFIG` in the agent's environment to replace that path. A missing file means default
+Set `FRACTILE_CONFIG` in the agent's environment to replace that path. A missing file means default
 configuration. Invalid configuration at startup is reported to stderr for terminal launches and to
-`~/Library/Application Support/Spaceman/agent.log` for app-bundle launches; Spaceman falls back to
+`~/Library/Application Support/Fractile/agent.log` for app-bundle launches; Fractile falls back to
 defaults and ignores workspace state so it can prioritize restoring parked windows. If an edit saved
 while running fails validation, the running agent logs the error and keeps the previous valid
 configuration.
@@ -17,7 +17,7 @@ configuration.
 Validate a file before replacing or restarting the app:
 
 ```sh
-spaceman config-check "$HOME/Library/Application Support/Spaceman/config.toml"
+fractile config-check "$HOME/Library/Application Support/Fractile/config.toml"
 ```
 
 The complete example is [config.example.toml](../config.example.toml).
@@ -66,7 +66,7 @@ workspace = 2                         # required for route; forbidden for the ot
 
 [[rules]]
 bundle_id = "com.apple.Stickies"
-action = "tile"                       # tiles an app Spaceman floats by default
+action = "tile"                       # tiles an app Fractile floats by default
 
 [[rules]]
 bundle_id = "ai.opencode.desktop"
@@ -84,7 +84,7 @@ match. `bundle_id` and `title` match exactly; `title_contains` (not empty) match
 title contains it, ignoring case, so `"Work —"` catches a Safari profile's `Work — Pull Request #42`.
 Rules run in file order and the first matching rule wins.
 
-A window no rule matches gets Spaceman's built-in default. A short, fixed list of utility, note
+A window no rule matches gets Fractile's built-in default. A short, fixed list of utility, note
 and password apps floats at its own size: Stickies, Calculator, Dictionary, Clock, Weather, System
 Settings, Passwords, Photo Booth, Voice Memos, Digital Color Meter, Archive Utility, Keychain
 Access, 1Password (7 and 8), Bitwarden, Raycast, Alfred, CleanShot X and Hex (the list is
@@ -98,9 +98,9 @@ overrides the default for what it decides: `action = "tile"` tiles one of these 
 - `pin` floats the window like `float` and shows it on every workspace of its display: switching
   workspaces never parks it and focusing it never switches workspaces. It still belongs to the
   workspace where it was first observed (memory and the HUD use that), and pause, quit and restart
-  restore it like any other window. `spaceman ctl pin` pins or unpins the focused window by hand
+  restore it like any other window. `fractile ctl pin` pins or unpins the focused window by hand
   (floating it first if it is tiled); a hand pin survives an agent restart.
-- `tile` tiles the window even when Spaceman would float it as a dialog, settings window, a
+- `tile` tiles the window even when Fractile would float it as a dialog, settings window, a
   built-in floating utility, or non-resizable window (see [Compatibility](compatibility.md)), like an unmatched resizable window.
   A window that refuses its tile size keeps its own size inside the tile. Toggle Float still floats
   it until toggled back.
@@ -145,15 +145,15 @@ windows, on top of `gaps`; the capsule redraws as windows open and close. It cou
 `settings.hud` on.
 
 ```sh
-spaceman config set settings.hud_position top
-spaceman config get settings.hud_position
-spaceman config reset settings.hud_position
+fractile config set settings.hud_position top
+fractile config get settings.hud_position
+fractile config reset settings.hud_position
 ```
 
 In Settings › General, **Workspace HUD** picks `Off`, `Icons` or `Layouts`. While it is not
 `Off`, **Customize…** beside it opens a sheet: a live miniature of the capsule over **Position**
 (`Bottom` or `Top`) and a link to Settings › Workspaces, which decides the workspaces each display's
-capsule lists. `spaceman config reset` removes a key that `spaceman config set` accepts, back
+capsule lists. `fractile config reset` removes a key that `fractile config set` accepts, back
 to its default; `settings.workspace_order` is edited in the file instead (see
 [Display Assignments](#display-assignments)).
 
@@ -162,17 +162,17 @@ to its default; `settings.workspace_order` is edited in the file instead (see
 `settings.trackpad_swipe` is read only while the `swipe_switch` Lab is on (see [Labs](#labs)); with
 the Lab off, the three-finger swipe always steps through workspaces, whatever the key says. With the
 Lab on, `trackpad_swipe = true` (the default) keeps the swipe, and `trackpad_swipe = false` stops it
-from ever changing Spaceman's workspace, so macOS handles it as it would without Spaceman (for
-example, moving between macOS desktops). Spaceman only ever listens to the trackpad, so it never
+from ever changing Fractile's workspace, so macOS handles it as it would without Fractile (for
+example, moving between macOS desktops). Fractile only ever listens to the trackpad, so it never
 stops macOS from acting on the gesture.
 
 ```sh
-spaceman config set labs.swipe_switch true
-spaceman config set trackpad_swipe false
-spaceman config reset trackpad_swipe
+fractile config set labs.swipe_switch true
+fractile config set trackpad_swipe false
+fractile config reset trackpad_swipe
 ```
 
-`spaceman config get trackpad_swipe` and `spaceman config show` print the value the file sets (or
+`fractile config get trackpad_swipe` and `fractile config show` print the value the file sets (or
 `true` while unset), whether or not the Lab is on.
 
 With the Lab on, Settings › Shortcuts shows **Swipe to switch workspace** under Workspaces, the same
@@ -194,9 +194,9 @@ Workspace HUD is turned off, and the menu bar shows a dimmed paused glyph while 
   auto-pause.
 
 ```sh
-spaceman config set pause_on_builtin_display true
-spaceman config get pause_on_builtin_display
-spaceman config reset pause_on_builtin_display
+fractile config set pause_on_builtin_display true
+fractile config get pause_on_builtin_display
+fractile config reset pause_on_builtin_display
 ```
 
 Settings › General exposes the same toggle as **Pause on built-in display**.
@@ -217,9 +217,9 @@ Settings › General exposes the same toggle as **Pause on built-in display**.
 - `"columns"`: each new window joins the focused tile's split as an equal sibling.
 
 ```sh
-spaceman config set layout columns
-spaceman config get layout
-spaceman config reset layout
+fractile config set layout columns
+fractile config get layout
+fractile config reset layout
 ```
 
 Settings › Layout edits `settings.layout` under **New windows** over a live miniature preview that
@@ -267,27 +267,27 @@ file's gaps differ) sets between windows, all screen edges, and each edge on its
 padding each edge resolves to and leaves `outer` as the file has it: an edge you move there gets its
 own key, and the rest keep following `outer`.
 
-`spaceman config` reads and writes them by dotted key:
+`fractile config` reads and writes them by dotted key:
 
 ```sh
-spaceman config set gaps.inner 8
-spaceman config set gaps.outer 8
-spaceman config set gaps.top 32
-spaceman config set single_window_max_width 1680
-spaceman config set single_window_max_height 1050   # read with labs.single_window_height on
-spaceman config get gaps.inner
+fractile config set gaps.inner 8
+fractile config set gaps.outer 8
+fractile config set gaps.top 32
+fractile config set single_window_max_width 1680
+fractile config set single_window_max_height 1050   # read with labs.single_window_height on
+fractile config get gaps.inner
 ```
 
 `get gaps.outer` prints `outer` itself (`0` while it is unset), `get` on an edge and `config show` the
 resolved padding. Setting `gaps.outer` leaves every edge that has its own key alone. Setting a key to
 `0` removes it from the file, except for an edge while `outer` is set: that edge keeps an explicit
-`0`. To make an edge follow `outer` again, run `spaceman config reset gaps.<edge>` or delete its key
+`0`. To make an edge follow `outer` again, run `fractile config reset gaps.<edge>` or delete its key
 from the file.
 
 ## Shortcuts
 
-`[shortcuts]` rebinds Spaceman's global shortcuts. Each entry in `[shortcuts.bindings]` maps a chord
-to a command in `spaceman ctl` syntax:
+`[shortcuts]` rebinds Fractile's global shortcuts. Each entry in `[shortcuts.bindings]` maps a chord
+to a command in `fractile ctl` syntax:
 
 ```toml
 [shortcuts]
@@ -388,7 +388,7 @@ in the file are kept.
 ## Labs
 
 `[labs]` turns on experimental features one by one. Every switch is off by default, and with all of
-them off Spaceman behaves exactly as if Labs did not exist: no extra shortcuts register and no
+them off Fractile behaves exactly as if Labs did not exist: no extra shortcuts register and no
 command changes behavior. Unknown keys are config errors. Settings › Labs lists every switch,
 grouped by what it changes (`Windows`: Scratchpad, Portrait edge rows, Recent focus, Dragged
 floats follow their display, Single-window height, Route every window and Focus follows mouse; `Workspaces`: Swipe switch, Focus empty workspaces on other
@@ -416,15 +416,15 @@ focus_follows_mouse = false           # optional (default: false); the tile the 
 `scratchpad = true` enables the Scratchpad (see [Controls › Scratchpad](controls.md#scratchpad-lab)) and
 registers its two shortcuts, `Option+\` and `Option+Shift+\`, live without a restart (or on the next
 hotkey registration if tiling is paused); a `[shortcuts]` binding on either chord takes it instead. The
-`spaceman ctl scratchpad` commands follow the switch live. Turning the switch off while windows are
+`fractile ctl scratchpad` commands follow the switch live. Turning the switch off while windows are
 hidden in the scratchpad brings them back on screen, where they tile again.
 
 `activity = true` adds Settings › Activity, the live arrangement log, journal health, process vitals,
 and Save snapshot (see [Restarts and Recovery](features/restarts-and-recovery.md)). With it off the pane
-stays out of the Settings sidebar and `⌘6` opens Labs instead; `spaceman doctor` and the journal
+stays out of the Settings sidebar and `⌘6` opens Labs instead; `fractile doctor` and the journal
 keep recording either way. Turning it off while the pane is open returns Settings to General.
 
-`single_window_height = true` makes Spaceman read `settings.single_window_max_height` (see
+`single_window_height = true` makes Fractile read `settings.single_window_max_height` (see
 [Gaps, Screen Edges, and Single-Window Width](#gaps-screen-edges-and-single-window-width)): a window
 alone on its display, or in Fullscreen Layout, is centered at that height when the padded area is
 taller, as `single_window_max_width` does for its width. It adds **Single-window height** under
@@ -433,12 +433,12 @@ presets 1440, 1680 and 1920) and any other height `config.toml` sets. With it of
 ignored and its row is hidden. It applies live. In Settings it is
 `Labs › Windows › Single-window height`.
 
-`route_all_windows = true` makes Spaceman read `windows = "all"` on `route` rules (see
+`route_all_windows = true` makes Fractile read `windows = "all"` on `route` rules (see
 [Current Schema](#current-schema)): every new window of the rule's application goes to the rule's
 workspace, not only its first one, so a Chrome window another app opens while you work elsewhere
 still lands on Chrome's workspace. Windows already open stay where they are. `windows` is allowed
 only on `route` rules; `"first"`, or no key, keeps today's behavior. With the Lab off the key is
-ignored. `spaceman rules add --app <bundle-id> --workspace <ws> --windows all` writes such a rule,
+ignored. `fractile rules add --app <bundle-id> --workspace <ws> --windows all` writes such a rule,
 and Settings › Rules keeps the key while the rule routes and drops it when the rule stops routing.
 In Settings it is `Labs › Windows › Route every window`.
 
@@ -465,7 +465,7 @@ Settings. The pointer resting where `settings.mouse_follows_focus` put it is not
 two work together without feeding each other. In Settings it is
 `Labs › Windows › Focus follows mouse`.
 
-`swipe_switch = true` makes Spaceman read `settings.trackpad_swipe` and turns the fixed three-finger
+`swipe_switch = true` makes Fractile read `settings.trackpad_swipe` and turns the fixed three-finger
 swipe row in Settings › Shortcuts into the **Swipe to switch workspace** switch (see
 [Trackpad Swipe](#trackpad-swipe)). With it off, `trackpad_swipe` is ignored and swipes work as before.
 In Settings it is `Labs › Workspaces › Swipe switch`.
@@ -500,29 +500,29 @@ glyph's workspace with its display. Rearranging, rotating, connecting or disconn
 updates them on the next refresh. With it off, or with one landscape display, the menu bar is
 unchanged. In Settings it is `Labs › Menu bar & HUD › Physical display order`.
 
-`menu_bar_icon_style = true` makes Spaceman read `settings.menu_bar_icon` and adds **Menu bar icon**
+`menu_bar_icon_style = true` makes Fractile read `settings.menu_bar_icon` and adds **Menu bar icon**
 to Settings › General, with `Full`, `Compact` and `Off`. `"full"` (the default) is today's icon: a
 layout glyph and workspace label for each display. `"compact"` draws one glyph and label, for the
 workspace you last focused (the first display's before anything has focus); the menu still lists
-every display. `"off"` hides the icon and its menu. Settings stays reachable: open Spaceman again
-(from Spotlight, Launchpad or Finder) or run `spaceman ctl open-settings`, and Settings › General
+every display. `"off"` hides the icon and its menu. Settings stays reachable: open Fractile again
+(from Spotlight, Launchpad or Finder) or run `fractile ctl open-settings`, and Settings › General
 keeps Automatic tiling, Pause & restore windows and Quit. With the Lab off, the key is ignored and
 the row is hidden, so turning the Lab off brings a hidden icon back. It applies live. In Settings it
 is `Labs › Menu bar & HUD › Menu bar icon style`.
 
 ```sh
-spaceman config set labs.menu_bar_icon_style true
-spaceman config set menu_bar_icon compact
-spaceman config reset menu_bar_icon
+fractile config set labs.menu_bar_icon_style true
+fractile config set menu_bar_icon compact
+fractile config reset menu_bar_icon
 ```
 
-`recent_focus = true` changes which tile `Option+H/J/K/L` and `spaceman ctl focus` pick when several
+`recent_focus = true` changes which tile `Option+H/J/K/L` and `fractile ctl focus` pick when several
 tiles on the focused tile's workspace border it on the side pressed: those that share part of its
 row or column with no nearer edge between. Of those, the one focused most recently wins, so pressing
 one way and back returns to where you were (with `1 | (2 / 3)`, left from 3 and right again lands on
 3, not 2). Every way a tile gets focus counts (keys, clicks, `Cmd+Tab`); focusing a floating window
 changes nothing, and a native tab keeps its tile's place. The order lives only in memory, and tiles
-not focused since Spaceman started rank last; with none of them focused, the nearest choice stands.
+not focused since Fractile started rank last; with none of them focused, the nearest choice stands.
 A further tile never wins for being more recent. Crossing displays, focus from a floating window or
 an empty workspace, Fullscreen Layout, and `Option+Shift+H/J/K/L` are unchanged. It applies live. In Settings it is
 `Labs › Windows › Recent focus`.
@@ -536,33 +536,33 @@ you chose, wherever it shows, until another window takes focus (see
 `Labs › Workspaces › Focus empty workspaces on other displays`.
 
 `workspace_steps = true` turns on `switch next|prev` and `move next|prev [--follow]` (see the
-command table above) for `spaceman ctl` and `[shortcuts.bindings]`, and lists them in Settings ›
+command table above) for `fractile ctl` and `[shortcuts.bindings]`, and lists them in Settings ›
 Shortcuts › Workspaces as Step to next workspace on display, Step to previous workspace on display,
 Move window to next workspace on display, and Move window to previous workspace on display (not to be
 confused with Option+Tab's Previous workspace). None has a built-in chord. With the switch
-off, bindings to them are skipped (the log names the switch) and `spaceman ctl` reports
+off, bindings to them are skipped (the log names the switch) and `fractile ctl` reports
 `Workspace steps are off`. `switch` acts on the focused display (with no visible window focused, the
 display `move-workspace` would use); `move` reports why and moves nothing when no window has focus. In Settings it is
 `Labs › Workspaces › Workspace steps`.
 
 ```sh
-spaceman config set labs.activity true
-spaceman config get labs.activity
-spaceman config reset labs.activity
+fractile config set labs.activity true
+fractile config get labs.activity
+fractile config reset labs.activity
 ```
 
 ## Remembered Placements
 
 Window identity in workspace state is tied to a running process, so it cannot survive a reboot or an
-application relaunch. Spaceman therefore also remembers, per application bundle identifier, which
+application relaunch. Fractile therefore also remembers, per application bundle identifier, which
 workspace each managed window lived on, whether it floated, and its last on-screen frame. It never
 records window titles.
 
 A new application process that owns no windows yet may claim its remembered placements in four
 cases:
 
-- **Startup recovery:** during the first 60 seconds after Spaceman starts, when an application
-  bundle is seen for the first time in the session (such as after a reboot or a Spaceman start
+- **Startup recovery:** during the first 60 seconds after Fractile starts, when an application
+  bundle is seen for the first time in the session (such as after a reboot or a Fractile start
   without valid workspace state).
 - **Mid-session relaunch:** after the startup window, when another process of the same application
   quit within the last 30 seconds or still owns windows (for example, a reinstall or restart
@@ -572,7 +572,7 @@ cases:
   quit), however long it was closed. A fresh launch that opens one window still opens on the active
   workspace.
 - **Returning applications:** when you move a newly opened window to another workspace by hand
-  within 120 seconds of it opening on the active workspace, Spaceman marks that application to
+  within 120 seconds of it opening on the active workspace, Fractile marks that application to
   return so later launches recall its remembered placements as well.
 
 Matching `route` and `ignore` rules always take precedence over memory (an application with a
@@ -589,7 +589,7 @@ recall window closes, and placements on workspaces that are no longer enabled or
 on the active workspace.
 
 An application quit while some of its windows were parked reopens them at the parking spot, one
-pixel inside a display corner. Spaceman brings back every such window it did not park itself (not
+pixel inside a display corner. Fractile brings back every such window it did not park itself (not
 only the focused one), cascading them onto that display, so recall and tiling can adopt them. Multi-window applications that restore windows with identical frames are
 matched by creation order, which is a best guess.
 
@@ -607,17 +607,17 @@ accepts:
 - `main`, the display macOS marks as main;
 - `secondary`, the leftmost attached non-main display;
 - `tertiary`, the next non-main display to the right of `secondary`;
-- an exact display UUID from `spaceman displays`;
-- an exact display name from `spaceman displays`. When two displays share that name, the first
-  one `spaceman displays` lists is used, and Settings › Workspaces shows the workspace under that
+- an exact display UUID from `fractile displays`;
+- an exact display name from `fractile displays`. When two displays share that name, the first
+  one `fractile displays` lists is used, and Settings › Workspaces shows the workspace under that
   same display; use the UUID to pick the other.
 
 ```sh
-spaceman displays
+fractile displays
 ```
 
 A missing `tertiary` falls back to `secondary`, so with two displays workspaces 5-10 all show on
-the secondary display. A missing `secondary`, UUID, or name falls back to the main display. Spaceman retains the preferred
+the secondary display. A missing `secondary`, UUID, or name falls back to the main display. Fractile retains the preferred
 assignment as its own active lane; reconnecting that display makes its assigned active workspace
 visible again.
 
@@ -644,8 +644,8 @@ across config edits until that state no longer refers to it.
 `settings.workspace_order` sets the order a display's workspaces appear in the Workspace HUD, the
 menu bar menu, and three-finger swipes. Listed workspaces come first, in the order given; every other
 workspace follows in the default order (1 through 10, then A through Z), so a partial list is fine
-and an empty or missing list changes nothing. The key is set in the file only: `spaceman config
-set` and `spaceman config reset` do not accept it. Entries are workspaces `1` through `10` or
+and an empty or missing list changes nothing. The key is set in the file only: `fractile config
+set` and `fractile config reset` do not accept it. Entries are workspaces `1` through `10` or
 `"A"` through `"Z"`, as numbers or strings; an unknown or repeated entry is rejected. The order only
 changes where workspaces are listed: listing a letter does not enable it, and shortcuts, routes and
 saved state are unaffected. For the top keyboard row:
@@ -657,18 +657,18 @@ workspace_order = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, "Q", "W", "E", "R", "T", "Y", 
 
 ## Process Scope
 
-`SPACEMAN_MANAGED_DISPLAY` is an internal process-scope override used by isolated tests. It accepts
+`FRACTILE_MANAGED_DISPLAY` is an internal process-scope override used by isolated tests. It accepts
 `main`, `secondary`, `tertiary`, or `both` (the default). It is not a TOML field, and the installed app does not
 provide a UI for setting it. A scoped process registers only workspace hotkeys assigned to its managed
 main/secondary/tertiary selectors; normal users should leave it unset.
 
-`SPACEMAN_APPLICATION_SUPPORT` is another internal test override. It replaces the Application Support
+`FRACTILE_APPLICATION_SUPPORT` is another internal test override. It replaces the Application Support
 directory for the default config path, state, logs, and control files so live harnesses cannot touch
 normal recovery data.
 
 ## Applying Changes
 
-Edits saved in Spaceman Settings or in an external editor take effect automatically: rule changes,
+Edits saved in Fractile Settings or in an external editor take effect automatically: rule changes,
 workspace display assignments, `settings.hud`, `settings.hud_style`,
 `settings.hud_position`, `settings.mouse_follows_focus`, `settings.trackpad_swipe`,
 `settings.workspace_order`, `settings.gaps`, `settings.single_window_max_width`, and
@@ -677,11 +677,11 @@ external edit applies on the next retile). Global shortcuts for a
 newly added named workspace letter (`Option+A` ... `Option+Z`) register on the next app start:
 
 ```sh
-spaceman ctl pause
-spaceman ctl status
-spaceman ctl quit
-open "/Applications/Spaceman.app"
+fractile ctl pause
+fractile ctl status
+fractile ctl quit
+open "/Applications/Fractile.app"
 ```
 
-`spaceman ctl restart` safely restores parked windows and exits, but currently does not relaunch the
+`fractile ctl restart` safely restores parked windows and exits, but currently does not relaunch the
 app by itself. The source installer uses it before replacing the bundle, then opens the new bundle.

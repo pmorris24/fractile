@@ -317,7 +317,7 @@ fn warp_sequence(
 /// Focus a window in another app from the background.
 ///
 /// Since macOS 14, `activateWithOptions` from an inactive app is cooperative:
-/// Spaceman is a background accessory when a global hotkey fires, so macOS
+/// Fractile is a background accessory when a global hotkey fires, so macOS
 /// ignores it and the window comes forward while keys stay in the app focus
 /// left (#92). Setting `AXFrontmost` on the app is the public Accessibility
 /// route an assistive app is granted, so it brings the app forward; the AppKit

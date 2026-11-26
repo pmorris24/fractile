@@ -12,11 +12,11 @@
 //! |                      | neighbours part or close, and the last key's legend rolls |         |
 //! | The last is learned  | the seal pops in, its check draws, a ring widens away     | .42 / .38, .34 / 0, .7 s |
 
+use fractile::shortcuts::Chord;
 use rune::{
     Beat, Easing, Edge, El, MotionIntent, Sequence, Shape, Spring, SpringPair, Transition, col, el,
     icon, row, text,
 };
-use spaceman::shortcuts::Chord;
 
 use super::{
     demo::{self, LESSONS},

@@ -3,7 +3,7 @@
 //! there too. An open window's icon with no rule behind it drags as a rule-to-be
 //! (`window_rule`): its drop writes one.
 
-use spaceman::WorkspaceId;
+use fractile::WorkspaceId;
 
 use super::{Layout, SLOP, TILE_H};
 use crate::{

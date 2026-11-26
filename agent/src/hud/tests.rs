@@ -1,4 +1,4 @@
-use spaceman::{
+use fractile::{
     Rect, WorkspaceId,
     app::{UiHudDisplay, UiHudTile, UiHudWorkspace},
 };
@@ -12,8 +12,8 @@ use super::{
 
 #[test]
 fn the_capsule_sits_sixty_points_inside_the_edge_it_picks() {
+    use fractile::config::HudPosition;
     use rune::ScreenEdge;
-    use spaceman::config::HudPosition;
 
     assert_eq!(panel_edge(HudPosition::Bottom), ScreenEdge::Bottom);
     assert_eq!(panel_edge(HudPosition::Top), ScreenEdge::Top);
@@ -28,7 +28,7 @@ fn the_capsule_sits_sixty_points_inside_the_edge_it_picks() {
 
 #[test]
 fn a_top_capsule_drops_into_place_a_bottom_one_rises_and_a_side_one_slides_in() {
-    use spaceman::config::HudPosition;
+    use fractile::config::HudPosition;
 
     // Away from its resting place, the capsule starts 6 pt outside the display edge it sits on.
     assert_eq!(
@@ -494,7 +494,7 @@ fn app_context_menu_names_route_rules_always_open_and_keeps_pin_for_the_pin_acti
 fn app_context_menu_respects_the_built_in_float_defaults() {
     let ws1 = id(1);
     let stickies = "com.apple.Stickies";
-    assert!(spaceman::defaults::floats_by_default(stickies));
+    assert!(fractile::defaults::floats_by_default(stickies));
     let title = |current| {
         menu::build_app_menu("Stickies", ws1, current, true)
             .find(menu::ID_TOGGLE_FLOAT)
@@ -518,7 +518,7 @@ fn app_context_menu_respects_the_built_in_float_defaults() {
         Some(Some(Place::Tile))
     );
 
-    // The picks write rules Spaceman's own parser reads back the same way.
+    // The picks write rules Fractile's own parser reads back the same way.
     let mut doc = crate::rules::Doc::parse("version = 1\n");
     doc.set_app_place(stickies, pick(menu::ID_TOGGLE_FLOAT, None).unwrap());
     assert!(
@@ -526,7 +526,7 @@ fn app_context_menu_respects_the_built_in_float_defaults() {
         "{}",
         doc.source()
     );
-    spaceman::config::Config::parse(&doc.source()).unwrap();
+    fractile::config::Config::parse(&doc.source()).unwrap();
     doc.set_app_place(
         stickies,
         pick(menu::ID_TOGGLE_PIN, Some(Place::Tile)).unwrap(),
@@ -537,7 +537,7 @@ fn app_context_menu_respects_the_built_in_float_defaults() {
         doc.source()
     );
     assert!(!doc.source().contains("workspace"), "{}", doc.source());
-    spaceman::config::Config::parse(&doc.source()).unwrap();
+    fractile::config::Config::parse(&doc.source()).unwrap();
 }
 
 // #419: an empty workspace moved to another display leaves this display's row.
@@ -595,7 +595,7 @@ fn moving_an_empty_workspace_away_retires_its_slot_on_the_old_display() {
 
 #[test]
 fn transient_status_toast_shows_even_when_workspace_hud_is_off_and_holds_for_toast_duration() {
-    use spaceman::app::UiHudToast;
+    use fractile::app::UiHudToast;
 
     let mut flow = HudFlow::new(false);
     // Normal workspace HUD events stay ignored while HUD is off.
@@ -647,7 +647,7 @@ fn a_capsule_kept_on_screen_never_leaves_and_comes_back_after_a_toast() {
         assert!(shown(&flow));
     }
     // A toast takes its place and leaves as toasts do; then the row is there to show again.
-    flow.trigger_toast(spaceman::app::UiHudToast::paused("Paused"), 60_000);
+    flow.trigger_toast(fractile::app::UiHudToast::paused("Paused"), 60_000);
     assert!(flow.resume_row().is_none(), "not while the toast is up");
     let mut now = 60_000;
     while flow.is_up() {

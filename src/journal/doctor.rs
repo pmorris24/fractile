@@ -17,7 +17,7 @@ pub struct KindSummary {
     pub bundles: BTreeMap<String, usize>,
 }
 
-/// Counts over the journal lines in one period, shared by `spaceman doctor` and the Activity
+/// Counts over the journal lines in one period, shared by `fractile doctor` and the Activity
 /// pane.
 #[derive(Debug, Default)]
 pub struct Summary<'a> {
@@ -258,7 +258,7 @@ pub fn summarize(lines: &[JournalLine], since_ms: u64, now_ms: u64, skipped: usi
 
     if !summary.marked.is_empty() {
         out.push_str(&format!(
-            "Marked wrong by hand (spaceman ctl wrong): {}\n",
+            "Marked wrong by hand (fractile ctl wrong): {}\n",
             summary
                 .marked
                 .iter()

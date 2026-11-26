@@ -1,14 +1,14 @@
 [package]
-name = "spaceman-agent"
-version = "0.3.5"
+name = "fractile-agent"
+version = "0.1.0"
 edition = "2024"
 rust-version = "1.100"
 license = "MIT"
-description = "Spaceman's macOS menu-bar and Rune host"
+description = "Fractile's macOS menu-bar and Rune host"
 publish = false
 
 [dependencies]
-spaceman = { path = ".." }
+fractile = { path = ".." }
 procwatch = { git = "https://github.com/anomalyco/rune", rev = "1de0710548e53bb4aa6ef05cd4ca2c69b8fa8323" }
 rune = { git = "https://github.com/anomalyco/rune", rev = "1de0710548e53bb4aa6ef05cd4ca2c69b8fa8323" }
 rune-kit = { git = "https://github.com/anomalyco/rune", rev = "1de0710548e53bb4aa6ef05cd4ca2c69b8fa8323" }

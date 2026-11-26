@@ -2,7 +2,7 @@
 
 ## Project Status
 
-Spaceman is an experimental public preview without a guaranteed security maintenance window.
+Fractile is an experimental public preview without a guaranteed security maintenance window.
 
 ## Reporting A Vulnerability
 
@@ -19,6 +19,6 @@ No response-time guarantee applies while the project remains experimental.
 
 ## Scope Notes
 
-Spaceman has broad Accessibility permission and uses private `_AXUIElementGetWindow`. The local
+Fractile has broad Accessibility permission and uses private `_AXUIElementGetWindow`. The local
 control socket and lock are mode `0600`. There is no telemetry and no network access. See
 [Security and privacy](docs/security-and-privacy.md) for the current data model.

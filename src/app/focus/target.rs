@@ -1,5 +1,5 @@
 //! Where a directional focus command goes. One resolver serves the command
-//! itself and the targets spaceman ctl debug and the terminal HUD print, so
+//! itself and the targets fractile ctl debug and the terminal HUD print, so
 //! the diagnostics can never drift from the action (#382): split tiles,
 //! Fullscreen Layout stacks, a focused float, an empty workspace and a focus
 //! request still in flight all resolve the same way in both.

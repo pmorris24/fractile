@@ -386,7 +386,7 @@ fn app_with_no_manageable_windows_does_not_open_or_expire_a_recall() {
 #[test]
 fn an_app_relaunched_from_a_visible_workspace_returns_to_it() {
     // The native snapshot never lists a quit app: its instance is simply
-    // absent and no longer running. Kit was looking at it on workspace 3,
+    // absent and no longer running. You were looking at it on workspace 3,
     // so its exit is seen there, while the new build's window opens after
     // focus has moved to workspace 1.
     let first = relaunched(10);
@@ -675,8 +675,8 @@ fn memory_records_document_and_title_across_parking_and_ignores_case_only_title_
         &[(first.clone(), frame(50)), (second.clone(), frame(500))],
     );
     if let crate::AppObservation::Complete { windows, .. } = &mut observed.applications[0] {
-        windows[0].document = Some("file:///Users/example/code/spaceman".into());
-        windows[0].title = Some("spaceman — Cargo.toml".into());
+        windows[0].document = Some("file:///Users/example/code/fractile".into());
+        windows[0].title = Some("fractile — Cargo.toml".into());
         windows[1].title = Some("Inbox (3) - Gmail".into());
     }
     let mut runtime = runtime(FakeBackend {
@@ -717,11 +717,11 @@ fn memory_records_document_and_title_across_parking_and_ignores_case_only_title_
     assert_eq!(remembered.windows[0].workspace, workspace(2));
     assert_eq!(
         remembered.windows[0].document.as_deref(),
-        Some("file:///Users/example/code/spaceman")
+        Some("file:///Users/example/code/fractile")
     );
     assert_eq!(
         remembered.windows[0].title.as_deref(),
-        Some("spaceman — Cargo.toml")
+        Some("fractile — Cargo.toml")
     );
     assert_eq!(remembered.windows[1].workspace, WorkspaceId::ONE);
     assert_eq!(remembered.windows[1].document, None);

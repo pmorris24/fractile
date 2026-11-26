@@ -193,7 +193,7 @@ impl ManagementScope {
             "tertiary" => Ok(Self::Tertiary),
             "both" => Ok(Self::Both),
             _ => Err(format!(
-                "SPACEMAN_MANAGED_DISPLAY must be main, secondary, tertiary, or both; got {value:?}"
+                "FRACTILE_MANAGED_DISPLAY must be main, secondary, tertiary, or both; got {value:?}"
             )),
         }
     }
@@ -285,7 +285,7 @@ pub(crate) enum WorkerAction {
     ToggleFloat,
     /// Pin the focused window (floating it first) on every workspace, or unpin it.
     TogglePin,
-    /// Kit noticed something wrong: mark the journal and snapshot it.
+    /// You noticed something wrong: mark the journal and snapshot it.
     MarkWrong,
     /// Move the open windows onto the workspaces the setup tour's plan gives them.
     Arrange(crate::onboarding_plan::Arrangement),
@@ -359,7 +359,7 @@ enum WorkerCommand {
 }
 
 /// Worker commands slower than this are logged; long Accessibility stalls
-/// otherwise look like Spaceman silently doing nothing.
+/// otherwise look like Fractile silently doing nothing.
 const SLOW_WORKER_COMMAND: Duration = Duration::from_secs(2);
 
 impl WorkerCommand {
@@ -550,9 +550,9 @@ impl PreparedAgent {
             log_event!("could not install application:openURLs: handler: {error}");
         }
         if let Err(error) = status_item::install(self.actions_sender.clone()) {
-            log_event!("failed to install Spaceman status item: {error}");
+            log_event!("failed to install Fractile status item: {error}");
             termination::allow_next();
-            return Err(format!("failed to install Spaceman status item: {error}"));
+            return Err(format!("failed to install Fractile status item: {error}"));
         }
         status_item::set_hud(self.hud);
         status_item::set_visible(self.menu_bar_icon != crate::config::MenuBarIcon::Off);

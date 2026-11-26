@@ -54,7 +54,7 @@ fn bar(focused: bool) -> El {
         .child(el().key("lead").grow(1.0))
         .child(glyphs::lock("lock", oklch(0.62, 0.004, 265.0)))
         .child(
-            text("anoma.ly/hex")
+            text("example.com")
                 .key("host")
                 .font(TINY.lh(6.0))
                 .color(ink(if focused { 0.88 } else { 0.55 })),
@@ -133,7 +133,7 @@ fn tabs(focused: bool) -> El {
         .child(tab(
             "tab1",
             favicon("favicon", oklch(0.32, 0.03, 265.0)),
-            "Spaceman \u{2014} For your windows",
+            "Fractile \u{2014} For your windows",
             false,
         ))
         .child(tab(

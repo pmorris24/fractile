@@ -2,8 +2,8 @@
 //! its number, Add, and the apps whose new windows open there. Its apps drag with the map's own app drag (`crate::map::drag`) and
 //! take the same right-click menu, so they drop on any workspace card or on the float box.
 
+use fractile::WorkspaceId;
 use rune::{Cursor, El, Tx, el, text};
-use spaceman::WorkspaceId;
 
 use super::{
     CARD_PAD, Frame, INSET, MENU_BAR, Monitor, NAME_H, Panel, RULE_ICON, rule_offset, rule_room,

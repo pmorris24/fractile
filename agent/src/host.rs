@@ -10,13 +10,13 @@ use std::{
 };
 
 use block2::RcBlock;
+use fractile::app::{HostCallbacks, MainThreadAgent, PreparedAgent, TICK_INTERVAL, TickOutcome};
 use objc2::{
     MainThreadMarker,
     rc::{Retained, autoreleasepool},
 };
 use objc2_app_kit::NSApplication;
 use objc2_foundation::{NSRunLoop, NSRunLoopCommonModes, NSTimer};
-use spaceman::app::{HostCallbacks, MainThreadAgent, PreparedAgent, TICK_INTERVAL, TickOutcome};
 
 use crate::Ui;
 
@@ -41,7 +41,7 @@ thread_local! {
     /// The setup tour's Try it step is showing; each tick its window is key holds the hotkeys off.
     static PRACTICING_SHORTCUTS: Cell<bool> = const { Cell::new(false) };
     /// A `[shortcuts]` table Settings just saved, for the next tick to register.
-    static SAVED_SHORTCUTS: RefCell<Option<spaceman::shortcuts::Shortcuts>> =
+    static SAVED_SHORTCUTS: RefCell<Option<fractile::shortcuts::Shortcuts>> =
         const { RefCell::new(None) };
 }
 
@@ -64,12 +64,12 @@ fn setup_window_is_key() -> bool {
     MainThreadMarker::new().is_some_and(|mtm| {
         NSApplication::sharedApplication(mtm)
             .keyWindow()
-            .is_some_and(|window| window.title().to_string() == "Spaceman")
+            .is_some_and(|window| window.title().to_string() == "Fractile")
     })
 }
 
 /// Registers a `[shortcuts]` table Settings saved, without waiting for the config probe.
-pub fn shortcuts_saved(shortcuts: spaceman::shortcuts::Shortcuts) {
+pub fn shortcuts_saved(shortcuts: fractile::shortcuts::Shortcuts) {
     SAVED_SHORTCUTS.with(|slot| *slot.borrow_mut() = Some(shortcuts));
 }
 
@@ -95,7 +95,7 @@ pub fn float_setup_window(floating: bool) {
     };
     for window in NSApplication::sharedApplication(mtm).windows().iter() {
         // The HUD's panels keep their own level; only the titled Settings window moves.
-        let ours = window.title().to_string() == "Spaceman";
+        let ours = window.title().to_string() == "Fractile";
         if ours && window.level() != level && (floating || window.level() == NSFloatingWindowLevel)
         {
             window.setLevel(level);
@@ -103,14 +103,14 @@ pub fn float_setup_window(floating: bool) {
     }
 }
 
-fn launch_links() -> Vec<spaceman::deep_link::DeepLink> {
+fn launch_links() -> Vec<fractile::deep_link::DeepLink> {
     std::env::args()
         .skip(1)
         .filter(|arg| arg.contains("://"))
-        .filter_map(|arg| match spaceman::deep_link::parse_url(&arg) {
+        .filter_map(|arg| match fractile::deep_link::parse_url(&arg) {
             Ok(link) => Some(link),
             Err(error) => {
-                let line = format!("spaceman: ignored launch deep link ({error})\n");
+                let line = format!("fractile: ignored launch deep link ({error})\n");
                 drop(std::io::Write::write_all(
                     &mut std::io::stderr().lock(),
                     line.as_bytes(),
@@ -123,15 +123,15 @@ fn launch_links() -> Vec<spaceman::deep_link::DeepLink> {
 
 pub fn run() -> Result<(), String> {
     let links = launch_links();
-    let (prepared, bridge) = match spaceman::app::prepare() {
+    let (prepared, bridge) = match fractile::app::prepare() {
         Ok(ready) => ready,
         Err(error) => {
-            // If another Spaceman agent already owns control.sock, hand off any
+            // If another Fractile agent already owns control.sock, hand off any
             // launch deep links to the running instance and exit cleanly.
             if !links.is_empty() {
                 let mut forwarded = false;
                 for link in &links {
-                    if spaceman::control::send(&["open".into(), link.canonical_url()]).is_ok() {
+                    if fractile::control::send(&["open".into(), link.canonical_url()]).is_ok() {
                         forwarded = true;
                     }
                 }
@@ -142,8 +142,8 @@ pub fn run() -> Result<(), String> {
             return Err(error);
         }
     };
-    let initial_target = links.last().map(spaceman::deep_link::DeepLink::resolve);
-    let accessibility = spaceman::macos::accessibility_trusted();
+    let initial_target = links.last().map(fractile::deep_link::DeepLink::resolve);
+    let accessibility = fractile::macos::accessibility_trusted();
     let initial_tour = crate::onboarding::launch_step(accessibility);
     let open_at_launch = initial_tour.is_some() || !accessibility || initial_target.is_some();
     let mut app = crate::live_app(bridge, initial_tour, accessibility, initial_target)
@@ -222,7 +222,7 @@ fn start_main_thread() {
         Ok(agent) => agent,
         Err(error) => {
             STARTUP_ERROR.with(|slot| *slot.borrow_mut() = Some(error));
-            spaceman::app::allow_immediate_termination();
+            fractile::app::allow_immediate_termination();
             window.quit();
             return;
         }
@@ -280,7 +280,7 @@ fn tick_pump() {
                 state.timer.invalidate();
                 drop(state);
             }
-            spaceman::app::finish_appkit_termination();
+            fractile::app::finish_appkit_termination();
         }
     }
 }

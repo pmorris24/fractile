@@ -5,7 +5,7 @@
 #[cfg(test)]
 mod tests;
 
-use spaceman::{
+use fractile::{
     WorkspaceId,
     shortcuts::{Chord, Key, Modifiers},
 };
@@ -54,7 +54,7 @@ pub struct Lesson {
 
 /// The lessons in the order they are asked for. Float and Fullscreen Layout are each pressed
 /// twice: once to make the change and once to undo it, and in between the workspace's own
-/// number, pressed again, brings the window behind forward, as it does in Spaceman.
+/// number, pressed again, brings the window behind forward, as it does in Fractile.
 pub const LESSONS: [Lesson; 7] = [
     lesson(Move::There, "Switch to workspace 2"),
     lesson(Move::Back, "Switch back to workspace 1"),
@@ -183,7 +183,7 @@ impl Demo {
     }
 
     /// Makes `mv` on the desktop. A switch to the workspace already showing brings focus to its
-    /// next window, as a repeat press does in Spaceman, unless a window floats there. Float and
+    /// next window, as a repeat press does in Fractile, unless a window floats there. Float and
     /// Fullscreen toggle, each taking over from the other. Every shortcut moves the desktop whichever lesson is up, and after the last;
     /// the lesson is learned when its own shortcut does what it asks for.
     pub fn press(&mut self, mv: Move) -> Pressed {

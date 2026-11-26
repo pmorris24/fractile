@@ -4,7 +4,7 @@
 
 use std::path::PathBuf;
 
-use spaceman::{
+use fractile::{
     WorkspaceId,
     config::{LabFeature, LabsConfig},
 };
@@ -12,7 +12,7 @@ use toml_edit::{
     Array, ArrayOfTables, DocumentMut, InlineTable, Item, Table, TableLike, Value, value,
 };
 
-const EMPTY: &str = "# Spaceman configuration.\nversion = 1\n";
+const EMPTY: &str = "# Fractile configuration.\nversion = 1\n";
 
 /// Where a rule sends an app's windows.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -65,7 +65,7 @@ pub struct Doc {
 
 impl Doc {
     pub fn load() -> Doc {
-        match spaceman::config::config_path() {
+        match fractile::config::config_path() {
             Some(path) => Doc::load_from(path),
             None => Doc::broken(None, "HOME is unavailable".into()),
         }
@@ -87,7 +87,7 @@ impl Doc {
             Ok(doc) => Doc {
                 path: None,
                 doc,
-                error: spaceman::config::Config::parse(source).err(),
+                error: fractile::config::Config::parse(source).err(),
                 pending_reload: false,
             },
             Err(error) => Doc::broken(None, error.to_string()),
@@ -460,9 +460,9 @@ impl Doc {
     pub fn display_path(&self) -> String {
         self.path
             .clone()
-            .or_else(spaceman::config::config_path)
+            .or_else(fractile::config::config_path)
             .map_or_else(
-                || "~/Library/Application Support/Spaceman/config.toml".into(),
+                || "~/Library/Application Support/Fractile/config.toml".into(),
                 |path| crate::controls::home_relative(&path),
             )
     }
@@ -471,19 +471,19 @@ impl Doc {
         self.doc.to_string()
     }
 
-    /// Writes the file once Spaceman's own parser accepts it; the agent picks it up from there.
+    /// Writes the file once Fractile's own parser accepts it; the agent picks it up from there.
     pub fn save(&mut self) -> Result<(), String> {
         if let Some(error) = &self.error {
             return Err(format!("config.toml has an error to fix first: {error}"));
         }
         let source = self.source();
-        spaceman::config::Config::parse(&source)?;
+        fractile::config::Config::parse(&source)?;
         let Some(path) = &self.path else {
             return Ok(());
         };
-        let _lock = spaceman::config::lock_config(path)
+        let _lock = fractile::config::lock_config(path)
             .map_err(|error| format!("failed to lock {}: {error}", path.display()))?;
-        spaceman::config::write_config_atomic(path, source.as_bytes())
+        fractile::config::write_config_atomic(path, source.as_bytes())
             .map_err(|error| error.to_string())
     }
 
@@ -506,7 +506,7 @@ impl Doc {
             }
             return Ok(());
         };
-        let _lock = spaceman::config::lock_config(&path)
+        let _lock = fractile::config::lock_config(&path)
             .map_err(|error| format!("failed to lock {}: {error}", path.display()))?;
         let mut fresh = Doc::load_from(path.clone());
         if let Some(error) = &fresh.error {
@@ -520,11 +520,11 @@ impl Doc {
             return Err(error);
         }
         let source = fresh.source();
-        if let Err(error) = spaceman::config::Config::parse(&source) {
+        if let Err(error) = fractile::config::Config::parse(&source) {
             *self = loaded;
             return Err(error);
         }
-        if let Err(error) = spaceman::config::write_config_atomic(&path, source.as_bytes()) {
+        if let Err(error) = fractile::config::write_config_atomic(&path, source.as_bytes()) {
             *self = loaded;
             return Err(error.to_string());
         }

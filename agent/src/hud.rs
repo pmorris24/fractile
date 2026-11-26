@@ -24,14 +24,14 @@ use std::{
     time::Duration,
 };
 
-use rune::{
-    Align, Cx, DisplayTarget, El, KeyPolicy, NativeDisplayId, OverlayHandle, OverlayInput,
-    OverlayOptions, OverlayPlacement, OverlaySpec, ScreenEdge, Tx, row,
-};
-use spaceman::{
+use fractile::{
     WorkspaceId,
     app::{UiHudDisplay, UiHudEvent, UiHudToast},
     config::{HudPosition, HudStyle},
+};
+use rune::{
+    Align, Cx, DisplayTarget, El, KeyPolicy, NativeDisplayId, OverlayHandle, OverlayInput,
+    OverlayOptions, OverlayPlacement, OverlaySpec, ScreenEdge, Tx, row,
 };
 
 use flow::FRESH_MS;
@@ -61,7 +61,7 @@ const REVEAL_FADE: Duration = Duration::from_millis(33);
 /// for ten or so workspaces before the row scrolls.
 const OVERLAY_SIZE: (f32, f32) = (860.0, pill::PILL_HEIGHT + 2.0 * pill::SHADOW_REACH);
 // The engine's reserved strip is sized for this capsule.
-const _: () = assert!(pill::PILL_HEIGHT == spaceman::config::HUD_PILL_HEIGHT as f32);
+const _: () = assert!(pill::PILL_HEIGHT == fractile::config::HUD_PILL_HEIGHT as f32);
 /// Keeps the capsule 60 pt inside the display edge it sits on, above the bottom or below the top.
 pub const OVERLAY_MARGIN: f32 = pill::CAPSULE_INSET - pill::SHADOW_REACH;
 
@@ -83,10 +83,10 @@ const SIDE_SIZE: (f32, f32) = (OVERLAY_SIZE.1, OVERLAY_SIZE.0);
 const SIDE_GAP: f32 = 12.0;
 /// One panel per display, up to this many displays.
 const PANEL_NAMES: [&str; 4] = [
-    "Spaceman HUD",
-    "Spaceman HUD 2",
-    "Spaceman HUD 3",
-    "Spaceman HUD 4",
+    "Fractile HUD",
+    "Fractile HUD 2",
+    "Fractile HUD 3",
+    "Fractile HUD 4",
 ];
 
 pub(super) struct HudOverlay {
@@ -139,7 +139,7 @@ impl HudOverlay {
         if let Some(clock) = &self.virtual_clock {
             return clock.load(std::sync::atomic::Ordering::Relaxed);
         }
-        spaceman::journal::unix_millis()
+        fractile::journal::unix_millis()
     }
 
     fn schedule_wake(&self, now_ms: u64, tx: &mut Tx) {
@@ -162,7 +162,7 @@ impl HudOverlay {
         let Some(handle) = &self.handle else {
             return;
         };
-        let gap = spaceman::config::HUD_STAY_GAP as f32;
+        let gap = fractile::config::HUD_STAY_GAP as f32;
         if self.position.is_side()
             && let Some((screen, frame)) = display_rects(self.display)
         {
@@ -250,7 +250,7 @@ impl HudOverlay {
             .cloned()
             .unwrap_or_else(|| apps::fallback_name(bundle));
         let current = self.sink.app_place(bundle);
-        let floats_by_default = spaceman::defaults::floats_by_default(bundle);
+        let floats_by_default = fractile::defaults::floats_by_default(bundle);
         let popup = menu::build_app_menu(&app_name, workspace, current, floats_by_default);
         self.flow.set_menu_open(true, now_ms);
         let bundle_id = bundle.to_owned();
@@ -489,7 +489,7 @@ impl HudDriver {
         self.each(move |overlay, tx| {
             let left = overlay
                 .flow
-                .set_enabled(enabled, spaceman::journal::unix_millis());
+                .set_enabled(enabled, fractile::journal::unix_millis());
             if left {
                 tx.wake_after(Duration::from_millis(LEAVE_MS));
             }
@@ -615,7 +615,7 @@ const fn native(id: u32) -> DisplayTarget {
 
 #[cfg(target_os = "macos")]
 fn display_ids() -> std::collections::HashMap<String, u32> {
-    spaceman::macos::display_ids()
+    fractile::macos::display_ids()
 }
 
 #[cfg(not(target_os = "macos"))]
@@ -627,7 +627,7 @@ fn display_ids() -> std::collections::HashMap<String, u32> {
 /// below, the menu bar's above; 0 when the display can't be read.
 #[cfg(target_os = "macos")]
 fn bar_inset(display: u32, position: HudPosition) -> f32 {
-    let Ok(outputs) = spaceman::macos::outputs() else {
+    let Ok(outputs) = fractile::macos::outputs() else {
         return 0.0;
     };
     let ids = display_ids();
@@ -651,8 +651,8 @@ fn bar_inset(display: u32, position: HudPosition) -> f32 {
 /// `display`'s whole screen and the area windows tile in (Dock and menu bar left out), in
 /// points, y down; the main display's when `display` is `None`.
 #[cfg(target_os = "macos")]
-fn display_rects(display: Option<u32>) -> Option<(spaceman::Rect, spaceman::Rect)> {
-    let outputs = spaceman::macos::outputs().ok()?;
+fn display_rects(display: Option<u32>) -> Option<(fractile::Rect, fractile::Rect)> {
+    let outputs = fractile::macos::outputs().ok()?;
     let ids = display_ids();
     let index = outputs.displays().iter().position(|output| match display {
         Some(display) => ids.get(&output.id) == Some(&display),
@@ -662,7 +662,7 @@ fn display_rects(display: Option<u32>) -> Option<(spaceman::Rect, spaceman::Rect
 }
 
 #[cfg(not(target_os = "macos"))]
-fn display_rects(_display: Option<u32>) -> Option<(spaceman::Rect, spaceman::Rect)> {
+fn display_rects(_display: Option<u32>) -> Option<(fractile::Rect, fractile::Rect)> {
     None
 }
 
@@ -682,7 +682,7 @@ fn reduce_motion() -> bool {
 }
 
 fn overlay_poll(overlay: &mut HudOverlay, _clock: f64, tx: &mut Tx) -> bool {
-    let now_ms = spaceman::journal::unix_millis();
+    let now_ms = fractile::journal::unix_millis();
     if overlay.flow.is_up()
         && let Some(display) = overlay.display
         && !display_ids().values().any(|id| *id == display)

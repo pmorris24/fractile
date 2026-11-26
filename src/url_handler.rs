@@ -1,7 +1,7 @@
 //! Main-thread AppKit `application:openURLs:` handler attached to winit's
 //! `NSApplicationDelegate`, complementing Rune's `kAEGetURL` handler.
 //!
-//! Incoming `spaceman://` URLs are strictly validated by [`crate::deep_link::parse_url`]
+//! Incoming `fractile://` URLs are strictly validated by [`crate::deep_link::parse_url`]
 //! before entering the action queue. Deep links only open Settings and highlight
 //! a target; they never mutate configuration or run window-tiling commands.
 
@@ -110,7 +110,7 @@ unsafe extern "C-unwind" fn application_open_urls(
     if caught.is_err() {
         drop(std::io::Write::write_all(
             &mut std::io::stderr().lock(),
-            b"spaceman: application:openURLs: handler panicked\n",
+            b"fractile: application:openURLs: handler panicked\n",
         ));
     }
 }
@@ -126,7 +126,7 @@ fn dispatch_url(raw: &str) {
             });
         }
         Err(error) => {
-            let line = format!("spaceman: ignored deep link ({error})\n");
+            let line = format!("fractile: ignored deep link ({error})\n");
             drop(std::io::Write::write_all(
                 &mut std::io::stderr().lock(),
                 line.as_bytes(),

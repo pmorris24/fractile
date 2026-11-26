@@ -1,10 +1,10 @@
-//! Arrangement journal: a bounded, title-free JSONL record of what Spaceman
+//! Arrangement journal: a bounded, title-free JSONL record of what Fractile
 //! believed about every window compared with what the window server showed.
 //!
 //! The agent writes a full [`Arrangement`] snapshot at startup and
 //! periodically, a [`JournalEvent::Diff`] whenever the arrangement changes,
 //! and begin/end events for debounced [`Anomaly`] disagreements between the
-//! model and the screen. `spaceman doctor` summarizes the result.
+//! model and the screen. `fractile doctor` summarizes the result.
 
 use std::{
     collections::{BTreeMap, HashMap},
@@ -89,7 +89,7 @@ pub enum JournalEvent {
         failed: usize,
     },
     /// The user moved a window to another workspace by hand within
-    /// [`CORRECTION_WINDOW`] of Spaceman placing it: the placement was wrong.
+    /// [`CORRECTION_WINDOW`] of Fractile placing it: the placement was wrong.
     WrongPlacement {
         bundle_id: String,
         window: u32,
@@ -98,16 +98,16 @@ pub enum JournalEvent {
         moved_to: WorkspaceId,
         after_ms: u64,
     },
-    /// The user ran `spaceman ctl wrong` (or Save snapshot) when something looked wrong; a full
+    /// The user ran `fractile ctl wrong` (or Save snapshot) when something looked wrong; a full
     /// snapshot follows.
     MarkedWrong,
     Stop,
 }
 
-/// A hand move this soon after Spaceman placed a window corrects that placement.
+/// A hand move this soon after Fractile placed a window corrects that placement.
 pub const CORRECTION_WINDOW: Duration = Duration::from_secs(120);
 
-/// Why Spaceman put a newly seen window on its workspace.
+/// Why Fractile put a newly seen window on its workspace.
 #[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum PlacementSource {

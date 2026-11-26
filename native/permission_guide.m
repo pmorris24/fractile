@@ -10,40 +10,40 @@
 typedef struct {
     double x;
     double y;
-} SpacemanGuidePoint;
+} FractileGuidePoint;
 
 typedef struct {
     double width;
     double height;
-} SpacemanGuideSize;
+} FractileGuideSize;
 
 typedef struct {
     double x;
     double y;
     double width;
     double height;
-} SpacemanGuideRect;
+} FractileGuideRect;
 
 typedef struct {
     int32_t pid;
     int32_t layer;
     double alpha;
-    SpacemanGuideRect frame;
+    FractileGuideRect frame;
     bool is_settings_owner;
     bool is_system_prompt_owner;
     bool is_ignored_chrome;
-} SpacemanGuideWindowInfo;
+} FractileGuideWindowInfo;
 
 typedef struct {
     bool has_settings_frame;
-    SpacemanGuideRect settings_frame;
+    FractileGuideRect settings_frame;
     bool has_blocking_sheet_or_prompt;
-} SpacemanGuideWindowAnalysis;
+} FractileGuideWindowAnalysis;
 
-@class SpacemanGuideDelegate;
+@class FractileGuideDelegate;
 
 static NSPanel *guidePanel;
-static SpacemanGuideDelegate *guideDelegate;
+static FractileGuideDelegate *guideDelegate;
 static NSTimer *guideTimer;
 static BOOL sawSettingsWindow;
 static BOOL guideUserMoved;
@@ -55,7 +55,7 @@ static NSUInteger guideReopens;
 static const NSUInteger guideReopenLimit = 2;
 static NSView *guideTile;
 
-/// The tile flies on its own from the click in Spaceman's window to its place
+/// The tile flies on its own from the click in Fractile's window to its place
 /// in the guide, so the eye can follow it to System Settings.
 static NSPanel *flightPanel;
 static CALayer *flightLayer;
@@ -74,7 +74,7 @@ static NSString *const settingsBundleID = @"com.apple.systempreferences";
 /// stand down.
 static NSUInteger settingsRequest;
 
-@interface SpacemanDragView : NSView <NSDraggingSource>
+@interface FractileDragView : NSView <NSDraggingSource>
 @property(nonatomic, strong) NSURL *bundleURL;
 @property(nonatomic, strong) NSImage *appIcon;
 @property(nonatomic, copy) NSString *appName;
@@ -82,12 +82,12 @@ static NSUInteger settingsRequest;
 @end
 
 /// The name System Settings lists the app under.
-static NSString *spacemanAppName(NSURL *bundleURL) {
+static NSString *fractileAppName(NSURL *bundleURL) {
     NSString *name = [[NSFileManager defaultManager] displayNameAtPath:bundleURL.path];
     if ([name.pathExtension.lowercaseString isEqualToString:@"app"]) {
         name = name.stringByDeletingPathExtension;
     }
-    return name.length > 0 ? name : @"Spaceman";
+    return name.length > 0 ? name : @"Fractile";
 }
 
 /// macOS 27 renamed the Accessibility list to Device Control and Data Access.
@@ -105,21 +105,21 @@ static BOOL accessibilityProtected(void) {
 }
 
 /// The name of the Privacy & Security list Accessibility lives in.
-const char *spaceman_accessibility_list_name(void) {
+const char *fractile_accessibility_list_name(void) {
     if (accessibilityProtected()) {
         return "System & App Protection Override";
     }
     return accessibilityRenamed() ? "Device Control and Data Access" : "Accessibility";
 }
 
-/// Whether System Settings still accepts Spaceman's tile dragged into its list.
-bool spaceman_accessibility_drag_supported(void) {
+/// Whether System Settings still accepts Fractile's tile dragged into its list.
+bool fractile_accessibility_drag_supported(void) {
     return !accessibilityProtected();
 }
 
 /// Asks macOS to register this running binary in Accessibility and show its
 /// prompt when untrusted.
-bool spaceman_prompt_accessibility_trust(void) {
+bool fractile_prompt_accessibility_trust(void) {
     NSDictionary *options = @{(__bridge NSString *)kAXTrustedCheckOptionPrompt: @YES};
     return AXIsProcessTrustedWithOptions((__bridge CFDictionaryRef)options);
 }
@@ -151,7 +151,7 @@ static void drawTile(NSRect bounds, NSImage *icon, NSString *name, BOOL dark) {
     [name drawAtPoint:NSMakePoint(52, 14) withAttributes:attributes];
 }
 
-@implementation SpacemanDragView
+@implementation FractileDragView
 
 - (instancetype)initWithFrame:(NSRect)frame bundleURL:(NSURL *)bundleURL {
     self = [super initWithFrame:frame];
@@ -159,7 +159,7 @@ static void drawTile(NSRect bounds, NSImage *icon, NSString *name, BOOL dark) {
         _bundleURL = bundleURL;
         _appIcon = [[NSWorkspace sharedWorkspace] iconForFile:bundleURL.path];
         _appIcon.size = NSMakeSize(32, 32);
-        _appName = spacemanAppName(bundleURL);
+        _appName = fractileAppName(bundleURL);
     }
     return self;
 }
@@ -218,10 +218,10 @@ static void drawTile(NSRect bounds, NSImage *icon, NSString *name, BOOL dark) {
 
 @end
 
-@interface SpacemanGuideContentView : NSView
+@interface FractileGuideContentView : NSView
 @end
 
-@implementation SpacemanGuideContentView
+@implementation FractileGuideContentView
 
 - (BOOL)acceptsFirstMouse:(NSEvent *)event {
     (void)event;
@@ -234,10 +234,10 @@ static void drawTile(NSRect bounds, NSImage *icon, NSString *name, BOOL dark) {
 
 @end
 
-@interface SpacemanGuideLabel : NSTextField
+@interface FractileGuideLabel : NSTextField
 @end
 
-@implementation SpacemanGuideLabel
+@implementation FractileGuideLabel
 
 - (BOOL)acceptsFirstMouse:(NSEvent *)event {
     (void)event;
@@ -254,10 +254,10 @@ static void drawTile(NSRect bounds, NSImage *icon, NSString *name, BOOL dark) {
 
 @end
 
-@interface SpacemanCloseButton : NSButton
+@interface FractileCloseButton : NSButton
 @end
 
-@implementation SpacemanCloseButton
+@implementation FractileCloseButton
 
 - (BOOL)acceptsFirstMouse:(NSEvent *)event {
     (void)event;
@@ -276,10 +276,10 @@ static void drawTile(NSRect bounds, NSImage *icon, NSString *name, BOOL dark) {
 
 static void closeGuide(void);
 
-@interface SpacemanGuideDelegate : NSObject <NSWindowDelegate>
+@interface FractileGuideDelegate : NSObject <NSWindowDelegate>
 @end
 
-@implementation SpacemanGuideDelegate
+@implementation FractileGuideDelegate
 
 - (void)windowDidMove:(NSNotification *)notification {
     (void)notification;
@@ -302,7 +302,7 @@ static double clampDouble(double value, double minValue, double maxValue) {
     return MIN(MAX(value, minValue), maxValue);
 }
 
-static bool rectsIntersect(SpacemanGuideRect a, SpacemanGuideRect b) {
+static bool rectsIntersect(FractileGuideRect a, FractileGuideRect b) {
     return a.x < b.x + b.width &&
            a.x + a.width > b.x &&
            a.y < b.y + b.height &&
@@ -315,10 +315,10 @@ static bool rectsIntersect(SpacemanGuideRect a, SpacemanGuideRect b) {
 /// bottom of System Settings and its modal sheets. Prefer placing the bar above
 /// Settings, else below Settings, else near the top of `visible` — never fall
 /// back to the bottom of `visible` over those buttons.
-SpacemanGuidePoint spaceman_permission_guide_origin(
-    SpacemanGuideRect settings,
-    SpacemanGuideRect visible,
-    SpacemanGuideSize panel,
+FractileGuidePoint fractile_permission_guide_origin(
+    FractileGuideRect settings,
+    FractileGuideRect visible,
+    FractileGuideSize panel,
     bool protected_mode
 ) {
     const double edgeMargin = 8.0;
@@ -334,7 +334,7 @@ SpacemanGuidePoint spaceman_permission_guide_origin(
     if (!protected_mode) {
         double x = (settings.x + settings.width) - panel.width - 16.0;
         double y = settings.y + 16.0;
-        return (SpacemanGuidePoint){
+        return (FractileGuidePoint){
             .x = clampDouble(x, minX, maxX),
             .y = clampDouble(y, minY, maxY),
         };
@@ -360,19 +360,19 @@ SpacemanGuidePoint spaceman_permission_guide_origin(
         }
     }
 
-    return (SpacemanGuidePoint){ .x = x, .y = y };
+    return (FractileGuidePoint){ .x = x, .y = y };
 }
 
 /// Inspects a front-to-back on-screen window list to locate System Settings'
 /// main window and detect any modal sheet, dialog, or system security/TCC
 /// approval prompt that must never be overlapped by the floating guide.
-SpacemanGuideWindowAnalysis spaceman_permission_guide_analyze_windows(
-    const SpacemanGuideWindowInfo *windows,
+FractileGuideWindowAnalysis fractile_permission_guide_analyze_windows(
+    const FractileGuideWindowInfo *windows,
     size_t count,
     int32_t self_pid,
     int32_t modal_layer
 ) {
-    SpacemanGuideWindowAnalysis result = {
+    FractileGuideWindowAnalysis result = {
         .has_settings_frame = false,
         .settings_frame = {0, 0, 0, 0},
         .has_blocking_sheet_or_prompt = false,
@@ -384,7 +384,7 @@ SpacemanGuideWindowAnalysis spaceman_permission_guide_analyze_windows(
     size_t settingsIndex = count;
     double bestArea = 0.0;
     for (size_t i = 0; i < count; i++) {
-        SpacemanGuideWindowInfo w = windows[i];
+        FractileGuideWindowInfo w = windows[i];
         if (!w.is_settings_owner || w.layer != 0 || w.alpha <= 0.01) {
             continue;
         }
@@ -402,7 +402,7 @@ SpacemanGuideWindowAnalysis spaceman_permission_guide_analyze_windows(
 
     size_t settingsVisibleWindows = 0;
     for (size_t i = 0; i < count; i++) {
-        SpacemanGuideWindowInfo w = windows[i];
+        FractileGuideWindowInfo w = windows[i];
         if (w.alpha <= 0.01 || w.frame.width < 100.0 || w.frame.height < 60.0) {
             continue;
         }
@@ -453,7 +453,7 @@ static BOOL isIgnoredChromeOwner(NSString *owner) {
            [owner isEqualToString:@"Notification Center"];
 }
 
-static SpacemanGuideWindowAnalysis inspectSettingsWindows(void) {
+static FractileGuideWindowAnalysis inspectSettingsWindows(void) {
     NSArray<NSRunningApplication *> *settingsApps =
         [NSRunningApplication runningApplicationsWithBundleIdentifier:settingsBundleID];
     pid_t settingsPID = settingsApps.count > 0 ? settingsApps.firstObject.processIdentifier : 0;
@@ -465,12 +465,12 @@ static SpacemanGuideWindowAnalysis inspectSettingsWindows(void) {
     NSArray *windows = CFBridgingRelease(windowInfo);
     size_t count = (size_t)windows.count;
     if (count == 0) {
-        return spaceman_permission_guide_analyze_windows(NULL, 0, (int32_t)getpid(), 8);
+        return fractile_permission_guide_analyze_windows(NULL, 0, (int32_t)getpid(), 8);
     }
 
-    SpacemanGuideWindowInfo *entries = calloc(count, sizeof(SpacemanGuideWindowInfo));
+    FractileGuideWindowInfo *entries = calloc(count, sizeof(FractileGuideWindowInfo));
     if (entries == NULL) {
-        return spaceman_permission_guide_analyze_windows(NULL, 0, (int32_t)getpid(), 8);
+        return fractile_permission_guide_analyze_windows(NULL, 0, (int32_t)getpid(), 8);
     }
 
     size_t validCount = 0;
@@ -490,7 +490,7 @@ static SpacemanGuideWindowAnalysis inspectSettingsWindows(void) {
                                [owner isEqualToString:@"System Settings"] ||
                                [owner isEqualToString:@"System Preferences"];
 
-        entries[validCount++] = (SpacemanGuideWindowInfo){
+        entries[validCount++] = (FractileGuideWindowInfo){
             .pid = pid,
             .layer = layer,
             .alpha = alpha,
@@ -507,7 +507,7 @@ static SpacemanGuideWindowAnalysis inspectSettingsWindows(void) {
     }
 
     int32_t modalLayer = (int32_t)CGWindowLevelForKey(kCGModalPanelWindowLevelKey);
-    SpacemanGuideWindowAnalysis analysis = spaceman_permission_guide_analyze_windows(
+    FractileGuideWindowAnalysis analysis = fractile_permission_guide_analyze_windows(
         entries,
         validCount,
         (int32_t)getpid(),
@@ -544,8 +544,8 @@ static BOOL settingsHasWindow(void) {
 
 /// Bit 0: System Settings has an on-screen window.
 /// Bit 1: System Settings is the frontmost application.
-/// Bit 2: Spaceman is the active application.
-int spaceman_permission_settings_state(void) {
+/// Bit 2: Fractile is the active application.
+int fractile_permission_settings_state(void) {
     NSCAssert(NSThread.isMainThread, @"settings state must run on the main thread");
     BOOL open = settingsHasWindow();
     BOOL frontmost = settingsFrontmost();
@@ -588,7 +588,7 @@ static void openSettingsPaneMayQuit(NSURL *url, BOOL mayQuit) {
     BOOL cold = running.count == 0;
     NSUInteger request = ++settingsRequest;
     // A Settings window left on another Space would pull the whole screen
-    // there, away from Spaceman. Quit it so it opens fresh on this Space.
+    // there, away from Fractile. Quit it so it opens fresh on this Space.
     if (mayQuit && !cold && !settingsHasWindow() && settingsWindowExists()) {
         NSRunningApplication *settings = running.firstObject;
         [settings terminate];
@@ -681,13 +681,13 @@ static void closeGuide(void) {
 
 /// Whether the Accessibility guide is open, in front or waiting behind another
 /// app for System Settings to come back.
-bool spaceman_accessibility_guide_active(void) {
+bool fractile_accessibility_guide_active(void) {
     NSCAssert(NSThread.isMainThread, @"permission guide must run on the main thread");
     return guidePanel != nil;
 }
 
 /// Dismisses the Accessibility guide and cancels any pending cold-launch retry.
-void spaceman_close_accessibility_guide(void) {
+void fractile_close_accessibility_guide(void) {
     NSCAssert(NSThread.isMainThread, @"permission guide must run on the main thread");
     closeGuide();
 }
@@ -752,8 +752,8 @@ static void stepFlight(void) {
     }
 }
 
-/// Whether the click that asked for the guide was inside one of Spaceman's windows.
-static BOOL clickInSpacemanWindow(NSPoint point) {
+/// Whether the click that asked for the guide was inside one of Fractile's windows.
+static BOOL clickInFractileWindow(NSPoint point) {
     for (NSWindow *window in NSApp.windows) {
         if (window.visible && window != guidePanel && window != flightPanel &&
             NSPointInRect(point, window.frame)) {
@@ -763,14 +763,14 @@ static BOOL clickInSpacemanWindow(NSPoint point) {
     return NO;
 }
 
-/// Lifts a copy of the tile out of Spaceman's window at `origin`.
+/// Lifts a copy of the tile out of Fractile's window at `origin`.
 static void beginFlight(NSPoint origin, NSURL *bundleURL, NSSize tileSize) {
     flightOrigin = origin;
     flightShownAt = CACurrentMediaTime();
     flightStartedAt = 0;
     NSImage *icon = [[NSWorkspace sharedWorkspace] iconForFile:bundleURL.path];
     icon.size = NSMakeSize(32, 32);
-    NSString *name = spacemanAppName(bundleURL);
+    NSString *name = fractileAppName(bundleURL);
     BOOL dark = isDark(NSApp.effectiveAppearance);
     NSImage *image = [NSImage imageWithSize:tileSize
                                     flipped:NO
@@ -829,7 +829,7 @@ static void updateGuidePosition(void) {
         closeGuide();
         return;
     }
-    SpacemanGuideWindowAnalysis analysis = inspectSettingsWindows();
+    FractileGuideWindowAnalysis analysis = inspectSettingsWindows();
     if (!analysis.has_settings_frame) {
         if (!sawSettingsWindow) {
             return;
@@ -881,20 +881,20 @@ static void updateGuidePosition(void) {
     }
     NSRect visible = screen != nil ? screen.visibleFrame : settings;
     if (!guideUserMoved) {
-        SpacemanGuidePoint origin = spaceman_permission_guide_origin(
-            (SpacemanGuideRect){
+        FractileGuidePoint origin = fractile_permission_guide_origin(
+            (FractileGuideRect){
                 .x = settings.origin.x,
                 .y = settings.origin.y,
                 .width = settings.size.width,
                 .height = settings.size.height,
             },
-            (SpacemanGuideRect){
+            (FractileGuideRect){
                 .x = visible.origin.x,
                 .y = visible.origin.y,
                 .width = visible.size.width,
                 .height = visible.size.height,
             },
-            (SpacemanGuideSize){
+            (FractileGuideSize){
                 .width = size.width,
                 .height = size.height,
             },
@@ -915,21 +915,21 @@ static void updateGuidePosition(void) {
     guidePlacingProgrammatically = NO;
 }
 
-void spaceman_show_accessibility_guide(void) {
+void fractile_show_accessibility_guide(void) {
     NSCAssert(NSThread.isMainThread, @"permission guide must run on the main thread");
     NSPoint click = NSEvent.mouseLocation;
     // macOS 27.3 rejects dragged tiles, so it gets a bar with click instructions
     // instead of the drag tile and its flight. macOS 27.0 through 27.2 keeps the
     // drag guide and its old list name.
     BOOL renamed = accessibilityProtected();
-    BOOL fly = !renamed && clickInSpacemanWindow(click) &&
+    BOOL fly = !renamed && clickInFractileWindow(click) &&
                !NSWorkspace.sharedWorkspace.accessibilityDisplayShouldReduceMotion;
     closeGuide();
     guideReopens = 0;
 
     NSURL *bundleURL = NSBundle.mainBundle.bundleURL.standardizedURL;
-    NSString *listName = [NSString stringWithUTF8String:spaceman_accessibility_list_name()];
-    NSString *appName = spacemanAppName(bundleURL);
+    NSString *listName = [NSString stringWithUTF8String:fractile_accessibility_list_name()];
+    NSString *appName = fractileAppName(bundleURL);
     NSURL *settingsURL = [NSURL URLWithString:
         @"x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_Accessibility"];
     openSettingsPane(settingsURL);
@@ -967,7 +967,7 @@ void spaceman_show_accessibility_guide(void) {
                             NSWindowStyleMaskFullSizeContentView
                     backing:NSBackingStoreBuffered
                       defer:NO];
-    guideDelegate = [[SpacemanGuideDelegate alloc] init];
+    guideDelegate = [[FractileGuideDelegate alloc] init];
     guidePanel.delegate = guideDelegate;
     guidePanel.floatingPanel = YES;
     guidePanel.level = NSFloatingWindowLevel;
@@ -980,15 +980,15 @@ void spaceman_show_accessibility_guide(void) {
     guidePanel.releasedWhenClosed = NO;
     guidePanel.movableByWindowBackground = YES;
 
-    SpacemanGuideContentView *content =
-        [[SpacemanGuideContentView alloc] initWithFrame:NSMakeRect(0, 0, panelSize.width, panelSize.height)];
+    FractileGuideContentView *content =
+        [[FractileGuideContentView alloc] initWithFrame:NSMakeRect(0, 0, panelSize.width, panelSize.height)];
     content.wantsLayer = YES;
     content.layer.backgroundColor = NSColor.controlBackgroundColor.CGColor;
     content.layer.cornerRadius = renamed ? 14 : 20;
     content.layer.borderWidth = 1;
     content.layer.borderColor = [NSColor colorWithWhite:0 alpha:0.10].CGColor;
 
-    SpacemanGuideLabel *instruction = [SpacemanGuideLabel labelWithString:text];
+    FractileGuideLabel *instruction = [FractileGuideLabel labelWithString:text];
     instruction.frame = renamed
         ? NSMakeRect(18, (panelSize.height - 18) / 2, panelSize.width - 66, 18)
         : NSMakeRect(18, 76, panelSize.width - 66, 18);
@@ -997,7 +997,7 @@ void spaceman_show_accessibility_guide(void) {
     instruction.lineBreakMode = NSLineBreakByTruncatingTail;
     [content addSubview:instruction];
 
-    SpacemanCloseButton *closeButton = [[SpacemanCloseButton alloc]
+    FractileCloseButton *closeButton = [[FractileCloseButton alloc]
         initWithFrame:renamed
             ? NSMakeRect(panelSize.width - 36, (panelSize.height - 24) / 2, 24, 24)
             : NSMakeRect(panelSize.width - 36, 73, 24, 24)];
@@ -1022,7 +1022,7 @@ void spaceman_show_accessibility_guide(void) {
     [content addSubview:closeButton];
 
     if (!renamed) {
-        SpacemanDragView *dragView = [[SpacemanDragView alloc]
+        FractileDragView *dragView = [[FractileDragView alloc]
             initWithFrame:NSMakeRect(18, 17, panelSize.width - 36, 44)
                  bundleURL:bundleURL];
         [content addSubview:dragView];

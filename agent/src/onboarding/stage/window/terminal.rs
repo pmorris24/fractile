@@ -27,7 +27,7 @@ pub(super) fn terminal(focused: bool) -> El {
     let text = ink(0.8);
     let bright = ink(0.96);
     let prompt = [
-        Run("~/code/spaceman", cyan, BOLD),
+        Run("~/code/fractile", cyan, BOLD),
         Run(" on ", dim, TERM),
         Run("dev", violet, BOLD),
     ];
@@ -39,7 +39,7 @@ pub(super) fn terminal(focused: bool) -> El {
         ],
         &[
             Run("   Compiling", green, BOLD),
-            Run(" spaceman v0.3.4", text, TERM),
+            Run(" fractile v0.3.4", text, TERM),
         ],
         &[
             Run("    Finished", green, BOLD),
@@ -122,7 +122,7 @@ pub(super) fn terminal(focused: bool) -> El {
                 .child(space("lead"))
                 .child(words(
                     "title",
-                    "greg@macbook \u{2014} ~/code/spaceman",
+                    "greg@macbook \u{2014} ~/code/fractile",
                     TINY,
                     ink(if focused { 0.62 } else { 0.38 }),
                 ))

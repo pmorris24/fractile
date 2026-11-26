@@ -64,7 +64,7 @@ fn command_shortcuts_skip_a_hidden_lab_pane() {
 #[test]
 fn the_labs_deep_link_opens_the_labs_pane() {
     assert_eq!(
-        Pane::from_deep_link(spaceman::deep_link::DeepLinkPane::Labs),
+        Pane::from_deep_link(fractile::deep_link::DeepLinkPane::Labs),
         Some(Pane::Labs)
     );
 }

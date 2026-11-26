@@ -1,14 +1,14 @@
-//! Pure parser and resolver for `spaceman://` deep links.
+//! Pure parser and resolver for `fractile://` deep links.
 //!
-//! Supported links (case-insensitive `spaceman://` scheme):
-//! - `spaceman://settings` — open Settings on the default pane
-//! - `spaceman://settings/<pane>` — open a Settings pane (`general`, `rules`,
+//! Supported links (case-insensitive `fractile://` scheme):
+//! - `fractile://settings` — open Settings on the default pane
+//! - `fractile://settings/<pane>` — open a Settings pane (`general`, `rules`,
 //!   `workspaces`, `shortcuts`, `labs`, `layout`, `activity`, `whats-new`)
-//! - `spaceman://settings/<pane>/<focus>` — open a Settings pane and highlight
+//! - `fractile://settings/<pane>/<focus>` — open a Settings pane and highlight
 //!   a specific sub-feature or setting row
-//! - `spaceman://labs` / `spaceman://labs/<slug>` — open Settings › Labs and
+//! - `fractile://labs` / `fractile://labs/<slug>` — open Settings › Labs and
 //!   highlight `<slug>` (for example `scrolling-strip`, `playground`)
-//! - `spaceman://features/<slug>` — map a feature slug to its Settings pane
+//! - `fractile://features/<slug>` — map a feature slug to its Settings pane
 //!   and optional highlight target
 //!
 //! Security invariant: deep links **only** open Settings and highlight a pane,
@@ -17,8 +17,8 @@
 
 use std::fmt;
 
-/// The registered macOS URL scheme for Spaceman.
-pub const SCHEME: &str = "spaceman";
+/// The registered macOS URL scheme for Fractile.
+pub const SCHEME: &str = "fractile";
 
 /// Maximum accepted raw link length in bytes.
 pub const MAX_LINK_LEN: usize = 2048;
@@ -26,7 +26,7 @@ pub const MAX_LINK_LEN: usize = 2048;
 /// Maximum accepted length for a single host, pane, or slug segment.
 pub const MAX_SEGMENT_LEN: usize = 64;
 
-/// Settings panes addressable by `spaceman://` links.
+/// Settings panes addressable by `fractile://` links.
 ///
 /// Includes panes that may not be registered in every build (`Labs`, `Layout`,
 /// `WhatsNew`) so links parse deterministically and fall back cleanly to the
@@ -74,21 +74,21 @@ impl DeepLinkPane {
     }
 }
 
-/// A validated `spaceman://` deep link.
+/// A validated `fractile://` deep link.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum DeepLink {
-    /// `spaceman://settings[/<pane>[/<focus>]]`
+    /// `fractile://settings[/<pane>[/<focus>]]`
     Settings {
         pane: Option<DeepLinkPane>,
         /// Preserved when the link named an unrecognized pane slug.
         unknown_pane: Option<String>,
         focus: Option<String>,
     },
-    /// `spaceman://labs[/<slug>]`
+    /// `fractile://labs[/<slug>]`
     Labs { slug: Option<String> },
-    /// `spaceman://features/<slug>`
+    /// `fractile://features/<slug>`
     Feature { slug: String },
-    /// A syntactically clean `spaceman://<host>` whose host is unrecognized;
+    /// A syntactically clean `fractile://<host>` whose host is unrecognized;
     /// resolves to default Settings with a diagnostic note.
     UnknownHost { host: String },
 }
@@ -125,7 +125,7 @@ impl fmt::Display for DeepLinkError {
             Self::Empty => f.write_str("deep link is empty"),
             Self::TooLong => f.write_str("deep link exceeds maximum length"),
             Self::UnsafeCharacters => f.write_str("deep link contains disallowed characters"),
-            Self::InvalidScheme => f.write_str("deep link must use the spaceman:// scheme"),
+            Self::InvalidScheme => f.write_str("deep link must use the fractile:// scheme"),
             Self::MissingHost => f.write_str("deep link is missing a target host"),
             Self::InvalidHost => f.write_str("deep link host must use only [a-z0-9-]"),
             Self::InvalidSegment => f.write_str("deep link path segment must use only [a-z0-9-]"),
@@ -135,7 +135,7 @@ impl fmt::Display for DeepLinkError {
 }
 
 impl DeepLink {
-    /// Formats the link in canonical lowercase `spaceman://...` form (no query
+    /// Formats the link in canonical lowercase `fractile://...` form (no query
     /// string or fragment).
     #[must_use]
     pub fn canonical_url(&self) -> String {
@@ -334,7 +334,7 @@ fn resolve_feature(slug: &str) -> OpenTarget {
     }
 }
 
-/// Parses a full `spaceman://...` URL from macOS or another external caller.
+/// Parses a full `fractile://...` URL from macOS or another external caller.
 ///
 /// Query strings and fragments are ignored safely. Percent-encoded bytes,
 /// control characters, path traversal (`..`), userinfo (`@`), ports (`:`),
@@ -414,7 +414,7 @@ pub fn parse_url(raw: &str) -> Result<DeepLink, DeepLinkError> {
     }
 }
 
-/// Parses either a full `spaceman://...` URL or a CLI shorthand target such as
+/// Parses either a full `fractile://...` URL or a CLI shorthand target such as
 /// `settings/workspaces`, `labs/scrolling-strip`, `features/gaps`, `labs`,
 /// `settings`, or a bare pane name (`workspaces`, `rules`, `general`, ...).
 pub fn parse_input(raw: &str) -> Result<DeepLink, DeepLinkError> {
@@ -481,7 +481,7 @@ mod tests {
     #[test]
     fn parses_valid_settings_urls() {
         assert_eq!(
-            parse_url("spaceman://settings").unwrap(),
+            parse_url("fractile://settings").unwrap(),
             DeepLink::Settings {
                 pane: None,
                 unknown_pane: None,
@@ -489,7 +489,7 @@ mod tests {
             }
         );
         assert_eq!(
-            parse_url("SPACEMAN://Settings/").unwrap(),
+            parse_url("FRACTILE://Settings/").unwrap(),
             DeepLink::Settings {
                 pane: None,
                 unknown_pane: None,
@@ -497,16 +497,16 @@ mod tests {
             }
         );
         for (url, expected_pane) in [
-            ("spaceman://settings/general", DeepLinkPane::General),
-            ("spaceman://settings/rules", DeepLinkPane::Rules),
-            ("spaceman://settings/workspaces", DeepLinkPane::Workspaces),
-            ("spaceman://settings/shortcuts", DeepLinkPane::Shortcuts),
-            ("spaceman://settings/labs", DeepLinkPane::Labs),
-            ("spaceman://settings/layout", DeepLinkPane::Layout),
-            ("spaceman://settings/activity", DeepLinkPane::Activity),
-            ("spaceman://settings/whats-new", DeepLinkPane::WhatsNew),
-            ("spaceman://settings/what-s-new", DeepLinkPane::WhatsNew),
-            ("SpAcEmAn://Settings/Workspaces/", DeepLinkPane::Workspaces),
+            ("fractile://settings/general", DeepLinkPane::General),
+            ("fractile://settings/rules", DeepLinkPane::Rules),
+            ("fractile://settings/workspaces", DeepLinkPane::Workspaces),
+            ("fractile://settings/shortcuts", DeepLinkPane::Shortcuts),
+            ("fractile://settings/labs", DeepLinkPane::Labs),
+            ("fractile://settings/layout", DeepLinkPane::Layout),
+            ("fractile://settings/activity", DeepLinkPane::Activity),
+            ("fractile://settings/whats-new", DeepLinkPane::WhatsNew),
+            ("fractile://settings/what-s-new", DeepLinkPane::WhatsNew),
+            ("FrAcTiLe://Settings/Workspaces/", DeepLinkPane::Workspaces),
         ] {
             let parsed = parse_url(url).unwrap();
             assert_eq!(
@@ -525,8 +525,8 @@ mod tests {
 
     #[test]
     fn parses_settings_sub_feature_focus() {
-        let parsed = parse_url("spaceman://settings/general/hud").unwrap();
-        assert_eq!(parsed.canonical_url(), "spaceman://settings/general/hud");
+        let parsed = parse_url("fractile://settings/general/hud").unwrap();
+        assert_eq!(parsed.canonical_url(), "fractile://settings/general/hud");
         assert_eq!(
             parsed.resolve(),
             OpenTarget {
@@ -537,7 +537,7 @@ mod tests {
             }
         );
 
-        let lab_via_settings = parse_url("spaceman://settings/labs/scrolling-strip").unwrap();
+        let lab_via_settings = parse_url("fractile://settings/labs/scrolling-strip").unwrap();
         assert_eq!(
             lab_via_settings.resolve(),
             OpenTarget {
@@ -552,21 +552,21 @@ mod tests {
     #[test]
     fn parses_labs_urls() {
         assert_eq!(
-            parse_url("spaceman://labs").unwrap(),
+            parse_url("fractile://labs").unwrap(),
             DeepLink::Labs { slug: None }
         );
         assert_eq!(
-            parse_url("spaceman://labs/").unwrap(),
+            parse_url("fractile://labs/").unwrap(),
             DeepLink::Labs { slug: None }
         );
-        let strip = parse_url("spaceman://labs/Scrolling-Strip/").unwrap();
+        let strip = parse_url("fractile://labs/Scrolling-Strip/").unwrap();
         assert_eq!(
             strip,
             DeepLink::Labs {
                 slug: Some("scrolling-strip".into()),
             }
         );
-        assert_eq!(strip.canonical_url(), "spaceman://labs/scrolling-strip");
+        assert_eq!(strip.canonical_url(), "fractile://labs/scrolling-strip");
         assert_eq!(
             strip.resolve(),
             OpenTarget {
@@ -582,37 +582,37 @@ mod tests {
     fn parses_per_feature_urls() {
         let cases = [
             (
-                "spaceman://features/scrolling-strip",
+                "fractile://features/scrolling-strip",
                 Some(DeepLinkPane::Labs),
                 Some("scrolling-strip"),
                 Some("scrolling-strip"),
             ),
             (
-                "spaceman://features/workspaces",
+                "fractile://features/workspaces",
                 Some(DeepLinkPane::Workspaces),
                 None,
                 None,
             ),
             (
-                "spaceman://features/rules",
+                "fractile://features/rules",
                 Some(DeepLinkPane::Rules),
                 None,
                 None,
             ),
             (
-                "spaceman://features/shortcuts",
+                "fractile://features/shortcuts",
                 Some(DeepLinkPane::Shortcuts),
                 None,
                 None,
             ),
             (
-                "spaceman://features/gaps",
+                "fractile://features/gaps",
                 Some(DeepLinkPane::Layout),
                 None,
                 Some("gaps"),
             ),
             (
-                "spaceman://features/hud",
+                "fractile://features/hud",
                 Some(DeepLinkPane::General),
                 None,
                 Some("hud"),
@@ -630,16 +630,16 @@ mod tests {
     #[test]
     fn ignores_query_params_and_fragments_safely() {
         let parsed =
-            parse_url("spaceman://labs/scrolling-strip?utm_source=x&enable=true#top").unwrap();
+            parse_url("fractile://labs/scrolling-strip?utm_source=x&enable=true#top").unwrap();
         assert_eq!(
             parsed,
             DeepLink::Labs {
                 slug: Some("scrolling-strip".into()),
             }
         );
-        assert_eq!(parsed.canonical_url(), "spaceman://labs/scrolling-strip");
+        assert_eq!(parsed.canonical_url(), "fractile://labs/scrolling-strip");
 
-        let settings = parse_url("spaceman://settings/workspaces?ref=github&reset=1").unwrap();
+        let settings = parse_url("fractile://settings/workspaces?ref=github&reset=1").unwrap();
         assert_eq!(
             settings,
             DeepLink::Settings {
@@ -648,12 +648,12 @@ mod tests {
                 focus: None,
             }
         );
-        assert_eq!(settings.canonical_url(), "spaceman://settings/workspaces");
+        assert_eq!(settings.canonical_url(), "fractile://settings/workspaces");
     }
 
     #[test]
     fn falls_back_cleanly_on_unknown_host_pane_or_feature() {
-        let unknown_pane = parse_url("spaceman://settings/not-a-pane")
+        let unknown_pane = parse_url("fractile://settings/not-a-pane")
             .unwrap()
             .resolve();
         assert_eq!(unknown_pane.pane, None);
@@ -664,7 +664,7 @@ mod tests {
                 .is_some_and(|msg| msg.contains("not-a-pane"))
         );
 
-        let unknown_host = parse_url("spaceman://mystery").unwrap().resolve();
+        let unknown_host = parse_url("fractile://mystery").unwrap().resolve();
         assert_eq!(unknown_host.pane, None);
         assert!(
             unknown_host
@@ -673,7 +673,7 @@ mod tests {
                 .is_some_and(|msg| msg.contains("mystery"))
         );
 
-        let unknown_feature = parse_url("spaceman://features/future-thing")
+        let unknown_feature = parse_url("fractile://features/future-thing")
             .unwrap()
             .resolve();
         assert_eq!(unknown_feature.pane, None);
@@ -694,45 +694,45 @@ mod tests {
         for bad in [
             "",
             "http://settings/general",
-            "https://anoma.ly/spaceman/labs/scrolling-strip",
+            "https://github.com/pmorris24/fractile/labs/scrolling-strip",
             "javascript:alert(1)",
             "file:///etc/passwd",
             "hex://labs/live-text",
-            "spaceman:settings/general",
-            "spaceman://",
-            "spaceman:///settings",
-            "spaceman://user@settings",
-            "spaceman://settings:8080/general",
-            "spaceman://labs/a/b",
-            "spaceman://settings/general/hud/extra",
-            "spaceman://labs//scrolling-strip",
+            "fractile:settings/general",
+            "fractile://",
+            "fractile:///settings",
+            "fractile://user@settings",
+            "fractile://settings:8080/general",
+            "fractile://labs/a/b",
+            "fractile://settings/general/hud/extra",
+            "fractile://labs//scrolling-strip",
         ] {
             assert!(parse_url(bad).is_err(), "should reject: {bad:?}");
         }
-        let oversized = format!("spaceman://labs/{}", "a".repeat(MAX_LINK_LEN));
+        let oversized = format!("fractile://labs/{}", "a".repeat(MAX_LINK_LEN));
         assert_eq!(parse_url(&oversized), Err(DeepLinkError::TooLong));
     }
 
     #[test]
     fn rejects_percent_encoded_and_injection_strings() {
         for hostile in [
-            "spaceman://labs/%FF",
-            "spaceman://labs/%2e%2e",
-            "spaceman://labs/..%2fetc",
-            "spaceman://labs/..",
-            "spaceman://settings/general/..%2fsecrets",
-            "spaceman://labs/<script>alert(1)</script>",
-            "spaceman://labs/scrolling-strip%0aquit",
-            "spaceman://labs/scrolling-strip\nquit",
-            "spaceman://labs/scrolling-strip\r\nquit",
-            "spaceman://labs/scrolling-strip\0",
-            "spaceman://labs/scrolling strip",
-            "spaceman://labs/scrolling;rm-rf",
-            "spaceman://labs/scrolling\\strip",
-            "spaceman://labs/'or'1'='1",
-            "spaceman://labs/-leading-dash",
-            "spaceman://labs/trailing-dash-",
-            "spaceman://settings/general/hud?a=1\nquit",
+            "fractile://labs/%FF",
+            "fractile://labs/%2e%2e",
+            "fractile://labs/..%2fetc",
+            "fractile://labs/..",
+            "fractile://settings/general/..%2fsecrets",
+            "fractile://labs/<script>alert(1)</script>",
+            "fractile://labs/scrolling-strip%0aquit",
+            "fractile://labs/scrolling-strip\nquit",
+            "fractile://labs/scrolling-strip\r\nquit",
+            "fractile://labs/scrolling-strip\0",
+            "fractile://labs/scrolling strip",
+            "fractile://labs/scrolling;rm-rf",
+            "fractile://labs/scrolling\\strip",
+            "fractile://labs/'or'1'='1",
+            "fractile://labs/-leading-dash",
+            "fractile://labs/trailing-dash-",
+            "fractile://settings/general/hud?a=1\nquit",
         ] {
             assert!(parse_url(hostile).is_err(), "should reject: {hostile:?}");
         }
@@ -741,7 +741,7 @@ mod tests {
     #[test]
     fn parses_cli_shorthand_and_full_urls() {
         assert_eq!(
-            parse_input("spaceman://labs/scrolling-strip").unwrap(),
+            parse_input("fractile://labs/scrolling-strip").unwrap(),
             DeepLink::Labs {
                 slug: Some("scrolling-strip".into()),
             }

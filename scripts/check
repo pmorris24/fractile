@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 # The one check: formatting, code shape, clippy, tests, dependency audit, fixture replay, example
-# config and the website build. Run it before merging.
-#   scripts/check            everything
-#   scripts/check --no-web   skip the website
+# config. Run it before merging. (`--no-web` is accepted and ignored: there is no website.)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 step() { printf '\n== %s\n' "$*"; }
@@ -15,7 +13,4 @@ step audit
 if cargo audit --version >/dev/null 2>&1; then cargo audit; else echo "cargo-audit isn't installed here; skipped (CI runs it)"; fi
 step replay; cargo run --locked -- replay fixtures/ghostty-tab-replacement.json
 step config; cargo run --locked -- config-check config.example.toml
-if [ "${1:-}" != "--no-web" ]; then
-  step website; (cd website && bun install --frozen-lockfile && bun audit && bun run build)
-fi
 step diff; git diff --check

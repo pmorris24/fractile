@@ -1,4 +1,4 @@
-# Spaceman configuration schema version. Only version 1 is accepted.
+# Fractile configuration schema version. Only version 1 is accepted.
 version = 1
 
 # Optional UI preferences. The non-activating Workspace HUD capsule is on by default.
@@ -17,10 +17,10 @@ layout = "dwindle"
 # when it is outside the newly focused window (on an empty target workspace, the display).
 # mouse_follows_focus = "off"
 # Whether a three-finger horizontal swipe steps through workspaces (default: true). Read only
-# with [labs] swipe_switch = true; then false makes Spaceman ignore the gesture for macOS.
+# with [labs] swipe_switch = true; then false makes Fractile ignore the gesture for macOS.
 # trackpad_swipe = true
 # How the menu bar icon looks: "full" (default) draws a glyph for each display, "compact"
-# one glyph for the focused workspace, and "off" hides it (open Spaceman again for Settings).
+# one glyph for the focused workspace, and "off" hides it (open Fractile again for Settings).
 # Read only with [labs] menu_bar_icon_style = true.
 # menu_bar_icon = "full"
 # Automatically pause tiling (and restore windows) when only a built-in laptop display is
@@ -51,7 +51,7 @@ outer = 0
 # Rules are optional, ordered, and first-match wins. Every matcher present in a
 # rule must match: bundle_id and title exactly, title_contains as a
 # case-insensitive part of the title. Valid actions are "float", "pin",
-# "tile", "route", and "ignore". "tile" tiles a window Spaceman would otherwise
+# "tile", "route", and "ignore". "tile" tiles a window Fractile would otherwise
 # float as a dialog or a built-in floating utility; "pin" floats a window and
 # shows it on every workspace.
 #
@@ -97,7 +97,7 @@ action = "route"
 workspace = "D"
 
 # Workspace assignments are optional. monitor accepts "main", "secondary",
-# "tertiary", a display UUID, or an exact display name from `spaceman displays`.
+# "tertiary", a display UUID, or an exact display name from `fractile displays`.
 # Defaults: 1-4 main, 5-7 secondary, 8-10 tertiary. Secondary and tertiary are the
 # non-main displays left to right; with two displays, tertiary uses the secondary one.
 [[workspaces]]
@@ -109,7 +109,7 @@ workspace = "D"
 monitor = "main"
 
 # Shortcuts are optional and left commented out, so copying this file keeps every
-# built-in shortcut. Bindings use `spaceman ctl` commands and replace the built-in
+# built-in shortcut. Bindings use `fractile ctl` commands and replace the built-in
 # shortcut on the same chord; "none" unbinds one. Set defaults = false to register
 # only these bindings. Changes register live without a restart. Every chord needs alt, cmd,
 # or ctrl, so a plain letter can never be hijacked. Avoid a bare-Option chord such
@@ -155,7 +155,7 @@ monitor = "main"
 # window's height too, and adds its row to Settings › Layout › Wide displays.
 # route_all_windows = true makes a route rule with windows = "all" send every new
 # window of its app to its workspace, not only the first one.
-# menu_bar_icon_style = true makes Spaceman read settings.menu_bar_icon, and adds
+# menu_bar_icon_style = true makes Fractile read settings.menu_bar_icon, and adds
 # its picker to Settings › General.
 # focus_follows_mouse = true focuses the tile the pointer comes to rest on,
 # without a click; floats, the Scratchpad and the menu bar are never hovered.

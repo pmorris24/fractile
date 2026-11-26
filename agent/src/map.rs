@@ -1,6 +1,6 @@
 //! Rules as a map of screens: a card per display holding the workspaces that show on it, a tile
 //! per workspace showing the apps whose new windows open there,
-//! the apps that float below, and under those the running apps Spaceman floats with no rule.
+//! the apps that float below, and under those the running apps Fractile floats with no rule.
 //! Rules are optional: without one a window opens on the workspace in view and can move to any
 //! other. Dragging an app to another tile, or to the float box, rewrites its rule. An app can
 //! have several rules, each for the windows a title filter picks out (`filter`). Everything sits
@@ -17,9 +17,9 @@ mod screen_menu;
 #[cfg(test)]
 mod tests;
 
+use fractile::{WorkspaceId, app::UiWorkspaceWindows, config::LabFeature};
 use rune::{Cursor, El, PointerPress, Tx, el, row, text};
 use rune_kit::{Menu as KitMenu, MenuItem, Placement};
-use spaceman::{WorkspaceId, app::UiWorkspaceWindows, config::LabFeature};
 
 pub use arrangement::ScreenDrag;
 pub use defaults::{fixture_default_floats, poll as poll_default_floats};
@@ -170,7 +170,7 @@ impl Layout {
     }
 
     /// The map for the connected `displays`, with a chip for each of the `running` apps
-    /// Spaceman floats by default.
+    /// Fractile floats by default.
     fn with_running(
         doc: &Doc,
         width: f32,
@@ -218,7 +218,7 @@ impl Layout {
                 Place::Float | Place::Pin | Place::Ignore => floating.push(rule),
                 // Tiling is the default, so a tile rule has no place on the map, except the
                 // one that tiles a built-in float: that shows on its default chip.
-                // `spaceman rules` and config.toml edit the others.
+                // `fractile rules` and config.toml edit the others.
                 Place::Tile => {}
             }
         }

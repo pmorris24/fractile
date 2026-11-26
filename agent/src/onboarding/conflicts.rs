@@ -1,4 +1,4 @@
-//! What would fight Spaceman for the same windows, read only when it is really on: Stage
+//! What would fight Fractile for the same windows, read only when it is really on: Stage
 //! Manager, macOS's own edge tiling, and other window managers that are running.
 //!
 //! The two macOS features live in the `com.apple.WindowManager` preferences. Turn off writes

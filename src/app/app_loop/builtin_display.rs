@@ -22,7 +22,7 @@ pub(super) enum BuiltinDisplayAction {
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub(super) struct BuiltinDisplayPolicy {
-    /// True only when Spaceman itself paused tiling because only a built-in display was attached.
+    /// True only when Fractile itself paused tiling because only a built-in display was attached.
     pub(super) auto_paused_for_builtin: bool,
     /// Built-in-only topology where the user explicitly resumed tiling; suppresses immediate
     /// re-pausing until the display topology actually changes.

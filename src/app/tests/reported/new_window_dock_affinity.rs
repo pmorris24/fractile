@@ -1,4 +1,4 @@
-//! #394: A newly observed window with its center in the physical Dock strip of the center display gets no workspace, even when Spaceman observes its frame and workspace 1 is visible.
+//! #394: A newly observed window with its center in the physical Dock strip of the center display gets no workspace, even when Fractile observes its frame and workspace 1 is visible.
 //! Reproduction contributed by @coygeek.
 
 use super::super::*;

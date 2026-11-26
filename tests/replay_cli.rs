@@ -4,10 +4,10 @@ use serde_json::Value;
 
 #[test]
 fn replay_reports_a_slot_preserving_ghostty_replacement() {
-    let output = Command::new(env!("CARGO_BIN_EXE_spaceman"))
+    let output = Command::new(env!("CARGO_BIN_EXE_fractile"))
         .args(["replay", "fixtures/ghostty-tab-replacement.json"])
         .output()
-        .expect("spaceman should run");
+        .expect("fractile should run");
 
     assert!(
         output.status.success(),
@@ -45,7 +45,7 @@ fn read_only_cli_output_exits_cleanly_on_closed_pipe() {
         process::Stdio,
     };
 
-    let dir = std::env::temp_dir().join(format!("spaceman-broken-pipe-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("fractile-broken-pipe-{}", std::process::id()));
     let config_path = dir.join("config.toml");
     let support_dir = dir.join("support");
     fs::create_dir_all(&support_dir).unwrap();
@@ -63,7 +63,7 @@ fn read_only_cli_output_exits_cleanly_on_closed_pipe() {
 
     // >81 KB doctor output via a journal with many recalled bundle IDs.
     let mut journal = String::new();
-    let now = spaceman::journal::unix_millis();
+    let now = fractile::journal::unix_millis();
     for i in 0..2000 {
         writeln!(
             journal,
@@ -71,27 +71,27 @@ fn read_only_cli_output_exits_cleanly_on_closed_pipe() {
         )
         .unwrap();
     }
-    fs::write(support_dir.join(spaceman::journal::JOURNAL_FILE), &journal).unwrap();
+    fs::write(support_dir.join(fractile::journal::JOURNAL_FILE), &journal).unwrap();
 
     for args in [
         &["rules", "list"][..],
         &["config", "show"][..],
         &["doctor"][..],
     ] {
-        let mut child = Command::new(env!("CARGO_BIN_EXE_spaceman"))
+        let mut child = Command::new(env!("CARGO_BIN_EXE_fractile"))
             .args(args)
-            .env("SPACEMAN_CONFIG", &config_path)
-            .env("SPACEMAN_APPLICATION_SUPPORT", &support_dir)
+            .env("FRACTILE_CONFIG", &config_path)
+            .env("FRACTILE_APPLICATION_SUPPORT", &support_dir)
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
-            .expect("spaceman should spawn");
+            .expect("fractile should spawn");
 
         let mut reader = BufReader::new(child.stdout.take().unwrap());
         let mut first_line = String::new();
         reader.read_line(&mut first_line).unwrap();
         assert!(!first_line.is_empty(), "args {args:?} produced no output");
-        // Drop the reader end immediately to close the pipe while spaceman writes the rest.
+        // Drop the reader end immediately to close the pipe while fractile writes the rest.
         drop(reader);
 
         let mut stderr = String::new();
@@ -101,7 +101,7 @@ fn read_only_cli_output_exits_cleanly_on_closed_pipe() {
             .unwrap()
             .read_to_string(&mut stderr)
             .unwrap();
-        let status = child.wait().expect("spaceman should exit");
+        let status = child.wait().expect("fractile should exit");
         assert!(
             status.success(),
             "args {args:?} failed with {status:?}, stderr: {stderr}"

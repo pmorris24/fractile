@@ -192,7 +192,7 @@ pub fn surface(p: Paint, element: El) -> El {
     element
 }
 
-/// The fill a `spaceman://` deep link gives the row or card it points at.
+/// The fill a `fractile://` deep link gives the row or card it points at.
 pub fn highlight(p: Paint, element: El, on: bool) -> El {
     if on {
         element.fill(p.k.c.layer_02)

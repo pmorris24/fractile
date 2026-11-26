@@ -258,7 +258,7 @@ impl Engine {
     }
 
     /// How recently `window`'s tile had focus: 0 for the most recent, None for
-    /// a tile not focused since Spaceman started (or not on this workspace).
+    /// a tile not focused since Fractile started (or not on this workspace).
     #[must_use]
     pub(crate) fn focus_recency(&self, window: &PhysicalWindowId) -> Option<usize> {
         let slot = self.slot_for_window(window)?;

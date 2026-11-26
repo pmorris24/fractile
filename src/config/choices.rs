@@ -3,7 +3,7 @@
 
 use serde::{Deserialize, Serialize};
 
-/// Whether Spaceman moves the pointer when an explicit focus action lands elsewhere:
+/// Whether Fractile moves the pointer when an explicit focus action lands elsewhere:
 /// `settings.mouse_follows_focus`.
 #[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "lowercase")]

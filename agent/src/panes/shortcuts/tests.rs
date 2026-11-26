@@ -1,7 +1,7 @@
 //! The three-finger swipe's row: the fixed tray while `[labs] swipe_switch` is off, a switch
 //! for `settings.trackpad_swipe` only with it on.
 
-use spaceman::config::{Config, LabFeature};
+use fractile::config::{Config, LabFeature};
 
 use super::SwipeRow;
 use crate::{controls::Paint, rules::Doc};

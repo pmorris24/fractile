@@ -1,8 +1,8 @@
-//! `[labs]` switches through `spaceman config`: read, written beside the file's other tables,
+//! `[labs]` switches through `fractile config`: read, written beside the file's other tables,
 //! removed back to their default, and guarded against unknown Lab keys.
 
+use fractile::config::{Config, MenuBarIcon};
 use serde_json::Value;
-use spaceman::config::{Config, MenuBarIcon};
 
 use super::TempConfig;
 

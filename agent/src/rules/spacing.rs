@@ -2,7 +2,7 @@
 //! edited in place like the rest of the file. A value set to its default `0` leaves the file, and so does a table it empties.
 //! `gaps.outer` is the file's own: Settings shows the edges it resolves to and never writes it.
 
-use spaceman::spacing::{Spacing, SpacingKey, check_outer};
+use fractile::spacing::{Spacing, SpacingKey, check_outer};
 use toml_edit::{Item, Table, TableLike};
 
 use super::Doc;

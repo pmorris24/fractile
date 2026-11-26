@@ -1,5 +1,5 @@
+use fractile::shortcuts::parse_chord;
 use rune::{Mods, PhysicalKeyCode as K};
-use spaceman::shortcuts::parse_chord;
 
 use super::*;
 

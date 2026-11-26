@@ -8,13 +8,13 @@ mod recorder;
 mod tests;
 mod workspaces;
 
-use rune::{El, Shadow, col, row, text};
-use rune_kit::SegmentedControl;
-use spaceman::{
+use fractile::{
     WorkspaceId,
     config::LabFeature,
     shortcuts::{Chord, Modifiers, Shortcuts},
 };
+use rune::{El, Shadow, col, row, text};
+use rune_kit::SegmentedControl;
 
 pub use recorder::Capture;
 pub(crate) use workspaces::switch_keys;
@@ -410,7 +410,7 @@ pub(crate) fn fixture_custom(ui: &mut Ui) {
         ("move-workspace", None),
     ] {
         if let Some(action) = catalog::find(id) {
-            let chord = source.and_then(|source| spaceman::shortcuts::parse_chord(source).ok());
+            let chord = source.and_then(|source| fractile::shortcuts::parse_chord(source).ok());
             let default = action.default_chord(shortcuts.modifier);
             ui.edit(|doc| doc.set_shortcut(action.command, default, chord));
         }

@@ -1,6 +1,6 @@
 # Known Limitations
 
-Spaceman is an experimental public preview, not a broadly qualified release.
+Fractile is an experimental public preview, not a broadly qualified release.
 
 - Builds are currently arm64-only; x86_64 and universal packaging are not validated.
 - The declared macOS 14 minimum lacks a documented validation matrix across supported macOS releases.
@@ -19,7 +19,7 @@ Spaceman is an experimental public preview, not a broadly qualified release.
 - Configuration changes to rules, display assignments, and `[settings]` apply automatically; newly
   referenced named workspace letters register their global shortcuts on the next app start. `ctl restart`
   exits safely but does not relaunch.
-- Spaceman assumes one macOS Space per display. Windows on another Space are adopted into the active
+- Fractile assumes one macOS Space per display. Windows on another Space are adopted into the active
   workspace when that Space is shown, and tiles whose windows are ordered out while it is shown may
   be released. Layout waits about 0.7 s after each Space slide so the two Spaces' windows are not
   tiled together. During a trackpad swipe macOS can report the arriving Space's windows before

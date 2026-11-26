@@ -1,5 +1,5 @@
+use fractile::shortcuts::parse_chord;
 use rune::{Mods, PhysicalKeyCode};
-use spaceman::shortcuts::parse_chord;
 
 use super::*;
 use crate::onboarding::{self, Input, Step, stage, try_it};

@@ -10,14 +10,14 @@
 //! the laptop), it takes the desk macOS remembers around the connected displays: the window
 //! server keeps every set of displays it has arranged, with each screen's place, in a
 //! preferences file of its own. That file is private and undocumented, so it is only a fallback:
-//! when it moves or changes shape the record is Spaceman's own alone. A forgotten display stays
+//! when it moves or changes shape the record is Fractile's own alone. A forgotten display stays
 //! out of both until it is plugged in again.
 
 use std::path::PathBuf;
 
-use spaceman::Rect;
+use fractile::Rect;
 
-use spaceman::macos::{DisplayOutput, DisplayOutputs};
+use fractile::macos::{DisplayOutput, DisplayOutputs};
 
 use super::{ConnectedDisplay, displays};
 
@@ -228,7 +228,7 @@ fn pick(
 }
 
 fn path() -> Option<PathBuf> {
-    spaceman::config::application_support_path(FILE)
+    fractile::config::application_support_path(FILE)
 }
 
 /// The record saved on disk, or none when there is no file or it does not read.
@@ -249,7 +249,7 @@ pub(crate) fn save(known: &Record) {
         .map_or(Ok(()), std::fs::create_dir_all)
         .and_then(|()| std::fs::write(&path, write(known)));
     if let Err(error) = written {
-        eprintln!("spaceman: could not save {}: {error}", path.display());
+        eprintln!("fractile: could not save {}: {error}", path.display());
     }
 }
 

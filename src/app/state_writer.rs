@@ -78,7 +78,7 @@ impl StateWriter {
         let shared = Arc::new(Shared::default());
         let thread_shared = Arc::clone(&shared);
         let threaded = match thread::Builder::new()
-            .name("spaceman-state-writer".into())
+            .name("fractile-state-writer".into())
             .spawn(move || run(&thread_shared))
         {
             Ok(_) => true,
@@ -280,7 +280,7 @@ mod tests {
 
     fn temp_dir(name: &str) -> PathBuf {
         let directory = std::env::temp_dir().join(format!(
-            "spaceman-state-writer-{name}-{}",
+            "fractile-state-writer-{name}-{}",
             std::process::id()
         ));
         drop(std::fs::remove_dir_all(&directory));

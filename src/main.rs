@@ -13,10 +13,10 @@ use std::{
 
 mod cli;
 
-use serde::{Deserialize, Serialize};
-use spaceman::{
+use fractile::{
     Engine, Model, NativeObservation, Reconciliation, ReconciliationEvidence, Settings, reconcile,
 };
+use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
 struct Replay {
@@ -30,7 +30,7 @@ struct Replay {
 
 #[derive(Serialize)]
 struct ReplayOutput {
-    steps: Vec<spaceman::Reconciliation>,
+    steps: Vec<fractile::Reconciliation>,
 }
 
 #[cfg(target_os = "macos")]
@@ -39,7 +39,7 @@ struct SnapshotOutput {
     observation: NativeObservation,
     reconciliation: Reconciliation,
     #[serde(skip_serializing_if = "Option::is_none")]
-    apply_results: Option<Vec<spaceman::macos::ApplyResult>>,
+    apply_results: Option<Vec<fractile::macos::ApplyResult>>,
 }
 
 #[cfg(target_os = "macos")]
@@ -50,7 +50,7 @@ struct WatchOutput {
 
 fn main() -> ExitCode {
     let mut args = env::args();
-    let executable = args.next().unwrap_or_else(|| "spaceman".into());
+    let executable = args.next().unwrap_or_else(|| "fractile".into());
     let Some(command) = args.next() else {
         print_usage(&executable);
         return ExitCode::from(2);
@@ -68,7 +68,7 @@ fn main() -> ExitCode {
         #[cfg(target_os = "macos")]
         ("snapshot", []) => run_retile(false).and_then(to_json),
         #[cfg(target_os = "macos")]
-        ("displays", []) => spaceman::macos::outputs()
+        ("displays", []) => fractile::macos::outputs()
             .map(|outputs| outputs.displays().to_vec())
             .map_err(|error| error.to_string())
             .and_then(to_json),
@@ -79,14 +79,14 @@ fn main() -> ExitCode {
             .filter(|hours| *hours > 0)
             .ok_or_else(|| format!("hours must be a positive integer, got {hours:?}"))
             .and_then(|hours| run_doctor(Some(hours))),
-        ("config-check", [path]) => spaceman::config::load_path(std::path::Path::new(path))
+        ("config-check", [path]) => fractile::config::load_path(std::path::Path::new(path))
             .map(|_| "configuration is valid".into()),
         #[cfg(target_os = "macos")]
-        ("ctl", _) => spaceman::control::send(&arguments),
+        ("ctl", _) => fractile::control::send(&arguments),
         #[cfg(target_os = "macos")]
-        ("open", [target]) => spaceman::deep_link::parse_input(target)
+        ("open", [target]) => fractile::deep_link::parse_input(target)
             .map_err(|error| error.to_string())
-            .and_then(|link| spaceman::control::send(&["open".into(), link.canonical_url()])),
+            .and_then(|link| fractile::control::send(&["open".into(), link.canonical_url()])),
         #[cfg(target_os = "macos")]
         ("hud", []) => run_hud(),
         #[cfg(target_os = "macos")]
@@ -158,17 +158,17 @@ fn print_usage(executable: &str) {
 }
 
 fn run_doctor(hours: Option<u64>) -> Result<String, String> {
-    let (live, rotated) = spaceman::journal::default_paths().ok_or("HOME is unavailable")?;
-    let (lines, skipped) = spaceman::journal::read(&[&rotated, &live])?;
+    let (live, rotated) = fractile::journal::default_paths().ok_or("HOME is unavailable")?;
+    let (lines, skipped) = fractile::journal::read(&[&rotated, &live])?;
     if lines.is_empty() && skipped == 0 {
         return Ok(format!(
-            "No arrangement journal at {} yet. It is written by a running Spaceman agent.",
+            "No arrangement journal at {} yet. It is written by a running Fractile agent.",
             live.display()
         ));
     }
-    let now = spaceman::journal::unix_millis();
+    let now = fractile::journal::unix_millis();
     let since = doctor_since(now, hours);
-    Ok(spaceman::journal::summarize(&lines, since, now, skipped))
+    Ok(fractile::journal::summarize(&lines, since, now, skipped))
 }
 
 fn doctor_since(now: u64, hours: Option<u64>) -> u64 {
@@ -179,7 +179,7 @@ fn doctor_since(now: u64, hours: Option<u64>) -> u64 {
 
 #[cfg(target_os = "macos")]
 fn write_hud_frame(out: &mut impl Write, debug: &serde_json::Value) -> io::Result<()> {
-    write!(out, "\x1b[2J\x1b[HSpaceman HUD  (Ctrl-C to close)\n\n")?;
+    write!(out, "\x1b[2J\x1b[HFractile HUD  (Ctrl-C to close)\n\n")?;
     for display in debug["displays"].as_array().into_iter().flatten() {
         let frame = &display["frame"];
         let layout = if display["fullscreen_layout"].as_bool() == Some(true) {
@@ -248,7 +248,7 @@ fn write_hud_frame(out: &mut impl Write, debug: &serde_json::Value) -> io::Resul
 #[cfg(target_os = "macos")]
 fn run_hud() -> Result<String, String> {
     loop {
-        let source = spaceman::control::send(&["debug".into()])?;
+        let source = fractile::control::send(&["debug".into()])?;
         let debug: serde_json::Value =
             serde_json::from_str(&source).map_err(|error| error.to_string())?;
         let mut stdout = io::BufWriter::new(io::stdout().lock());
@@ -285,15 +285,15 @@ fn to_json(value: impl Serialize) -> Result<String, String> {
 
 /// The probes tile like the agent: with `config.toml`'s spacing, or none when it can't be read.
 #[cfg(target_os = "macos")]
-fn configured_spacing() -> spaceman::spacing::Spacing {
-    spaceman::config::Config::load()
+fn configured_spacing() -> fractile::spacing::Spacing {
+    fractile::config::Config::load()
         .map(|config| config.spacing())
         .unwrap_or_default()
 }
 
 #[cfg(target_os = "macos")]
-fn configured_layout() -> spaceman::config::LayoutMode {
-    spaceman::config::Config::load()
+fn configured_layout() -> fractile::config::LayoutMode {
+    fractile::config::Config::load()
         .map(|config| config.layout())
         .unwrap_or_default()
 }
@@ -301,7 +301,7 @@ fn configured_layout() -> spaceman::config::LayoutMode {
 #[cfg(target_os = "macos")]
 fn run_retile(should_apply: bool) -> Result<SnapshotOutput, String> {
     let (observation, settings) =
-        spaceman::macos::snapshot(1).map_err(|error| error.to_string())?;
+        fractile::macos::snapshot(1).map_err(|error| error.to_string())?;
     let settings = settings
         .spaced(configured_spacing())
         .with_layout(configured_layout());
@@ -309,7 +309,7 @@ fn run_retile(should_apply: bool) -> Result<SnapshotOutput, String> {
         && observation
             .applications
             .iter()
-            .any(|app| matches!(app, spaceman::AppObservation::Unavailable { .. }))
+            .any(|app| matches!(app, fractile::AppObservation::Unavailable { .. }))
     {
         return Err("refusing to apply an incomplete window observation".into());
     }
@@ -320,7 +320,7 @@ fn run_retile(should_apply: bool) -> Result<SnapshotOutput, String> {
         &settings,
     );
     let apply_results =
-        should_apply.then(|| spaceman::macos::apply(&reconciliation.placements, &settings));
+        should_apply.then(|| fractile::macos::apply(&reconciliation.placements, &settings));
     Ok(SnapshotOutput {
         observation,
         reconciliation,
@@ -344,12 +344,12 @@ fn run_watch(
         let ticket = engine.begin_cycle();
         let (mut observation, mut settings) = match (initial_window_id, scope.as_ref()) {
             (Some(window_id), None) => {
-                spaceman::macos::snapshot_for_window(ticket.cycle, window_id)
+                fractile::macos::snapshot_for_window(ticket.cycle, window_id)
             }
             (Some(_), Some(scope)) => {
-                spaceman::macos::snapshot_in_output(ticket.cycle, scope.output)
+                fractile::macos::snapshot_in_output(ticket.cycle, scope.output)
             }
-            (None, _) => spaceman::macos::snapshot(ticket.cycle),
+            (None, _) => fractile::macos::snapshot(ticket.cycle),
         }
         .map_err(|error| error.to_string())?;
         settings.spacing = configured_spacing();
@@ -366,14 +366,14 @@ fn run_watch(
             active_scope.filter(&mut observation);
             settings.output = active_scope.frame;
         } else {
-            spaceman::live::add_absent_applications(&mut observation, &mut known_apps);
+            fractile::live::add_absent_applications(&mut observation, &mut known_apps);
         }
         let reconciliation = engine
             .accept(ticket, &observation, &settings)
             .map_err(|error| format!("stale synchronous cycle: {error:?}"))?;
         let placements =
-            spaceman::live::applicable_placements(&observation, &reconciliation, &settings);
-        let apply_results = should_apply.then(|| spaceman::macos::apply(&placements, &settings));
+            fractile::live::applicable_placements(&observation, &reconciliation, &settings);
+        let apply_results = should_apply.then(|| fractile::macos::apply(&placements, &settings));
 
         steps.push(SnapshotOutput {
             observation,
@@ -405,9 +405,9 @@ fn run_persistent(should_apply: bool) -> Result<String, String> {
     while running.load(Ordering::Acquire) {
         engine.invalidate();
         let ticket = engine.begin_cycle();
-        let (mut observation, mut settings) = match spaceman::macos::snapshot(ticket.cycle) {
+        let (mut observation, mut settings) = match fractile::macos::snapshot(ticket.cycle) {
             Ok(snapshot) => snapshot,
-            Err(spaceman::macos::SnapshotError::AccessibilityPermissionRequired) => {
+            Err(fractile::macos::SnapshotError::AccessibilityPermissionRequired) => {
                 return Err(
                     "Accessibility permission is required for the persistent runtime".into(),
                 );
@@ -429,16 +429,16 @@ fn run_persistent(should_apply: bool) -> Result<String, String> {
             engine.invalidate();
             break;
         }
-        spaceman::live::add_absent_applications(&mut observation, &mut known_apps);
+        fractile::live::add_absent_applications(&mut observation, &mut known_apps);
         settings.spacing = spacing;
         settings.layout = layout;
         let reconciliation = engine
             .accept(ticket, &observation, &settings)
             .map_err(|error| format!("stale synchronous cycle: {error:?}"))?;
         let placements =
-            spaceman::live::applicable_placements(&observation, &reconciliation, &settings);
+            fractile::live::applicable_placements(&observation, &reconciliation, &settings);
         let apply_results = (should_apply && running.load(Ordering::Acquire)).then(|| {
-            spaceman::macos::apply_while(&placements, &settings, || running.load(Ordering::Acquire))
+            fractile::macos::apply_while(&placements, &settings, || running.load(Ordering::Acquire))
         });
         let step = SnapshotOutput {
             observation,
@@ -474,10 +474,10 @@ fn run_persistent(should_apply: bool) -> Result<String, String> {
 
 #[cfg(target_os = "macos")]
 struct WindowScope {
-    app: spaceman::AppInstanceId,
+    app: fractile::AppInstanceId,
     bundle_id: String,
-    frame: spaceman::Rect,
-    output: spaceman::Rect,
+    frame: fractile::Rect,
+    output: fractile::Rect,
     excluded_window_ids: HashSet<u32>,
     authorized_window_ids: HashSet<u32>,
     missing_cycles: u8,
@@ -488,13 +488,13 @@ impl WindowScope {
     fn discover(
         observation: &NativeObservation,
         window_id: u32,
-        output: spaceman::Rect,
+        output: fractile::Rect,
     ) -> Result<Self, String> {
         observation
             .applications
             .iter()
             .find_map(|app| match app {
-                spaceman::AppObservation::Complete { app, windows, .. } => windows
+                fractile::AppObservation::Complete { app, windows, .. } => windows
                     .iter()
                     .find(|window| window.id.window_id == window_id)
                     .map(|window| Self {
@@ -520,7 +520,7 @@ impl WindowScope {
             .applications
             .drain(..)
             .find(|app| app.app_id() == &self.app);
-        if let Some(spaceman::AppObservation::Complete {
+        if let Some(fractile::AppObservation::Complete {
             focused, windows, ..
         }) = &mut scoped
         {
@@ -551,13 +551,13 @@ impl WindowScope {
         }
         self.missing_cycles = self.missing_cycles.saturating_add(1);
         observation.applications = vec![if self.missing_cycles <= 8 {
-            spaceman::AppObservation::Unavailable {
+            fractile::AppObservation::Unavailable {
                 app: self.app.clone(),
                 error: "scoped window is settling or absent".into(),
             }
         } else {
-            spaceman::AppObservation::Complete {
-                app: spaceman::ObservedApplication {
+            fractile::AppObservation::Complete {
+                app: fractile::ObservedApplication {
                     id: self.app.clone(),
                     bundle_id: self.bundle_id.clone(),
                 },

@@ -9,7 +9,7 @@ test_state="$(mktemp -d)"
 agent_pid=""
 test_pid=""
 window_id=""
-test_title="spaceman-workspace-test-$$"
+test_title="fractile-workspace-test-$$"
 test_script_id=""
 test_ax_identifier=""
 printf 'version = 1\n' >"$test_config"
@@ -25,7 +25,7 @@ if [[ -z "$(aerospace list-workspaces --monitor all --visible)" ]]; then
 fi
 previous_workspace="$(aerospace list-workspaces --focused)"
 previous_monitor="$(aerospace list-monitors --focused --format '%{monitor-id}')"
-# NSScreen.screens always lists the main screen first; Spaceman uses the other screen as secondary.
+# NSScreen.screens always lists the main screen first; Fractile uses the other screen as secondary.
 test_monitor="$(aerospace list-monitors --format '%{monitor-id}|%{monitor-appkit-nsscreen-screens-id}' | awk -F '|' '$2 != 1 { print $1; exit }')"
 previous_test_workspace=""
 previous_bundle="$(osascript -e 'tell application "System Events" to get bundle identifier of first application process whose frontmost is true')"
@@ -62,7 +62,7 @@ on run arguments
   tell application "System Events" to tell first application process whose unix id is target_pid
     click UI element 1 of UI element 1
     delay 0.2
-    click menu item "Quit Spaceman" of menu 1 of UI element 1 of UI element 1
+    click menu item "Quit Fractile" of menu 1 of UI element 1 of UI element 1
   end tell
 end run
 APPLESCRIPT
@@ -95,8 +95,8 @@ if [[ ! "$test_monitor" =~ ^[1-9][0-9]*$ ]]; then
 fi
 previous_test_workspace="$(aerospace list-workspaces --monitor "$test_monitor" --visible)"
 
-aerospace workspace spaceman-workspace-test >/dev/null 2>&1
-aerospace move-workspace-to-monitor --workspace spaceman-workspace-test "$test_monitor" >/dev/null 2>&1
+aerospace workspace fractile-workspace-test >/dev/null 2>&1
+aerospace move-workspace-to-monitor --workspace fractile-workspace-test "$test_monitor" >/dev/null 2>&1
 test_script_id="$(osascript - "$test_title" <<'APPLESCRIPT'
 on run arguments
   set target_title to item 1 of arguments
@@ -147,11 +147,11 @@ if [[ -z "$test_ax_identifier" ]]; then
   echo "FAIL: disposable Ghostty AX identifier was not discovered" >&2
   exit 1
 fi
-aerospace move-node-to-workspace --window-id "$window_id" spaceman-workspace-test >/dev/null
-aerospace workspace spaceman-workspace-test >/dev/null
+aerospace move-node-to-workspace --window-id "$window_id" fractile-workspace-test >/dev/null
+aerospace workspace fractile-workspace-test >/dev/null
 aerospace enable off >/dev/null
 
-SPACEMAN_CONFIG="$test_config" SPACEMAN_APPLICATION_SUPPORT="$test_state" SPACEMAN_MANAGED_DISPLAY=secondary "$root/target/Spaceman.app/Contents/MacOS/spaceman-agent" &
+FRACTILE_CONFIG="$test_config" FRACTILE_APPLICATION_SUPPORT="$test_state" FRACTILE_MANAGED_DISPLAY=secondary "$root/target/Fractile.app/Contents/MacOS/fractile-agent" &
 agent_pid=$!
 sleep 2
 
@@ -298,10 +298,10 @@ assert_not_minimized "hard kill"
 state_file="$test_state/parked-windows.json"
 [[ -s "$state_file" && "$(jq length "$state_file")" -eq 1 ]] || { echo "FAIL: parked window was not persisted before hard kill" >&2; exit 1; }
 
-SPACEMAN_CONFIG="$test_config" SPACEMAN_APPLICATION_SUPPORT="$test_state" SPACEMAN_MANAGED_DISPLAY=secondary "$root/target/Spaceman.app/Contents/MacOS/spaceman-agent" &
+FRACTILE_CONFIG="$test_config" FRACTILE_APPLICATION_SUPPORT="$test_state" FRACTILE_MANAGED_DISPLAY=secondary "$root/target/Fractile.app/Contents/MacOS/fractile-agent" &
 agent_pid=$!
 sleep 2
-SPACEMAN_APPLICATION_SUPPORT="$test_state" "$root/target/Spaceman.app/Contents/MacOS/spaceman" ctl pause >/dev/null
+FRACTILE_APPLICATION_SUPPORT="$test_state" "$root/target/Fractile.app/Contents/MacOS/fractile" ctl pause >/dev/null
 wait_for_position equal "$normal_position" || { echo "FAIL: startup recovery did not restore the parked window after pause" >&2; exit 1; }
 assert_not_minimized "crash recovery"
 for _ in $(seq 1 30); do

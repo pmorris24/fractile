@@ -104,7 +104,7 @@ pub(super) struct StackedWindow {
 
 /// The window focus follows mouse may focus at `point`: the front-most window
 /// there, when it is an ordinary (layer 0) window of another process and no
-/// menu is open. The menu bar, the Dock, a menu, a popover or Spaceman's own
+/// menu is open. The menu bar, the Dock, a menu, a popover or Fractile's own
 /// HUD and Settings in front of the point give nothing. `stack` is front to back.
 pub(super) fn hover_target(
     stack: &[StackedWindow],

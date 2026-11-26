@@ -59,7 +59,7 @@ fn restart(
 }
 
 /// #160: a window floated only by a rule tiles again once the rule is
-/// removed, even when Spaceman restarted while it floated.
+/// removed, even when Fractile restarted while it floated.
 #[test]
 fn removing_a_float_rule_tiles_its_window_after_a_restart() {
     let mut runtime = runtime_with_config(titled_notes(two_windows(20)), float_rule());

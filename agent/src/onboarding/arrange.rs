@@ -3,11 +3,11 @@
 //! tile to the next workspace, a drag to any other, and the Floating line lists what stays out
 //! of the tiles. Everything sits at computed positions, so a drag knows where the pointer is.
 
-use rune::{Cursor, El, Spring, Tx, el, row, text};
-use spaceman::{
+use fractile::{
     WorkspaceId,
     onboarding_plan::{self, Inventory, Lane, OpenApp, OpenWindow, Plan, Screen},
 };
+use rune::{Cursor, El, Spring, Tx, el, row, text};
 
 use crate::{
     Ui, apps,

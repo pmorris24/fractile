@@ -8,9 +8,9 @@ pub(crate) use displays::{
     fixture_quad, fixture_three, index_of,
 };
 
+use fractile::{WorkspaceId, shortcuts::Shortcuts};
 use rune::{El, Tx, text};
 use rune_kit::SegmentedControl;
-use spaceman::{WorkspaceId, shortcuts::Shortcuts};
 
 use crate::{
     Pane, Ui,
@@ -80,7 +80,7 @@ pub(crate) fn poll_displays(ui: &mut Ui, clock: f64) -> bool {
 
 #[cfg(target_os = "macos")]
 fn read_displays() -> Option<Vec<displays::ConnectedDisplay>> {
-    spaceman::macos::outputs()
+    fractile::macos::outputs()
         .ok()
         .map(|outputs| displays::connected(&outputs))
 }
@@ -446,7 +446,7 @@ mod tests {
     #[test]
     fn a_workspace_saved_by_the_secondary_displays_uuid_needs_no_default_note() {
         // Settings never writes this (choosing Secondary saves `secondary`), but
-        // `spaceman workspaces assign` and a hand-edited config.toml do, and a display can
+        // `fractile workspaces assign` and a hand-edited config.toml do, and a display can
         // become Secondary after its UUID was saved. Issue 337.
         let displays = fixture_three();
         let choices = choices(&displays);
@@ -829,8 +829,8 @@ mod tests {
 
     #[test]
     fn a_name_two_extra_displays_share_resolves_where_the_engine_puts_it() {
-        use spaceman::macos::{DisplayOutput, DisplayOutputs};
-        use spaceman::{DisplaySelector, Rect};
+        use fractile::macos::{DisplayOutput, DisplayOutputs};
+        use fractile::{DisplaySelector, Rect};
         // The right-hand screen is discovered first, the left-hand one sorts first. Issue 420.
         let display = |id: &str, name: &str, x, is_main| DisplayOutput {
             id: id.into(),

@@ -2,7 +2,7 @@
 //! and every other binding survive. A built-in shortcut moved to a new chord leaves `none` on
 //! its old one, and moving it back home removes both.
 
-use spaceman::{
+use fractile::{
     WorkspaceId,
     shortcuts::{self, Chord, Command, Key, Modifiers, Shortcuts},
 };
@@ -14,9 +14,9 @@ use super::{
 };
 
 impl Doc {
-    /// `[shortcuts]` as Spaceman reads it, or the built-ins while the file has an error.
+    /// `[shortcuts]` as Fractile reads it, or the built-ins while the file has an error.
     pub fn shortcuts(&self) -> Shortcuts {
-        spaceman::config::Config::parse(&self.source())
+        fractile::config::Config::parse(&self.source())
             .map(|config| config.shortcuts().clone())
             .unwrap_or_default()
     }
@@ -27,7 +27,7 @@ impl Doc {
             .is_some_and(|table| !table.is_empty())
     }
 
-    /// Gives `command` (in `spaceman ctl` syntax) the one chord `chord`, or none at all.
+    /// Gives `command` (in `fractile ctl` syntax) the one chord `chord`, or none at all.
     /// `default` is the chord its built-in shortcut uses, if it has one.
     pub fn set_shortcut(&mut self, command: &str, default: Option<Chord>, chord: Option<Chord>) {
         let Ok(Some(target)) = shortcuts::parse_command(command) else {

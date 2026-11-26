@@ -17,5 +17,5 @@ fn main() {
     cc::Build::new()
         .file("native/permission_guide.m")
         .flag("-fobjc-arc")
-        .compile("spaceman_permission_guide");
+        .compile("fractile_permission_guide");
 }

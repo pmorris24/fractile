@@ -5,16 +5,16 @@
 #   THEMES="dark light"                 appearances (default: dark)
 #   TREE=1                              also dump each scene's element tree as JSON
 # Files are <scene>-<width>[-light].png in $OUT. List the scenes with
-# `cargo run -p spaceman-agent -- --list-scenes`. See docs/design-system.md.
+# `cargo run -p fractile-agent -- --list-scenes`. See docs/design-system.md.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 out="${OUT:?set OUT to the folder to render into}"
 sizes="${SIZES:-920x660}"
 themes="${THEMES:-dark}"
 mkdir -p "$out"
-cargo build --locked -q -p spaceman-agent
+cargo build --locked -q -p fractile-agent
 target="$(cargo metadata --locked --format-version 1 --no-deps | sed -n 's/.*"target_directory":"\([^"]*\)".*/\1/p')"
-bin="$target/debug/spaceman-agent"
+bin="$target/debug/fractile-agent"
 for scene in "$@"; do
   for size in $sizes; do
     for theme in $themes; do

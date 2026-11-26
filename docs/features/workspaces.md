@@ -7,7 +7,7 @@ instantly, and send windows or whole apps to a workspace, without using macOS Sp
 
 ```ts
 Switch workspace                                           // ws.switch
-├── Option+1..0 / Option+A..Z / spaceman ctl switch <ws> / a workspace in the menu bar menu
+├── Option+1..0 / Option+A..Z / fractile ctl switch <ws> / a workspace in the menu bar menu
 ├── Incoming parked windows revealed -> laid out -> outgoing windows parked off-screen
 │   └── Reveal not confirmed by the window server in time -> switch rolled back, old workspace stays
 ├── Focus -> last-focused tile of the incoming workspace, keyboard focus included
@@ -67,7 +67,7 @@ Move workspace to another display                          // ws.move-workspace
 
 Empty workspace chosen on another display (Lab)            // ws.empty-choice
 ├── Off by default; Settings › Labs › Workspaces › Focus empty workspaces on other displays,
-│   [labs] empty_workspace_focus = true, or spaceman config set labs.empty_workspace_focus true
+│   [labs] empty_workspace_focus = true, or fractile config set labs.empty_workspace_focus true
 ├── Showing an empty workspace focuses nothing, so the window on the display you came from keeps
 │   keyboard input and stays reported as focused; with the Lab off, commands follow that window
 ├── Chosen with Option+<ws>, ctl switch, the menu or the HUD, on a display other than the focused
@@ -76,7 +76,7 @@ Empty workspace chosen on another display (Lab)            // ws.empty-choice
 │   ├── Commands that need a window (Option+Shift+F, Option+Shift+H/J/K/L, Option+Shift+<ws>,
 │   │   Option+Shift+Space) report there is none, as on an empty workspace on the display in use
 │   └── Option+H/J/K/L starts from its display and focuses the nearest tile that way
-├── Ends when another window takes focus, Spaceman focuses a window (Option+H, Option+<ws> of
+├── Ends when another window takes focus, Fractile focuses a window (Option+H, Option+<ws> of
 │   another workspace), the workspace gains a window or leaves the screen, a display is connected,
 │   unplugged or rearranged, or the Lab is turned off
 ├── Clicking the window that already had focus does not end it: Accessibility reports no change
@@ -128,7 +128,7 @@ Mouse follows focus ([settings] mouse_follows_focus)       // ws.mouse-follows-f
 Focus follows mouse ([labs] focus_follows_mouse, off)      // ws.focus-follows-mouse
 ├── Main thread (src/app/app_loop/hover.rs): the pointer moved, then rested ~150 ms -> Core
 │   Graphics names the front window there (no AX); the menu bar, Dock, an open menu, or
-│   Spaceman's HUD/Settings in front -> nothing
+│   Fractile's HUD/Settings in front -> nothing
 ├── Worker (src/app/focus/hover.rs): a tile on a visible workspace -> focused, pointer untouched;
 │   floats, the Scratchpad and unmanaged windows -> nothing
 └── Skipped when the pointer has moved on, rests where mouse follows focus warped it, a button is
@@ -172,7 +172,7 @@ Where a new window goes (first match wins)                 // ws.adoption
 └── otherwise          -> tiled on the active workspace of the display under the window's center
 
 Settings › Rules                                           // ws.rules-pane
-├── Settings opens on General; Rules is a pane to visit (or spaceman://settings/rules)
+├── Settings opens on General; Rules is a pane to visit (or fractile://settings/rules)
 ├── `Where new windows open` ("Optional. Any window can move to any workspace"): a tile per
 │   workspace with the apps routed there; drag an icon to another tile or to `Floating`
 ├── + on a tile, or `Add app`, lists every running app, ruled or not
@@ -189,7 +189,7 @@ Settings › Rules                                           // ws.rules-pane
     (action = "tile"), `Pin on all workspaces` (action = "pin", which moves it to `Floating`)
 
 Pinned floats                                              // ws.pin
-├── action = "pin" rule, or spaceman ctl pin on the focused window (floats it first; again unpins)
+├── action = "pin" rule, or fractile ctl pin on the focused window (floats it first; again unpins)
 ├── Never parked by a switch, a move or a display change: shows on every workspace of its display
 ├── Keeps its owning workspace for memory and the HUD; unpinning hands it to the workspace showing it
 ├── A pin rule added while the float is parked brings it back (matched by bundle; title rules wait
@@ -198,7 +198,7 @@ Pinned floats                                              // ws.pin
 
 Reopened at a parking spot                                 // ws.stale-parked
 ├── An app quit while some windows were parked reopens them one pixel inside a display corner
-└── Every such window Spaceman neither parked nor owns (not only the focused one) is brought onto
+└── Every such window Fractile neither parked nor owns (not only the focused one) is brought onto
     that display, cascaded 24 pt apart, then recalled or adopted like any new window
 
 Displays                                                    // ws.displays
@@ -288,9 +288,9 @@ Keyboard (while tiling is enabled)
 └── Option+Shift+Tab            -> move focused workspace to next display
 Trackpad: three-finger swipe left/right -> next/previous workspace (turn macOS's three-finger
           "Swipe between full-screen applications" off or move it to four fingers)
-CLI: spaceman ctl switch | back-and-forth | move-workspace | move | move-tab | move-app | pin
+CLI: fractile ctl switch | back-and-forth | move-workspace | move | move-tab | move-app | pin
      (switch next|prev and move next|prev [--follow] with [labs] workspace_steps = true)
-Config: ~/Library/Application Support/Spaceman/config.toml -> [[rules]], [[workspaces]],
+Config: ~/Library/Application Support/Fractile/config.toml -> [[rules]], [[workspaces]],
         [settings] workspace_order (edits apply when the file changes; new named-workspace shortcuts register on the next app start)
 Menu bar: shows the active workspace glyphs; its menu lists every workspace of the display whose menu
           bar it opens from, the visible one checked, with their apps' icons and Option shortcut
@@ -482,7 +482,7 @@ on the same letter.
 - Unit (FakeBackend), `src/app/tests/restart_recall.rs`:
   `every_window_reopened_at_a_parking_spot_is_rescued_and_recalled` (three Safari windows on
   workspaces 1-3, reopened minutes later in the background),
-  `a_window_parked_by_spaceman_is_never_rescued`,
+  `a_window_parked_by_fractile_is_never_rescued`,
   `a_window_at_a_parking_spot_that_cannot_move_backs_off_and_is_rescued_later` (failed moves are
   retried after a delay that doubles from 2 s to 32 s, at once when the window's frame or the
   displays change, issue 481), `a_window_that_moves_after_a_failed_rescue_is_tried_again_at_once`,
@@ -579,7 +579,7 @@ on the same letter.
 - Unit tests model frames, not z-order or paint timing: "outgoing parked after incoming laid out"
   does not prove nothing flashes. See the stacked-window flash in
   [Fullscreen Layout](fullscreen-layout.md#gotchas).
-- Some apps (Electron, Ghostty) move their own windows back on screen; Spaceman re-parks, then after
+- Some apps (Electron, Ghostty) move their own windows back on screen; Fractile re-parks, then after
   repeated undoing honors the reappearance and re-homes the window to the visible workspace. In the
   working tree, a window that does so twice in five minutes stays tiled but is no longer hidden
   across switches (`parking_exempt`).
@@ -592,15 +592,15 @@ on the same letter.
   input timing and whether Command was held, so Command-Tab can be told apart from self-activation.
 - Since macOS 14, AppKit activation from a background app is cooperative and ignored, so a switch
   that only called it showed the incoming window while keys stayed in the app focus left (issue
-  92). Spaceman sets `AXFrontmost` on the incoming app instead. When focusing still fails,
+  92). Fractile sets `AXFrontmost` on the incoming app instead. When focusing still fails,
   `agent.log` gets `switch focus failed: workspace <ws> window <id>` (never a title).
 - macOS keeps a parked window's title bar on screen, so a one-pixel-wide slice of it stays at the
   display's bottom corner: about 32 px tall for a plain title bar, 66 px with a unified toolbar.
 - Some apps (Arc) answer `AXFrontmost` with success and still stay behind the app focus left.
-  After focusing, Spaceman polls the frontmost app every 10 ms and repeats the focus every 50 ms,
+  After focusing, Fractile polls the frontmost app every 10 ms and repeats the focus every 50 ms,
   at most three times (200 ms bound).
 - Restored-arrangement recall needs the app's first observation to list two or more windows. An app
-  that macOS restores one window at a time, slowly enough that Spaceman sees a lone window first,
+  that macOS restores one window at a time, slowly enough that Fractile sees a lone window first,
   opens on the active workspace as before.
 - Panels and non-standard windows are never parked, so they show on every workspace; an empty
   workspace exposes whatever unmanaged windows sit behind managed ones.

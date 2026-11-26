@@ -1,9 +1,9 @@
 //! Labs pane: experimental features, each behind its own `[labs]` switch and off by default,
-//! grouped by the part of Spaceman they change. With every switch off Spaceman behaves as if
+//! grouped by the part of Fractile they change. With every switch off Fractile behaves as if
 //! Labs did not exist.
 
+use fractile::config::LabFeature;
 use rune::El;
-use spaceman::config::LabFeature;
 
 use crate::{Ui, controls, controls::Paint, view::scroll_body};
 
@@ -106,7 +106,7 @@ const GROUPS: [(&str, &str, &[Lab]); 4] = [
     ),
 ];
 
-/// The `spaceman://labs/<slug>` that highlights `feature`'s row, such as `physical-displays`.
+/// The `fractile://labs/<slug>` that highlights `feature`'s row, such as `physical-displays`.
 pub fn slug(feature: LabFeature) -> String {
     feature.key().replace('_', "-")
 }

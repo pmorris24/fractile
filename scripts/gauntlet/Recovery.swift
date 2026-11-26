@@ -1,5 +1,5 @@
 // The last scenario always runs: a clean quit must put every parked window back, and nothing
-// Spaceman wrote may carry a panic or a window title.
+// Fractile wrote may carry a panic or a window title.
 import Foundation
 
 extension Gauntlet {
@@ -7,7 +7,7 @@ extension Gauntlet {
         scenario = "recovery"
         var restoredFrames: [UInt32: Rect] = [:]
         if agent.pid == nil {
-            skip("quit restores every parked window on screen", "Spaceman is not running")
+            skip("quit restores every parked window on screen", "Fractile is not running")
         } else {
             // An aborted scenario may leave a window minimized or hidden; bring everything back first.
             for window in windows {
@@ -42,7 +42,7 @@ extension Gauntlet {
                     measured: "exit \(Int(exited.ms)) ms, restored \(Int(restored.ms)) ms: \(frames(windows))")
             }
         }
-        // Whatever happened above, Spaceman stops before its log and journal are judged.
+        // Whatever happened above, Fractile stops before its log and journal are judged.
         stopAgent()
         try? step("parked-windows.json is empty after quit") {
             let parked = try parkedFrames()
@@ -84,11 +84,11 @@ extension Gauntlet {
                     if data.range(of: Data(titleToken.utf8)) != nil { leaks.append(url.lastPathComponent) }
                 }
             }
-            if doctor.out.contains(titleToken) { leaks.append("spaceman doctor") }
+            if doctor.out.contains(titleToken) { leaks.append("fractile doctor") }
             try require(leaks.isEmpty ? nil : "violation in \(leaks.joined(separator: ", "))", expected: "0 leaks (window-memory.json 0600)", measured: leaks.joined(separator: ", "))
             return Outcome(expected: "title token in 0 non-memory files", measured: "0 of \(scanned) files and doctor output")
         }
-        try? step("spaceman doctor reports a healthy run") {
+        try? step("fractile doctor reports a healthy run") {
             try require(doctor.status == 0 ? nil : "doctor exited \(doctor.status)", expected: "exit 0", measured: doctor.out)
             let expectedStops = agent.launches - agent.kills
             var problems: [String] = []
@@ -109,7 +109,7 @@ extension Gauntlet {
         }
     }
 
-    /// Quits Spaceman the clean way (which restores parked windows), then with SIGTERM if it hangs.
+    /// Quits Fractile the clean way (which restores parked windows), then with SIGTERM if it hangs.
     func stopAgent() {
         guard agent.pid != nil else { return }
         _ = agent.ctl(["quit"])
@@ -118,7 +118,7 @@ extension Gauntlet {
         _ = wait(5, interval: 0.1) { agent.pid == nil ? nil : "running" }
     }
 
-    /// Closes the test windows and makes sure no Spaceman under test outlives the run, restoring first.
+    /// Closes the test windows and makes sure no Fractile under test outlives the run, restoring first.
     func cleanup() {
         stopAgent()
         for window in windows { window.send("quit") }

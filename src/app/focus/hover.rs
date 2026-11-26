@@ -10,7 +10,7 @@ use super::super::*;
 impl<B: WorkspaceBackend> WorkspaceRuntime<B> {
     /// Focuses the visible tile `window_id` the pointer rests on at `point`,
     /// unless the Lab is off, the pointer has moved on, a button is held, a
-    /// drag or a Space slide is under way, or Spaceman put the pointer there.
+    /// drag or a Space slide is under way, or Fractile put the pointer there.
     pub(in crate::app) fn focus_hovered(
         &mut self,
         window_id: u32,

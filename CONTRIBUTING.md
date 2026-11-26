@@ -1,6 +1,6 @@
 # Contributing
 
-Spaceman is an experimental public preview. Coordinate substantial work with the repository owner
+Fractile is an experimental public preview. Coordinate substantial work with the repository owner
 before investing in it; contribution expectations may change as the preview matures.
 
 ## Before Changing Code

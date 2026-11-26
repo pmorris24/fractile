@@ -134,7 +134,7 @@ pub(super) fn notes(focused: bool) -> El {
                     ink(0.36),
                 )))
                 .child(words("heading", "Q4 Priorities", HEADING, ink(0.95)).mt(2.0))
-                .child(todo("todo0", "Ship Spaceman", true))
+                .child(todo("todo0", "Ship Fractile", true))
                 .child(todo("todo1", "Mount the speaker above my chair", true))
                 .child(todo("todo2", "Buy stronger wall anchors", false))
                 .child(todo("todo3", "Call Mom back", false)),

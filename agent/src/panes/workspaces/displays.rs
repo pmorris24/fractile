@@ -1,8 +1,8 @@
 //! The displays Settings › Workspaces offers: every connected screen, its friendly label, and
 //! the exact `config.toml` selector the engine resolves (the same one Option+Shift+Tab writes).
 
-use spaceman::Rect;
-use spaceman::macos::DisplayOutputs;
+use fractile::Rect;
+use fractile::macos::DisplayOutputs;
 
 /// The built-in selector for the display macOS marks as main.
 pub(crate) const MAIN: &str = "main";
@@ -15,7 +15,7 @@ pub(crate) const TERTIARY: &str = "tertiary";
 /// gets its position in the segment and keeps its name in its card's heading.
 const SEGMENT_NAME_MAX: usize = 16;
 
-/// One connected display, read from `spaceman::macos::outputs`.
+/// One connected display, read from `fractile::macos::outputs`.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct ConnectedDisplay {
     /// `main`, `secondary`, or the display's UUID.

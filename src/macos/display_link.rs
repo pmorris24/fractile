@@ -47,7 +47,7 @@ struct TickIvars {
 define_class!(
     #[unsafe(super = NSObject)]
     #[thread_kind = MainThreadOnly]
-    #[name = "SpacemanDisplayLinkTarget"]
+    #[name = "FractileDisplayLinkTarget"]
     #[ivars = TickIvars]
     struct TickTarget;
 

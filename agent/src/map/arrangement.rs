@@ -6,7 +6,7 @@
 
 mod view;
 
-use spaceman::{Rect, WorkspaceId};
+use fractile::{Rect, WorkspaceId};
 
 pub use view::ScreenDrag;
 #[cfg(test)]

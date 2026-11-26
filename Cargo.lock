@@ -972,6 +972,45 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aa9a19cbb55df58761df49b23516a86d432839add4af60fc256da840f66ed35b"
 
 [[package]]
+name = "fractile"
+version = "0.1.0"
+dependencies = [
+ "block2 0.6.2",
+ "cc",
+ "ctrlc",
+ "libc",
+ "objc2 0.6.5",
+ "objc2-app-kit 0.3.2",
+ "objc2-application-services",
+ "objc2-core-foundation",
+ "objc2-core-graphics",
+ "objc2-foundation 0.3.2",
+ "objc2-quartz-core 0.3.2",
+ "objc2-service-management",
+ "serde",
+ "serde_json",
+ "toml",
+]
+
+[[package]]
+name = "fractile-agent"
+version = "0.1.0"
+dependencies = [
+ "block2 0.6.2",
+ "fractile",
+ "objc2 0.6.5",
+ "objc2-app-kit 0.3.2",
+ "objc2-foundation 0.3.2",
+ "procwatch",
+ "rune",
+ "rune-kit",
+ "rune-mac",
+ "rune-theme-opencode",
+ "serde_json",
+ "toml_edit 0.23.10+spec-1.0.0",
+]
+
+[[package]]
 name = "futures-core"
 version = "0.3.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3205,45 +3244,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dd538fb6910ac1099850255cf94a94df6551fbdd602454387d0adb2d1ca6dead"
 dependencies = [
  "serde",
-]
-
-[[package]]
-name = "spaceman"
-version = "0.3.5"
-dependencies = [
- "block2 0.6.2",
- "cc",
- "ctrlc",
- "libc",
- "objc2 0.6.5",
- "objc2-app-kit 0.3.2",
- "objc2-application-services",
- "objc2-core-foundation",
- "objc2-core-graphics",
- "objc2-foundation 0.3.2",
- "objc2-quartz-core 0.3.2",
- "objc2-service-management",
- "serde",
- "serde_json",
- "toml",
-]
-
-[[package]]
-name = "spaceman-agent"
-version = "0.3.5"
-dependencies = [
- "block2 0.6.2",
- "objc2 0.6.5",
- "objc2-app-kit 0.3.2",
- "objc2-foundation 0.3.2",
- "procwatch",
- "rune",
- "rune-kit",
- "rune-mac",
- "rune-theme-opencode",
- "serde_json",
- "spaceman",
- "toml_edit 0.23.10+spec-1.0.0",
 ]
 
 [[package]]

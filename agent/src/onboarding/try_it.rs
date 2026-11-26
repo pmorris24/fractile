@@ -4,12 +4,12 @@
 //! the keyboard makes a move: nothing here is clicked through, nothing advances by itself, and
 //! nothing moves a real window.
 
-use rune::{El, Mods, PhysicalInput, PhysicalKeyCode, Tx, col, row, text};
-use rune_kit::{Checkbox, SegmentedControl};
-use spaceman::{
+use fractile::{
     app::UiLaunchAtLogin,
     shortcuts::{Chord, Modifiers},
 };
+use rune::{El, Mods, PhysicalInput, PhysicalKeyCode, Tx, col, row, text};
+use rune_kit::{Checkbox, SegmentedControl};
 
 use super::{
     Input,
@@ -256,7 +256,7 @@ fn options(ui: &Ui, p: Paint, view: &View) -> El {
     match ui.agent.as_ref().map(|agent| &agent.launch_at_login) {
         Some(UiLaunchAtLogin::NeedsApproval) => {
             login =
-                login.description("Approve Spaceman in System Settings › General › Login Items.");
+                login.description("Approve Fractile in System Settings › General › Login Items.");
         }
         Some(UiLaunchAtLogin::Failed(error)) => login = login.description(error.clone()),
         _ => {}

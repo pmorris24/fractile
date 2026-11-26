@@ -2,7 +2,7 @@
 
 use std::{cell::Cell, collections::BTreeSet};
 
-use spaceman::{
+use fractile::{
     WorkspaceId,
     app::{UiHudDisplay, UiHudToast},
 };

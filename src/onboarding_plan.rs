@@ -279,7 +279,7 @@ pub fn role(bundle_id: &str, category: Option<&str>) -> Role {
         .unwrap_or(Role::Other)
 }
 
-/// Whether the plan starts `app` floating: a utility Spaceman floats by default
+/// Whether the plan starts `app` floating: a utility Fractile floats by default
 /// ([`crate::defaults`]; a Stickies note tiled to half a display is nobody's intent), an app
 /// with no resizable window, or an app the role table doesn't know whose windows are all small.
 #[must_use]
@@ -627,7 +627,7 @@ impl Plan {
     }
 
     /// The floating apps that need a `float` rule to stay floating: those with a resizable
-    /// window, which Spaceman would otherwise tile. A utility that floats by default
+    /// window, which Fractile would otherwise tile. A utility that floats by default
     /// ([`crate::defaults`]) needs none.
     #[must_use]
     pub fn float_rules(&self, inventory: &Inventory) -> Vec<String> {
@@ -644,7 +644,7 @@ impl Plan {
     }
 
     /// The open utilities that float by default but this plan tiles: each needs a `tile` rule,
-    /// or Spaceman floats it again. With [`Self::float_rules`], the only rules a plan asks for.
+    /// or Fractile floats it again. With [`Self::float_rules`], the only rules a plan asks for.
     #[must_use]
     pub fn tile_rules(&self, inventory: &Inventory) -> Vec<String> {
         inventory

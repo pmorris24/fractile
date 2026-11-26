@@ -6,11 +6,11 @@ mod layout;
 pub mod shortcuts;
 pub(crate) mod workspaces;
 
-use rune::{El, Icon};
-use spaceman::{
+use fractile::{
     app::UiLaunchAtLogin,
     config::{LabFeature, LabsConfig},
 };
+use rune::{El, Icon};
 
 use crate::{
     Sheet, Ui, activity,
@@ -20,32 +20,32 @@ use crate::{
 };
 
 static GENERAL_ICON: Icon = Icon {
-    name: "spaceman-general",
+    name: "fractile-general",
     view: 16.0,
     body: include_str!("../assets/general.svg"),
 };
 static LAYOUT_ICON: Icon = Icon {
-    name: "spaceman-layout",
+    name: "fractile-layout",
     view: 16.0,
     body: include_str!("../assets/layout.svg"),
 };
 static RULES_ICON: Icon = Icon {
-    name: "spaceman-rules",
+    name: "fractile-rules",
     view: 16.0,
     body: include_str!("../assets/rules.svg"),
 };
 static WORKSPACES_ICON: Icon = Icon {
-    name: "spaceman-workspaces",
+    name: "fractile-workspaces",
     view: 16.0,
     body: include_str!("../assets/workspaces.svg"),
 };
 static LABS_ICON: Icon = Icon {
-    name: "spaceman-labs",
+    name: "fractile-labs",
     view: 16.0,
     body: include_str!("../assets/labs.svg"),
 };
 static ACTIVITY_ICON: Icon = Icon {
-    name: "spaceman-activity",
+    name: "fractile-activity",
     view: 24.0,
     body: include_str!("../assets/activity.svg"),
 };
@@ -148,20 +148,20 @@ impl Pane {
         Self::listed(labs).nth(index)
     }
 
-    /// Maps a `spaceman://` deep-link pane to a registered Settings pane.
+    /// Maps a `fractile://` deep-link pane to a registered Settings pane.
     ///
     /// Returns `None` for panes not registered in this build (such as `WhatsNew`) so the
     /// caller can fall back cleanly while preserving `highlight_lab` / `highlight_feature`.
-    pub const fn from_deep_link(pane: spaceman::deep_link::DeepLinkPane) -> Option<Pane> {
+    pub const fn from_deep_link(pane: fractile::deep_link::DeepLinkPane) -> Option<Pane> {
         match pane {
-            spaceman::deep_link::DeepLinkPane::General => Some(Pane::General),
-            spaceman::deep_link::DeepLinkPane::Layout => Some(Pane::Layout),
-            spaceman::deep_link::DeepLinkPane::Rules => Some(Pane::Rules),
-            spaceman::deep_link::DeepLinkPane::Workspaces => Some(Pane::Rules),
-            spaceman::deep_link::DeepLinkPane::Shortcuts => Some(Pane::Shortcuts),
-            spaceman::deep_link::DeepLinkPane::Activity => Some(Pane::Activity),
-            spaceman::deep_link::DeepLinkPane::Labs => Some(Pane::Labs),
-            spaceman::deep_link::DeepLinkPane::WhatsNew => None,
+            fractile::deep_link::DeepLinkPane::General => Some(Pane::General),
+            fractile::deep_link::DeepLinkPane::Layout => Some(Pane::Layout),
+            fractile::deep_link::DeepLinkPane::Rules => Some(Pane::Rules),
+            fractile::deep_link::DeepLinkPane::Workspaces => Some(Pane::Rules),
+            fractile::deep_link::DeepLinkPane::Shortcuts => Some(Pane::Shortcuts),
+            fractile::deep_link::DeepLinkPane::Activity => Some(Pane::Activity),
+            fractile::deep_link::DeepLinkPane::Labs => Some(Pane::Labs),
+            fractile::deep_link::DeepLinkPane::WhatsNew => None,
         }
     }
 }
@@ -195,22 +195,22 @@ pub(crate) const SCENES: &[Scene] = &[
     // The Workspace HUD's Customize sheet, with the capsule on each edge.
     ("hud-customize", |ui| {
         reset_fixture(ui, Pane::General);
-        general::fixture_hud_sheet(ui, spaceman::config::HudPosition::Bottom);
+        general::fixture_hud_sheet(ui, fractile::config::HudPosition::Bottom);
     }),
     ("hud-customize-left", |ui| {
         reset_fixture(ui, Pane::General);
-        general::fixture_hud_sheet(ui, spaceman::config::HudPosition::Left);
+        general::fixture_hud_sheet(ui, fractile::config::HudPosition::Left);
     }),
     ("hud-customize-top", |ui| {
         reset_fixture(ui, Pane::General);
-        general::fixture_hud_sheet(ui, spaceman::config::HudPosition::Top);
+        general::fixture_hud_sheet(ui, fractile::config::HudPosition::Top);
     }),
     ("layout", |ui| reset_fixture(ui, Pane::Layout)),
     // Gaps, uneven edges for a custom bar, and a width cap that brings in the ultrawide.
     ("layout-spaced", |ui| {
         reset_fixture(ui, Pane::Layout);
         ui.edit(|doc| {
-            doc.set_spacing(spaceman::spacing::Spacing {
+            doc.set_spacing(fractile::spacing::Spacing {
                 inner: 10,
                 top: 32,
                 bottom: 8,
@@ -226,7 +226,7 @@ pub(crate) const SCENES: &[Scene] = &[
     ("workspaces-three-displays", |ui| {
         reset_fixture(ui, Pane::Workspaces);
         ui.displays = workspaces::fixture_three();
-        let nine = spaceman::WorkspaceId::new(9).unwrap_or(spaceman::WorkspaceId::SIX);
+        let nine = fractile::WorkspaceId::new(9).unwrap_or(fractile::WorkspaceId::SIX);
         ui.edit(|doc| doc.set_monitor(nine, Some(workspaces::THIRD_FIXTURE_ID)));
     }),
     // A display whose name is too long for a segment: its card keeps the name (issue 349).
@@ -248,7 +248,7 @@ pub(crate) const SCENES: &[Scene] = &[
     // The third monitor unplugged: its saved assignment keeps its own card.
     ("workspaces-unplugged", |ui| {
         reset_fixture(ui, Pane::Workspaces);
-        let nine = spaceman::WorkspaceId::new(9).unwrap_or(spaceman::WorkspaceId::SIX);
+        let nine = fractile::WorkspaceId::new(9).unwrap_or(fractile::WorkspaceId::SIX);
         ui.edit(|doc| doc.set_monitor(nine, Some(workspaces::THIRD_FIXTURE_ID)));
     }),
     ("shortcuts", |ui| reset_fixture(ui, Pane::Shortcuts)),
@@ -261,11 +261,11 @@ pub(crate) const SCENES: &[Scene] = &[
         });
     }),
     ("labs", |ui| reset_fixture(ui, Pane::Labs)),
-    // Physical display order on and highlighted, as `spaceman://labs/physical-displays` opens it.
+    // Physical display order on and highlighted, as `fractile://labs/physical-displays` opens it.
     ("labs-physical-displays", |ui| {
         reset_fixture(ui, Pane::Labs);
-        ui.edit(|doc| doc.set_lab(spaceman::config::LabFeature::PhysicalDisplays, true));
-        ui.highlight_lab = Some(labs::slug(spaceman::config::LabFeature::PhysicalDisplays));
+        ui.edit(|doc| doc.set_lab(fractile::config::LabFeature::PhysicalDisplays, true));
+        ui.highlight_lab = Some(labs::slug(fractile::config::LabFeature::PhysicalDisplays));
     }),
     ("shortcuts-recording", |ui| {
         reset_fixture(ui, Pane::Shortcuts);

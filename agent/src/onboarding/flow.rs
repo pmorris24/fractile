@@ -1,8 +1,8 @@
-//! Pure state machine and owner-only persistence for Spaceman's four-step setup tour.
+//! Pure state machine and owner-only persistence for Fractile's four-step setup tour.
 
 use std::{fs, path::Path};
 
-use spaceman::state_file::write_atomic_owner_only;
+use fractile::state_file::write_atomic_owner_only;
 
 use crate::controls::PermissionControl;
 
@@ -230,13 +230,13 @@ impl Flow {
 }
 
 pub fn launch_step(accessibility_trusted: bool) -> Option<Step> {
-    let support = spaceman::config::application_support_path("onboarding-complete")?;
+    let support = fractile::config::application_support_path("onboarding-complete")?;
     let directory = support.parent()?;
     launch_step_at(directory, accessibility_trusted)
 }
 
 pub fn record_step(step: Step) {
-    if let Some(path) = spaceman::config::application_support_path("onboarding-step")
+    if let Some(path) = fractile::config::application_support_path("onboarding-step")
         && let Some(directory) = path.parent()
     {
         drop(record_step_at(directory, step));
@@ -244,7 +244,7 @@ pub fn record_step(step: Step) {
 }
 
 pub fn record_completion() {
-    if let Some(path) = spaceman::config::application_support_path("onboarding-complete")
+    if let Some(path) = fractile::config::application_support_path("onboarding-complete")
         && let Some(directory) = path.parent()
     {
         drop(record_completion_at(directory));

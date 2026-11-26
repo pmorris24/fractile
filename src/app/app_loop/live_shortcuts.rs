@@ -1,4 +1,4 @@
-//! `[shortcuts]` applied while Spaceman runs: a changed table re-registers the global hotkeys at
+//! `[shortcuts]` applied while Fractile runs: a changed table re-registers the global hotkeys at
 //! once, and Settings › Shortcuts holds them off while it records a chord.
 
 use crate::shortcuts::Shortcuts;

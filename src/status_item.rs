@@ -130,7 +130,7 @@ thread_local! {
 pub fn install(sender: Sender<Action>) -> Result<(), String> {
     let marker = MainThreadMarker::new().ok_or("status item requires the main thread")?;
     let target = Target::new(sender, marker);
-    let menu = NSMenu::initWithTitle(NSMenu::alloc(marker), &NSString::from_str("Spaceman"));
+    let menu = NSMenu::initWithTitle(NSMenu::alloc(marker), &NSString::from_str("Fractile"));
     let status = plain_item("Starting...", marker);
     status.setEnabled(false);
     status.setHidden(true);
@@ -166,7 +166,7 @@ pub fn install(sender: Sender<Action>) -> Result<(), String> {
     ));
     menu.addItem(&NSMenuItem::separatorItem(marker));
     menu.addItem(&action_item(
-        "Quit Spaceman",
+        "Quit Fractile",
         &target,
         sel!(quit:),
         "q",
@@ -203,7 +203,7 @@ pub fn install(sender: Sender<Action>) -> Result<(), String> {
 }
 
 /// Shows or hides the whole menu bar icon: hidden for `settings.menu_bar_icon = "off"`
-/// (with `[labs] menu_bar_icon_style`). Settings stays reachable by opening Spaceman again.
+/// (with `[labs] menu_bar_icon_style`). Settings stays reachable by opening Fractile again.
 pub fn set_visible(visible: bool) {
     CONTROLLER.with(|controller| {
         if let Some(controller) = controller.borrow().as_ref()
@@ -467,7 +467,7 @@ fn accessibility_description(layouts: &[WorkspaceLayout]) -> Option<String> {
 
 const ACTIVE_ALPHA: f64 = 1.0;
 const PAUSED_ALPHA: f64 = 0.45;
-const PAUSED_ACCESSIBILITY_DESCRIPTION: &str = "Spaceman paused";
+const PAUSED_ACCESSIBILITY_DESCRIPTION: &str = "Fractile paused";
 const PAUSE_BAR_WIDTH: f64 = 2.0;
 const PAUSE_BAR_HEIGHT: f64 = 5.5;
 const PAUSE_BAR_GAP: f64 = 2.0;

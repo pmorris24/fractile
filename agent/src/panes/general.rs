@@ -1,12 +1,12 @@
 //! General pane: Accessibility (only while missing), core preferences, and
 //! configuration. The Workspace HUD's rare refinements open in its Customize sheet.
 
-use rune::{El, Tx, row};
-use rune_kit::SegmentedControl;
-use spaceman::{
+use fractile::{
     app::UiLaunchAtLogin,
     config::{HudPosition, HudStyle, LabFeature, MenuBarIcon, MouseFollowsFocus},
 };
+use rune::{El, Tx, row};
+use rune_kit::SegmentedControl;
 
 use crate::{
     Pane, Sheet, Ui,
@@ -84,7 +84,7 @@ const MENU_BAR_ICONS: [(&str, MenuBarIcon, &str); 3] = [
     (
         "Off",
         MenuBarIcon::Off,
-        "Hidden; open Spaceman again to get here",
+        "Hidden; open Fractile again to get here",
     ),
 ];
 
@@ -108,7 +108,7 @@ pub fn pane(ui: &Ui, p: Paint) -> El {
             let access = controls::setting_row(
                 p,
                 "accessibility",
-                spaceman::permission_guide::list_name(),
+                fractile::permission_guide::list_name(),
                 Some(("Required to move and resize windows".into(), c.warning.fg)),
                 controls::button(
                     p,
@@ -200,7 +200,7 @@ pub fn pane(ui: &Ui, p: Paint) -> El {
                 "Show in Finder",
                 ButtonKind::Secondary,
                 |_: &mut Ui, _: &mut Tx| {
-                    if let Some(path) = spaceman::config::config_path() {
+                    if let Some(path) = fractile::config::config_path() {
                         controls::reveal_in_finder(&path);
                     }
                 },
@@ -247,7 +247,7 @@ fn leave_row(p: Paint, tiling: bool) -> El {
     controls::setting_row(
         p,
         "leave",
-        "Quit Spaceman",
+        "Quit Fractile",
         Some(("Puts every window back first".to_owned(), p.muted())),
         row()
             .key("leave-controls")
@@ -524,7 +524,7 @@ mod tests {
         assert!(ui.doc.hud_stay());
         let on = ui.doc.source();
         assert!(on.contains("hud_stay = true"), "{on}");
-        assert!(spaceman::config::Config::parse(&on).unwrap().hud_stay());
+        assert!(fractile::config::Config::parse(&on).unwrap().hud_stay());
         ui.set_hud_stay(false);
         assert!(!ui.doc.source().contains("hud_stay"));
     }
@@ -543,7 +543,7 @@ mod tests {
             "{enabled}"
         );
         assert!(
-            spaceman::config::Config::parse(&enabled)
+            fractile::config::Config::parse(&enabled)
                 .unwrap()
                 .pause_on_builtin_display()
         );
@@ -553,7 +553,7 @@ mod tests {
         let disabled = ui.doc.source();
         assert!(!disabled.contains("pause_on_builtin_display"), "{disabled}");
         assert!(
-            !spaceman::config::Config::parse(&disabled)
+            !fractile::config::Config::parse(&disabled)
                 .unwrap()
                 .pause_on_builtin_display()
         );

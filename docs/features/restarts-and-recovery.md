@@ -6,7 +6,7 @@ workspaces and layouts; when something looks wrong, find out what happened.
 ## Sub-features
 
 ```ts
-Spaceman restarts, apps keep running                       // recover.resume
+Fractile restarts, apps keep running                       // recover.resume
 └── workspace-state.json valid -> same workspaces, layouts, Fullscreen Layout, last focus
 
 Pause / auto-pause on built-in display / quit / macOS termination   // recover.restore-on-exit
@@ -25,7 +25,7 @@ Crash or hard kill                                         // recover.crash
 
 Placement recall (reboot, fresh start, or app relaunch)     // recover.memory
 ├── Old slots for dead processes retire
-├── During the first 60 s after Spaceman starts, each unseen bundle's first instance may claim
+├── During the first 60 s after Fractile starts, each unseen bundle's first instance may claim
 │   remembered placements
 │   ├── recall closes early once every placement is claimed or the app quits
 │   ├── exact AXDocument, then exact title, then fuzzy title, then frame (8 px), then size (8 px), then creation order
@@ -36,17 +36,17 @@ Placement recall (reboot, fresh start, or app relaunch)     // recover.memory
 ├── An app relaunched mid-session (a reinstall or restart) recalls its placements too: its new
 │   instance appears within 30 s of the old one quitting, or while the old one still owns windows
 │   (a quit is noticed whichever workspace the app was on, visible or hidden)
-├── Kit moves a window back by hand within 120 s of it opening on the active workspace
+├── You move a window back by hand within 120 s of it opening on the active workspace
 │   -> journaled as a wrong placement; its app then recalls its placements on every launch
 └── Arrangement changes recorded after holding 10 s (quitting does not shrink the memory)
 
 Diagnose                                                   // recover.doctor
 ├── Settings › Activity ([labs] activity = true) -> 24h health, recent journal rows, procwatch
 │                                vitals, Save snapshot
-├── spaceman doctor [hours] -> starts, restorations, recalls, wrong placements, anomalies,
+├── fractile doctor [hours] -> starts, restorations, recalls, wrong placements, anomalies,
 │                                last arrangement
-├── spaceman ctl wrong -> marks the journal and snapshots the arrangement right now
-├── spaceman ctl debug / spaceman hud -> live sanitized model
+├── fractile ctl wrong -> marks the journal and snapshots the arrangement right now
+├── fractile ctl debug / fractile hud -> live sanitized model
 └── agent.log (+ .prev) -> decisions, slow worker commands, worker errors (not routine cancellations)
 ```
 
@@ -54,15 +54,15 @@ Diagnose                                                   // recover.doctor
 
 ```ts
 Menu bar: workspaces (switch) | Pause Tiling (pause + restore) | Workspace HUD | Settings... (⌘,)
-          | Quit Spaceman (⌘Q)
+          | Quit Fractile (⌘Q)
 Settings: sidebar foot -> version
 Settings: Activity ([labs] activity = true) -> Journal (Show in Finder) | Save snapshot
-CLI:      spaceman ctl pause | resume | quit | restart | status | debug
-          spaceman doctor [hours]      // reads files directly; works with the agent stopped
-          spaceman hud
+CLI:      fractile ctl pause | resume | quit | restart | status | debug
+          fractile doctor [hours]      // reads files directly; works with the agent stopped
+          fractile hud
 Implicit: macOS restart/log out/shutdown, scripts/install-app.sh,
-          reopening Spaceman.app after a crash
-Files:    ~/Library/Application Support/Spaceman/
+          reopening Fractile.app after a crash
+Files:    ~/Library/Application Support/Fractile/
           ├── workspace-state.json   parked-windows.json   window-memory.json
           └── journal.jsonl(.1)      agent.log(.prev)
 ```
@@ -112,10 +112,10 @@ See [Recovery](../recovery.md) for the safe manual procedure; never delete `park
 
 ## Gotchas
 
-- **Reboot is unproven.** No test or observation yet covers: Spaceman restoring before other apps
+- **Reboot is unproven.** No test or observation yet covers: Fractile restoring before other apps
   save their window positions at shutdown, or memory recall after login. On 2026-10-01 apps
-  relaunched at Spaceman's off-screen parking edge after a reboot, suggesting they saved parked
-  frames; read `spaceman doctor` after the next reboot.
+  relaunched at Fractile's off-screen parking edge after a reboot, suggesting they saved parked
+  frames; read `fractile doctor` after the next reboot.
 - Memory restores the workspace and floating state during a recall, not tile position
   or weight; multi-window apps reopening with identical frames match by `AXDocument` and title
   first, falling back to creation order only when neither distinguishes them.

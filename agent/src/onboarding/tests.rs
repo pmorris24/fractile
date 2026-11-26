@@ -1,6 +1,6 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use spaceman::WorkspaceId;
+use fractile::WorkspaceId;
 
 use super::arrange::{Board, Geometry, Target, Tile};
 use super::conflicts::{Conflict, switch_on};
@@ -19,7 +19,7 @@ fn temp_dir(name: &str) -> std::path::PathBuf {
     static NEXT: AtomicUsize = AtomicUsize::new(0);
     let id = NEXT.fetch_add(1, Ordering::Relaxed);
     let dir = std::env::temp_dir().join(format!(
-        "spaceman-onboarding-test-{name}-{}-{id}",
+        "fractile-onboarding-test-{name}-{}-{id}",
         std::process::id()
     ));
     std::fs::create_dir_all(&dir).unwrap();
@@ -504,7 +504,7 @@ fn arrange_and_start_saves_no_rules_for_utilities_that_float_by_default() {
 
 #[test]
 fn the_worker_inventory_becomes_the_plan_only_while_a_tour_is_open() {
-    use spaceman::onboarding_plan::{Inventory, Lane, OpenApp, OpenWindow};
+    use fractile::onboarding_plan::{Inventory, Lane, OpenApp, OpenWindow};
     let inventory = || Inventory {
         apps: vec![OpenApp {
             bundle_id: TERMINAL.into(),

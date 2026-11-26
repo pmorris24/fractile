@@ -48,7 +48,7 @@ final class Gauntlet {
     let agent: Agent
     let bundle: URL
     let windowDirectory: URL
-    /// Every test window's title starts with this. It must never appear in Spaceman's output.
+    /// Every test window's title starts with this. It must never appear in Fractile's output.
     let titleToken: String
     var windows: [TestWindow] = []
     var display = Rect(x: 0, y: 0, width: 0, height: 0)
@@ -69,10 +69,10 @@ final class Gauntlet {
             try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
         }
         try fileManager.setAttributes([.posixPermissions: 0o700], ofItemAtPath: state.path)
-        // Every app already running is ignored, so Spaceman tiles only the test windows and never moves,
+        // Every app already running is ignored, so Fractile tiles only the test windows and never moves,
         // parks or focuses anything else on the machine.
         let ignored = Set(NSWorkspace.shared.runningApplications.compactMap(\.bundleIdentifier))
-            .subtracting(["anomaly.spaceman", "anomaly.spaceman.gauntlet"])
+            .subtracting(["app.fractile", "app.fractile.gauntlet"])
             .filter { !$0.contains("\"") && !$0.contains("\\") }
             .sorted()
         let rules = ignored.map { "[[rules]]\nbundle_id = \"\($0)\"\naction = \"ignore\"\n" }
@@ -128,7 +128,7 @@ final class Gauntlet {
         fflush(stdout)
     }
 
-    /// Title-free evidence after every step: Spaceman's view and the window server's.
+    /// Title-free evidence after every step: Fractile's view and the window server's.
     private func snapshot(_ entry: StepRecord) {
         var object: [String: Any] = ["step": entry.json]
         object["debug"] = agent.debug()?.raw ?? NSNull()
@@ -167,7 +167,7 @@ final class Gauntlet {
     func ctl(_ arguments: String...) throws {
         let result = agent.ctl(arguments)
         try require(
-            result.ok ? nil : "spaceman ctl \(arguments.joined(separator: " ")) failed: \(result.out)",
+            result.ok ? nil : "fractile ctl \(arguments.joined(separator: " ")) failed: \(result.out)",
             expected: "ctl accepted", measured: result.out)
     }
 
@@ -217,18 +217,18 @@ final class Gauntlet {
         return coverageProblem(frames, display)
     }
 
-    /// Spaceman's tiles on `workspace` are exactly `windows`, the window server agrees with every
+    /// Fractile's tiles on `workspace` are exactly `windows`, the window server agrees with every
     /// frame, and together they cover the display.
     func tilingProblem(_ windows: [TestWindow], workspace: String? = nil) -> String? {
         let workspace = workspace ?? homeWorkspace
-        guard let debug = agent.debug() else { return "spaceman ctl debug failed" }
+        guard let debug = agent.debug() else { return "fractile ctl debug failed" }
         guard let shown = debug.displays.first(where: { $0.workspace == workspace }) else {
             return "workspace \(workspace) is not on any display"
         }
         let tiles = debug.tiles(on: workspace)
         let expected = Set(windows.map(\.id))
         if Set(tiles.keys) != expected {
-            return "Spaceman tiles [\(tiles.keys.map(label).sorted().joined(separator: ","))] on \(workspace), expected [\(windows.map(\.label).joined(separator: ","))]"
+            return "Fractile tiles [\(tiles.keys.map(label).sorted().joined(separator: ","))] on \(workspace), expected [\(windows.map(\.label).joined(separator: ","))]"
         }
         let natives = Native.windows()
         var frames: [(String, Rect)] = []
@@ -236,7 +236,7 @@ final class Gauntlet {
             guard let native = natives[window.id] else { return "\(window.label) is gone from the window server" }
             let tile = tiles[window.id]!
             if !native.bounds.close(to: tile, tolerance: options.tolerance) {
-                return "\(window.label) is at \(native.bounds) but Spaceman's tile is \(tile)"
+                return "\(window.label) is at \(native.bounds) but Fractile's tile is \(tile)"
             }
             frames.append((window.label, native.bounds))
         }
@@ -255,10 +255,10 @@ final class Gauntlet {
         return nil
     }
 
-    /// Focus agrees everywhere: Spaceman's focused window, the frontmost app, and the front window on screen.
+    /// Focus agrees everywhere: Fractile's focused window, the frontmost app, and the front window on screen.
     func focusProblem(_ window: TestWindow) -> String? {
-        guard let debug = agent.debug() else { return "spaceman ctl debug failed" }
-        if debug.focused != window.id { return "Spaceman reports \(label(debug.focused)) focused" }
+        guard let debug = agent.debug() else { return "fractile ctl debug failed" }
+        if debug.focused != window.id { return "Fractile reports \(label(debug.focused)) focused" }
         let frontmost = Native.frontmostPid()
         if frontmost != window.pid {
             return "frontmost app is \(windows.first { $0.pid == frontmost }?.label ?? "pid \(frontmost ?? 0)")"
@@ -293,7 +293,7 @@ final class Gauntlet {
                 "macos": "\(version.majorVersion).\(version.minorVersion).\(version.patchVersion)",
                 "displays": Native.displays().map(\.json),
             ],
-            "spaceman": ["version": agent.version, "app": options.app.path],
+            "fractile": ["version": agent.version, "app": options.app.path],
             "options": ["reflow_budget_ms": options.reflowBudgetMs, "tolerance_pt": options.tolerance],
             "counts": ["pass": passed, "fail": failures, "skip": skipped],
             "steps": records.map(\.json),

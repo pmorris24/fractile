@@ -1,4 +1,4 @@
-// Ground truth from the window server, independent of Spaceman's own observation code.
+// Ground truth from the window server, independent of Fractile's own observation code.
 import AppKit
 import CoreGraphics
 import Foundation
@@ -20,7 +20,7 @@ struct Rect: Equatable, CustomStringConvertible {
         self.init(x: rect.origin.x, y: rect.origin.y, width: rect.width, height: rect.height)
     }
 
-    /// Spaceman's JSON frames: `{"x", "y", "width", "height"}`.
+    /// Fractile's JSON frames: `{"x", "y", "width", "height"}`.
     init?(json: Any?) {
         guard let object = json as? [String: Any],
             let x = number(object["x"]), let y = number(object["y"]),

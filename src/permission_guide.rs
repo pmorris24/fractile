@@ -1,5 +1,5 @@
 //! Accessibility permission guide docked beside System Settings, plus focus
-//! return tracking so Spaceman comes back to the front as soon as trust is
+//! return tracking so Fractile comes back to the front as soon as trust is
 //! granted.
 
 use std::{
@@ -10,30 +10,30 @@ use std::{
 use objc2::MainThreadMarker;
 
 unsafe extern "C" {
-    fn spaceman_show_accessibility_guide();
-    fn spaceman_close_accessibility_guide();
-    fn spaceman_accessibility_guide_active() -> bool;
-    fn spaceman_accessibility_list_name() -> *const c_char;
-    fn spaceman_accessibility_drag_supported() -> bool;
-    fn spaceman_permission_settings_state() -> i32;
-    fn spaceman_prompt_accessibility_trust() -> bool;
+    fn fractile_show_accessibility_guide();
+    fn fractile_close_accessibility_guide();
+    fn fractile_accessibility_guide_active() -> bool;
+    fn fractile_accessibility_list_name() -> *const c_char;
+    fn fractile_accessibility_drag_supported() -> bool;
+    fn fractile_permission_settings_state() -> i32;
+    fn fractile_prompt_accessibility_trust() -> bool;
 }
 
 /// How long after a grant System Settings may take to come back to the front
-/// (for example while a Touch ID or password sheet closes) before Spaceman
+/// (for example while a Touch ID or password sheet closes) before Fractile
 /// stops waiting to return.
 pub const RETURN_FROM_SETTINGS_WINDOW: Duration = Duration::from_secs(3);
 
-/// Main-thread snapshot of System Settings and Spaceman window focus.
+/// Main-thread snapshot of System Settings and Fractile window focus.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct SettingsFocus {
     pub settings_open: bool,
     pub settings_frontmost: bool,
-    pub spaceman_active: bool,
+    pub fractile_active: bool,
 }
 
-/// Brings Spaceman back after the user grants Accessibility in System Settings,
-/// so the onboarding tour's auto-advance is immediately visible. Spaceman
+/// Brings Fractile back after the user grants Accessibility in System Settings,
+/// so the onboarding tour's auto-advance is immediately visible. Fractile
 /// returns only while System Settings is still frontmost: someone who switched
 /// to another app keeps it.
 #[derive(Clone, Copy, Debug, Default)]
@@ -51,12 +51,12 @@ impl ReturnFromSettings {
         self.granted_at.is_some()
     }
 
-    /// Returns `true` when Spaceman should be brought back to the front now.
+    /// Returns `true` when Fractile should be brought back to the front now.
     pub fn poll(&mut self, now: Instant, focus: SettingsFocus) -> bool {
         let Some(granted_at) = self.granted_at else {
             return false;
         };
-        if focus.spaceman_active
+        if focus.fractile_active
             || now.saturating_duration_since(granted_at) > RETURN_FROM_SETTINGS_WINDOW
         {
             self.granted_at = None;
@@ -70,12 +70,12 @@ impl ReturnFromSettings {
     }
 }
 
-/// Opens System Settings' Accessibility pane and docks Spaceman's floating drag
-/// guide beside it (with a flying-tile handoff when clicked from Spaceman).
+/// Opens System Settings' Accessibility pane and docks Fractile's floating drag
+/// guide beside it (with a flying-tile handoff when clicked from Fractile).
 pub fn show() {
     if MainThreadMarker::new().is_some() {
         // SAFETY: Verified on the main thread; the Objective-C helper owns its panel state.
-        unsafe { spaceman_show_accessibility_guide() };
+        unsafe { fractile_show_accessibility_guide() };
     }
 }
 
@@ -83,7 +83,7 @@ pub fn show() {
 pub fn close() {
     if MainThreadMarker::new().is_some() {
         // SAFETY: Verified on the main thread; idempotent when no guide is open.
-        unsafe { spaceman_close_accessibility_guide() };
+        unsafe { fractile_close_accessibility_guide() };
     }
 }
 
@@ -91,7 +91,7 @@ pub fn close() {
 #[must_use]
 pub fn active() -> bool {
     // SAFETY: Verified on the main thread before touching Objective-C panel state.
-    MainThreadMarker::new().is_some() && unsafe { spaceman_accessibility_guide_active() }
+    MainThreadMarker::new().is_some() && unsafe { fractile_accessibility_guide_active() }
 }
 
 /// The name System Settings gives the Accessibility list: `"Accessibility"`
@@ -100,11 +100,11 @@ pub fn active() -> bool {
 #[must_use]
 pub fn list_name() -> &'static str {
     // SAFETY: Returns a static NUL-terminated ASCII string literal from Objective-C.
-    let name = unsafe { CStr::from_ptr(spaceman_accessibility_list_name()) };
+    let name = unsafe { CStr::from_ptr(fractile_accessibility_list_name()) };
     name.to_str().unwrap_or("Accessibility")
 }
 
-/// Whether System Settings accepts dragging Spaceman's tile into its list.
+/// Whether System Settings accepts dragging Fractile's tile into its list.
 ///
 /// macOS 27.3's System & App Protection Override rejects dropped tiles: it asks
 /// for a click on the Privacy & Security notification instead, and apps are
@@ -113,7 +113,7 @@ pub fn list_name() -> &'static str {
 #[must_use]
 pub fn drag_supported() -> bool {
     // SAFETY: Pure operating-system version check in Objective-C; no shared state.
-    unsafe { spaceman_accessibility_drag_supported() }
+    unsafe { fractile_accessibility_drag_supported() }
 }
 
 /// What to do in System Settings while Accessibility is still missing. The
@@ -126,9 +126,9 @@ pub fn add_instructions() -> String {
 
 fn instructions(list: &str, drag: bool) -> String {
     if drag {
-        format!("Drag Spaceman into the {list} list, or switch it on in System Settings.")
+        format!("Drag Fractile into the {list} list, or switch it on in System Settings.")
     } else {
-        format!("Click the Privacy & Security notification, or add Spaceman in {list}.")
+        format!("Click the Privacy & Security notification, or add Fractile in {list}.")
     }
 }
 
@@ -138,22 +138,22 @@ fn instructions(list: &str, drag: bool) -> String {
 pub fn prompt_accessibility_trust() -> bool {
     // SAFETY: Objective-C helper builds an owned options dictionary and calls
     // `AXIsProcessTrustedWithOptions`.
-    unsafe { spaceman_prompt_accessibility_trust() }
+    unsafe { fractile_prompt_accessibility_trust() }
 }
 
 /// Reads whether System Settings has an on-screen window, whether System
-/// Settings is frontmost, and whether Spaceman is active. Main thread only.
+/// Settings is frontmost, and whether Fractile is active. Main thread only.
 #[must_use]
 pub fn settings_focus() -> SettingsFocus {
     if MainThreadMarker::new().is_none() {
         return SettingsFocus::default();
     }
     // SAFETY: Verified on the main thread; returns a bitmask of AppKit/CG state.
-    let bits = unsafe { spaceman_permission_settings_state() };
+    let bits = unsafe { fractile_permission_settings_state() };
     SettingsFocus {
         settings_open: bits & 1 != 0,
         settings_frontmost: bits & 2 != 0,
-        spaceman_active: bits & 4 != 0,
+        fractile_active: bits & 4 != 0,
     }
 }
 
@@ -207,13 +207,13 @@ struct GuideWindowAnalysis {
 
 #[cfg(test)]
 unsafe extern "C" {
-    fn spaceman_permission_guide_origin(
+    fn fractile_permission_guide_origin(
         settings: GuideRect,
         visible: GuideRect,
         panel: GuideSize,
         protected_mode: bool,
     ) -> GuidePoint;
-    fn spaceman_permission_guide_analyze_windows(
+    fn fractile_permission_guide_analyze_windows(
         windows: *const GuideWindowInfo,
         count: usize,
         self_pid: i32,
@@ -232,13 +232,13 @@ mod tests {
         protected_mode: bool,
     ) -> GuidePoint {
         // SAFETY: Pure value-type geometry calculation in `native/permission_guide.m`.
-        unsafe { spaceman_permission_guide_origin(settings, visible, panel, protected_mode) }
+        unsafe { fractile_permission_guide_origin(settings, visible, panel, protected_mode) }
     }
 
     fn analyze_windows(windows: &[GuideWindowInfo], self_pid: i32) -> GuideWindowAnalysis {
         // SAFETY: Passes a valid slice pointer and length to the pure C analyzer.
         unsafe {
-            spaceman_permission_guide_analyze_windows(windows.as_ptr(), windows.len(), self_pid, 8)
+            fractile_permission_guide_analyze_windows(windows.as_ptr(), windows.len(), self_pid, 8)
         }
     }
 
@@ -264,22 +264,22 @@ mod tests {
     }
 
     #[test]
-    fn return_from_settings_brings_spaceman_back_only_from_system_settings() {
+    fn return_from_settings_brings_fractile_back_only_from_system_settings() {
         let t0 = Instant::now();
         let in_settings = SettingsFocus {
             settings_open: true,
             settings_frontmost: true,
-            spaceman_active: false,
+            fractile_active: false,
         };
         let sheet_closing = SettingsFocus {
             settings_open: true,
             settings_frontmost: false,
-            spaceman_active: false,
+            fractile_active: false,
         };
-        let back_in_spaceman = SettingsFocus {
+        let back_in_fractile = SettingsFocus {
             settings_open: true,
             settings_frontmost: false,
-            spaceman_active: true,
+            fractile_active: true,
         };
 
         let mut returning = ReturnFromSettings::default();
@@ -304,9 +304,9 @@ mod tests {
         assert!(!returning.poll(t0 + Duration::from_secs(4), in_settings));
         assert!(!returning.is_pending());
 
-        // Already active in Spaceman cancels cleanly.
+        // Already active in Fractile cancels cleanly.
         returning.note_granted(t0);
-        assert!(!returning.poll(t0, back_in_spaceman));
+        assert!(!returning.poll(t0, back_in_fractile));
         assert!(!returning.is_pending());
     }
 
@@ -330,11 +330,11 @@ mod tests {
     fn instructions_follow_each_macos_tier() {
         // macOS 14 through 26.
         let legacy = instructions("Accessibility", true);
-        assert!(legacy.contains("Drag Spaceman into the Accessibility list"));
+        assert!(legacy.contains("Drag Fractile into the Accessibility list"));
 
         // macOS 27.0 through 27.2: renamed, still draggable.
         let renamed = instructions("Device Control and Data Access", true);
-        assert!(renamed.contains("Drag Spaceman into the Device Control and Data Access list"));
+        assert!(renamed.contains("Drag Fractile into the Device Control and Data Access list"));
 
         // macOS 27.3: no drag, so the copy points at the notification instead.
         let protected = instructions("System & App Protection Override", false);
@@ -486,7 +486,7 @@ mod tests {
         let with_xpc_sheet = analyze_windows(&[xpc_sheet, main], 999);
         assert!(with_xpc_sheet.has_blocking_sheet_or_prompt);
 
-        // Regular app behind System Settings, Spaceman's own panel, and another display's window
+        // Regular app behind System Settings, Fractile's own panel, and another display's window
         // must not hide the guide.
         let own_panel = GuideWindowInfo {
             pid: 999,

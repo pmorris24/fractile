@@ -41,7 +41,7 @@ impl MainThreadAgent {
                 ),
                 ControlCommand::Queue(_) => Err("automatic tiling is paused".into()),
                 ControlCommand::Restart if self.worker.is_busy() => {
-                    Err("Spaceman is busy; retry restart".into())
+                    Err("Fractile is busy; retry restart".into())
                 }
                 ControlCommand::Restart => self.queue_action(Action::Restart, "restart queued"),
                 ControlCommand::Pause if self.automatic => {
@@ -65,6 +65,6 @@ impl MainThreadAgent {
         self.actions_sender
             .send(action)
             .map(|()| ack.into())
-            .map_err(|_| "Spaceman agent is stopping".into())
+            .map_err(|_| "Fractile agent is stopping".into())
     }
 }

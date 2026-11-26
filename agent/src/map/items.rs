@@ -2,7 +2,7 @@
 //! for each window open there now. An app with two windows open shows twice; an app a rule
 //! sends there shows even with none open; a window no rule sent shows too.
 
-use spaceman::{WorkspaceId, app::UiWorkspaceWindows};
+use fractile::{WorkspaceId, app::UiWorkspaceWindows};
 
 use crate::rules::Rule;
 
@@ -67,7 +67,7 @@ pub(super) fn items(rules: &[Rule], open: &[String]) -> Vec<Item> {
 
 /// Open windows for stills: two Safari windows on 1, two Firefox windows and Slack on 2.
 pub(super) fn fixture() -> Vec<UiWorkspaceWindows> {
-    use spaceman::{
+    use fractile::{
         Rect,
         app::{UiHudTile, UiHudWorkspace},
     };

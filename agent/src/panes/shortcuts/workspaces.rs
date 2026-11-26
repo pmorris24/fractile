@@ -2,7 +2,7 @@
 //! `defaults = false`, and `modifier` for numbered (1–10) and enabled named (A–Z) workspaces,
 //! matching the hotkey planner's precedence (`src/hotkeys.rs`).
 
-use spaceman::{
+use fractile::{
     WorkspaceId,
     shortcuts::{Chord, Command, Key, Modifiers, Shortcuts},
 };
@@ -269,12 +269,12 @@ fn consecutive_runs(numbers: &[u8]) -> Vec<(u8, u8)> {
 
 #[cfg(test)]
 mod tests {
-    use spaceman::shortcuts::parse_chord;
+    use fractile::shortcuts::parse_chord;
 
     use super::*;
 
     fn parse(body: &str) -> Shortcuts {
-        spaceman::config::Config::parse(&format!("version = 1\n{body}"))
+        fractile::config::Config::parse(&format!("version = 1\n{body}"))
             .unwrap()
             .shortcuts()
             .clone()

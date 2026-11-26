@@ -1,6 +1,6 @@
 # Compatibility
 
-Spaceman is macOS-only. The app plist declares macOS 14.0 as its minimum, but the declared minimum,
+Fractile is macOS-only. The app plist declares macOS 14.0 as its minimum, but the declared minimum,
 newer macOS releases, and supported CPU architectures have not yet been validated on clean machines.
 Treat compatibility as experimental rather than guaranteed.
 
@@ -23,7 +23,7 @@ Accessibility grants live in **System Settings > Privacy & Security**. The list 
 app tile in that list, so the setup guide asks for a click on the Privacy & Security notification or
 the list's `+` button instead.
 
-Spaceman observes normal-level (`kCGWindowLayer = 0`) Accessibility elements with role `AXWindow`
+Fractile observes normal-level (`kCGWindowLayer = 0`) Accessibility elements with role `AXWindow`
 and subrole `AXStandardWindow` that are on screen, not minimized, not in native fullscreen, centered
 on an attached display, and expose a settable position. Standard windows with a fullscreen button
 (or borderless regular-app windows without close/fullscreen buttons, such as Ghostty with
@@ -42,7 +42,7 @@ logical workspace. A `tile` rule tiles any of them, though a window that cannot 
 size inside its tile. Always-on-top overlays at non-zero window layers (`kCGWindowLayer != 0`, such
 as popped-out Slack Huddles and Picture-in-Picture windows), buttonless accessory-application
 windows, utility panels, dialogs with other subroles, and applications with incomplete or unusual
-Accessibility implementations remain global and are ignored so Spaceman never fights their bounds.
+Accessibility implementations remain global and are ignored so Fractile never fights their bounds.
 
 Some applications reposition their own windows. If a parked window reappears on screen while its
 application is frontmost, the user summoned it: the stale recovery frame is discarded and the window —
@@ -55,15 +55,15 @@ If an application undoes several re-parks in a row, the
 reappearance is honored after all and the window is re-homed. A window whose reappearance is honored
 twice within five minutes becomes parking-exempt for the rest of the session: it remains owned and
 tiled on its workspace, but is left visible when another workspace is active rather than being fought
-indefinitely. Parking-exempt windows appear in the `parking_exempt` list of `spaceman ctl debug`; an
+indefinitely. Parking-exempt windows appear in the `parking_exempt` list of `fractile ctl debug`; an
 `ignore` config rule instead opts an application out of management permanently. If a newly identified
-frontmost window appears at the bottom-corner position produced by Spaceman parking, it is
+frontmost window appears at the bottom-corner position produced by Fractile parking, it is
 revealed so normal workspace adoption can recover an app that relaunched with stale saved bounds.
 Other windows an application keeps off screen itself are left alone rather than parked, and never
 recorded as recovery frames.
 
 Apps run as a bare executable rather than opened as an `.app` (for example a development build
-started from a terminal) have no LaunchServices launch date; Spaceman tells their process
+started from a terminal) have no LaunchServices launch date; Fractile tells their process
 incarnations apart by kernel process start time instead and manages their windows like any other.
 
 Native tabs in any app (Finder, Safari, Terminal and others) keep their tile when the evidence is
@@ -71,7 +71,7 @@ unambiguous: one window of the app leaves, one arrives in its place with focus a
 and the tile keeps its slot, order and place. Ghostty native tabs are the primary
 stable-logical-window target: only for Ghostty does ambiguous evidence hold the slot for a bounded
 settle; for other apps it is treated as one window closing and another opening. Replacement is
-conservative: when the evidence is ambiguous, Spaceman never guesses which window replaced which.
+conservative: when the evidence is ambiguous, Fractile never guesses which window replaced which.
 
 Unresolved Ghostty slots still count toward application workspace affinity, and pending replacement
 candidates are reserved against adoption by another workspace while reconciliation settles.
@@ -90,5 +90,5 @@ display. Empty gaps between
 staggered displays are not treated as a window reappearing on screen. Native clamping and application
 behavior still require live qualification on a particular display arrangement.
 
-Spaceman uses the private `_AXUIElementGetWindow` symbol. It requires no SIP change, but an OS update
+Fractile uses the private `_AXUIElementGetWindow` symbol. It requires no SIP change, but an OS update
 could remove or alter that symbol. Mac App Store distribution is not supported.

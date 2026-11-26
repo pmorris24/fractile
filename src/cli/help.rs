@@ -1,5 +1,5 @@
 pub(crate) fn version() -> String {
-    format!("spaceman {}", spaceman::build_version())
+    format!("fractile {}", fractile::build_version())
 }
 
 pub(crate) fn is_help_flag(arg: &str) -> bool {
@@ -45,15 +45,15 @@ pub(crate) fn root_usage(executable: &str) -> String {
 pub(crate) fn root(executable: &str) -> String {
     let mut sections = vec![
         format!(
-            "Spaceman {} — macOS tiling window manager",
-            spaceman::build_version()
+            "Fractile {} — macOS tiling window manager",
+            fractile::build_version()
         ),
         String::new(),
         format!("Usage: {executable} <command> [args...]"),
         String::new(),
         "Options:".into(),
-        "  -h, --help                 Show help for spaceman or a subcommand".into(),
-        "  -V, --version              Print the spaceman version".into(),
+        "  -h, --help                 Show help for fractile or a subcommand".into(),
+        "  -V, --version              Print the fractile version".into(),
         String::new(),
         "Configuration:".into(),
         "  config <subcommand>        Inspect, validate, and edit config.toml atomically".into(),
@@ -66,8 +66,8 @@ pub(crate) fn root(executable: &str) -> String {
         sections.extend([
             String::new(),
             "Live Agent Control:".into(),
-            "  ctl <command> [args...]    Send a command to the running Spaceman agent".into(),
-            "  open <url-or-target>       Open Settings to a spaceman:// deep link or pane".into(),
+            "  ctl <command> [args...]    Send a command to the running Fractile agent".into(),
+            "  open <url-or-target>       Open Settings to a fractile:// deep link or pane".into(),
             "  displays                   List connected displays as JSON".into(),
             "  snapshot                   Capture a dry-run window observation as JSON".into(),
             "  hud                        Stream live workspace state in the terminal".into(),
@@ -83,11 +83,11 @@ pub(crate) fn root(executable: &str) -> String {
         "Diagnostics & Testing:".into(),
         "  doctor [hours]             Summarize the arrangement journal".into(),
         "  replay <fixture.json>      Replay a recorded observation fixture".into(),
-        "  help [command]             Show help for spaceman or a command".into(),
+        "  help [command]             Show help for fractile or a command".into(),
         String::new(),
         "Environment:".into(),
-        "  SPACEMAN_CONFIG            Override the path to config.toml".into(),
-        "  SPACEMAN_APPLICATION_SUPPORT".into(),
+        "  FRACTILE_CONFIG            Override the path to config.toml".into(),
+        "  FRACTILE_APPLICATION_SUPPORT".into(),
         "                             Override the Application Support directory".into(),
         String::new(),
         format!("Run '{executable} <command> --help' for command details."),
@@ -104,10 +104,10 @@ pub(crate) fn subcommand(executable: &str, name: &str) -> Option<String> {
         "ctl" => ctl_help(executable),
         #[cfg(target_os = "macos")]
         "open" => format!(
-            "Open Spaceman Settings on a specific pane, feature, or Lab via control.sock.\n\nUsage:\n  {executable} open <url-or-target>\n\nExamples:\n  {executable} open spaceman://settings/workspaces\n  {executable} open spaceman://labs/scrolling-strip\n  {executable} open spaceman://features/gaps\n  {executable} open rules\n\nNotes:\n  - Deep links only open Settings and highlight a target; they never mutate config.toml."
+            "Open Fractile Settings on a specific pane, feature, or Lab via control.sock.\n\nUsage:\n  {executable} open <url-or-target>\n\nExamples:\n  {executable} open fractile://settings/workspaces\n  {executable} open fractile://labs/scrolling-strip\n  {executable} open fractile://features/gaps\n  {executable} open rules\n\nNotes:\n  - Deep links only open Settings and highlight a target; they never mutate config.toml."
         ),
         "config-check" => format!(
-            "Validate a Spaceman configuration file.\n\nUsage:\n  {executable} config-check <config.toml>"
+            "Validate a Fractile configuration file.\n\nUsage:\n  {executable} config-check <config.toml>"
         ),
         "doctor" => format!(
             "Summarize the arrangement journal written by the running agent.\n\nUsage:\n  {executable} doctor [hours]\n\nArguments:\n  [hours]    Optional lookback window in hours (positive integer)"
@@ -150,7 +150,7 @@ pub(crate) fn subcommand(executable: &str, name: &str) -> Option<String> {
 
 pub(crate) fn config_help(executable: &str) -> String {
     [
-        "Inspect, validate, and edit Spaceman's config.toml atomically.",
+        "Inspect, validate, and edit Fractile's config.toml atomically.",
         "",
         "Usage:",
         &format!("  {executable} config path [--json]"),
@@ -199,7 +199,7 @@ pub(crate) fn config_help(executable: &str) -> String {
         "  labs.focus_follows_mouse    true | false  The tile the pointer rests on takes focus",
         "",
         "Notes:",
-        "  - Respects SPACEMAN_CONFIG and SPACEMAN_APPLICATION_SUPPORT.",
+        "  - Respects FRACTILE_CONFIG and FRACTILE_APPLICATION_SUPPORT.",
         "  - Every write is validated against version-1 schema and replaced atomically.",
         "  - 'reset' removes a key, and any table it empties, back to its default.",
     ]
@@ -253,7 +253,7 @@ pub(crate) fn workspaces_help(executable: &str) -> String {
         "  - 'secondary' and 'tertiary' are the non-main displays, left to right. With two",
         "    displays, 'tertiary' workspaces show on the secondary display.",
         "  - Named workspaces A-Z are opt-in and default to 'main'.",
-        "  - Use 'spaceman displays' to inspect display names and UUIDs.",
+        "  - Use 'fractile displays' to inspect display names and UUIDs.",
     ]
     .join("\n")
 }
@@ -261,7 +261,7 @@ pub(crate) fn workspaces_help(executable: &str) -> String {
 #[cfg(target_os = "macos")]
 pub(crate) fn ctl_help(executable: &str) -> String {
     [
-        "Send a live control command to the running Spaceman agent over control.sock.",
+        "Send a live control command to the running Fractile agent over control.sock.",
         "",
         "Usage:",
         &format!("  {executable} ctl <command> [args...]"),
@@ -307,8 +307,8 @@ pub(crate) fn ctl_help(executable: &str) -> String {
         "Agent & UI:",
         "  pause | resume             Pause (and restore windows) or resume tiling",
         "  wrong                      Record an anomaly marker in the arrangement journal",
-        "  open <url-or-target>       Open Settings on a spaceman:// link, pane, feature, or Lab",
-        "  open-settings              Open the Spaceman Settings window",
+        "  open <url-or-target>       Open Settings on a fractile:// link, pane, feature, or Lab",
+        "  open-settings              Open the Fractile Settings window",
         "  open-accessibility         Open Accessibility onboarding / System Settings",
         "  toggle-launch-at-login     Toggle Launch at Login registration",
         "  restart | quit             Restore parked windows and exit the agent (does not relaunch)",

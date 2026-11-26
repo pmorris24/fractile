@@ -57,7 +57,7 @@ pub(crate) struct WorkspaceState {
     pub(super) slots: Vec<Vec<SavedSlot>>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub(super) floating: Vec<(crate::PhysicalWindowId, WorkspaceId)>,
-    /// Floating windows pinned by hand (`spaceman ctl pin`) to show on every workspace.
+    /// Floating windows pinned by hand (`fractile ctl pin`) to show on every workspace.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub(super) pinned: Vec<crate::PhysicalWindowId>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]

@@ -68,7 +68,7 @@ pub(super) fn is_window_resize(start: Rect, current: Rect) -> bool {
 
 /// The pointer carried the window: on one axis both of its edges moved the way
 /// the pointer went, even if the app changed its size as it landed (#429). A
-/// border drag leaves the opposite edge where it was, and a window Spaceman
+/// border drag leaves the opposite edge where it was, and a window Fractile
 /// moved (parking) did not follow the pointer.
 fn carried(start: Rect, current: Rect, travel: (i32, i32)) -> bool {
     let along = |leading: i32, trailing: i32, pointer: i32| {

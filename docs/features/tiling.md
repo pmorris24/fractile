@@ -29,7 +29,7 @@ Focus                                                   // tile.focus
 ├── For 250 ms after a focus command, a report of a window it left (or of no window at all) still
 │   counts as its target: quick presses, numbered moves, Option+Tab, Dwindle's next split and focus
 │   follow all start from the window just focused
-└── ctl debug and spaceman hud print the targets these keys go to, from the same resolver
+└── ctl debug and fractile hud print the targets these keys go to, from the same resolver
 
 Reorder                                                 // tile.reorder
 ├── Option+Shift+H/J/K/L / ctl move-direction <dir> -> swap/move within the tree
@@ -70,10 +70,10 @@ Spacing                                                 // tile.spacing
 ```ts
 Keyboard: Option+H/J/K/L, Option+Shift+H/J/K/L, Option+`, Option+-, Option+=, Option+/
 Pointer:  drag a managed window (reorder/nest/move display), drag its edge (resize)
-CLI:      spaceman ctl focus | move-direction | resize shrink|grow|width|height | balance | layout | retile
+CLI:      fractile ctl focus | move-direction | resize shrink|grow|width|height | balance | layout | retile
 Shortcut: [shortcuts.bindings] can bind any of those, e.g. "ctrl+alt+w" = "resize width 1200"
 Settings: Settings › Layout -> New windows (Dwindle | Columns), Window gaps (Customize separately: Between windows, Screen edges, Top/Bottom/Left/Right edge), Wide displays: Single-window width (and, with Labs › Windows › Single-window height, Single-window height)
-Config:   spaceman config set layout dwindle|columns; spaceman config set gaps.inner|gaps.outer|gaps.top|gaps.bottom|gaps.left|gaps.right|single_window_max_width|single_window_max_height <points>
+Config:   fractile config set layout dwindle|columns; fractile config set gaps.inner|gaps.outer|gaps.top|gaps.bottom|gaps.left|gaps.right|single_window_max_width|single_window_max_height <points>
 ```
 
 Input arriving while the worker is busy queues in order (up to 64); queued input is dropped on
@@ -178,7 +178,7 @@ pause, quit, or hotkey loss.
   a pointer resize, keyboard resize, `resize width` and balance through gaps.
   `src/app/tests/spacing.rs` covers the frames the runtime applies, `outer` with one edge at zero
   included. `src/config.rs` and `src/cli/tests.rs` cover parsing, `outer`'s fallback and its
-  explicit edges, range errors and `spaceman config`; `agent/src/rules/tests.rs` covers Settings ›
+  explicit edges, range errors and `fractile config`; `agent/src/rules/tests.rs` covers Settings ›
   Layout saves that keep comments, keep `outer` and its explicit zeros, and restore the file.
 - `src/reconcile/tests.rs` `finder_tab_replacement_keeps_its_slot_and_place_in_the_row`: a
   non-Ghostty tab change keeps the tile's slot and order.
@@ -198,19 +198,19 @@ pause, quit, or hotkey loss.
 
 - Settings › Rules shows a `tile` rule only for a built-in float, as `· tiled` on its chip under
   `Floating by default`. Tiling is the default for every other app, so the map has nowhere to
-  draw its tile rule: edit those with `spaceman rules` or `config.toml`. The Workspace HUD's
+  draw its tile rule: edit those with `fractile rules` or `config.toml`. The Workspace HUD's
   `Float`, `Pin` and `Always open` items replace an app's tile rule.
-- Tests check requested frames; apps with minimum sizes may refuse them. Spaceman grows such a
+- Tests check requested frames; apps with minimum sizes may refuse them. Fractile grows such a
   window's tile to the size it kept, taking the space from its siblings in proportion to what each
   can spare, and logs a `minimum size:` line in `agent.log`. Minimums are learned per window, only
-  from refusals visible right after the write, and kept until the window closes or Spaceman
+  from refusals visible right after the write, and kept until the window closes or Fractile
   restarts. Apps that clamp
   later (Electron aspect ratios) are still recorded as constrained instead of fought every cycle.
-  If the requested split cannot fit, Spaceman tries grouping one adjacent pair of root children
+  If the requested split cannot fit, Fractile tries grouping one adjacent pair of root children
   on the other axis. It checks both width and height and keeps window order. Automatic fits
   are temporary; the requested layout returns when it fits again. A resize or balance while a
   pair is stacked changes only the stack shown, never the saved split. If no pair solves the shortage,
-  windows may overlap. A sustained overlap involving a constrained tile appears in `spaceman doctor`
+  windows may overlap. A sustained overlap involving a constrained tile appears in `fractile doctor`
   as `constrained_overlap`.
 - A swap, a drag-nest, a display-edge column drop, or a perpendicular move while tiles are
   temporarily stacked edits the saved layout; the stack is then recomputed from it, so the result

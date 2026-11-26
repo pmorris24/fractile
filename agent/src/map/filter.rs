@@ -209,6 +209,6 @@ pub fn sheet(ui: &Ui, draft: &FilterDraft, p: Paint, layer: &mut Vec<El>) {
 /// Safari being added to workspace 3 with `filter` typed, for stills.
 pub(super) fn fixture_sheet(ui: &mut Ui, filter: &str) {
     ui.apps.get(SAFARI);
-    ui.add_app(SAFARI, Place::Workspace(spaceman::WorkspaceId::THREE));
+    ui.add_app(SAFARI, Place::Workspace(fractile::WorkspaceId::THREE));
     ui.title_filter = TextEdit::new(filter);
 }

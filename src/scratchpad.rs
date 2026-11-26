@@ -11,7 +11,7 @@
 
 use crate::{PhysicalWindowId, Rect, WorkspaceId};
 
-/// What a Scratchpad shortcut or `spaceman ctl scratchpad …` asks for.
+/// What a Scratchpad shortcut or `fractile ctl scratchpad …` asks for.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ScratchpadCommand {
     /// Summon the next scratchpad window onto the focused display, or hide the one shown there.

@@ -3,7 +3,7 @@
 use serde::{Deserialize, Serialize};
 
 /// The `[labs]` table: experimental features, each behind its own switch and off by default.
-/// With every switch off Spaceman behaves exactly as if Labs did not exist.
+/// With every switch off Fractile behaves exactly as if Labs did not exist.
 #[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct LabsConfig {

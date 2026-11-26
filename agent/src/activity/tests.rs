@@ -1,4 +1,4 @@
-use spaceman::{
+use fractile::{
     WorkspaceId,
     journal::{Anomaly, AnomalyKind, AnomalyState, JournalEvent, JournalLine, PlacementSource},
 };

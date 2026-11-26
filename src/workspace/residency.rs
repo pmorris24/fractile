@@ -34,7 +34,7 @@ pub(crate) enum FloatCause {
 /// Who pinned a float to every workspace of its display.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub(crate) struct Pin {
-    /// `spaceman ctl pin`; persisted.
+    /// `fractile ctl pin`; persisted.
     pub(crate) by_hand: bool,
     /// A `pin` rule on the latest observation; recomputed, never persisted.
     pub(crate) by_rule: bool,
@@ -116,7 +116,7 @@ impl WindowTable {
 }
 
 impl Workspaces {
-    /// Where `window` lives, if Spaceman manages it.
+    /// Where `window` lives, if Fractile manages it.
     #[must_use]
     pub(crate) fn residency(&self, window: &PhysicalWindowId) -> Option<Residency> {
         self.workspace_of(window)

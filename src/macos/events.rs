@@ -140,7 +140,7 @@ impl WindowEventMonitor {
         let thread_invalidation = Arc::clone(&invalidation);
         let thread_stopped = Arc::clone(&stopped);
         let thread = thread::Builder::new()
-            .name("spaceman-ax-events".into())
+            .name("fractile-ax-events".into())
             .spawn(move || run_event_loop(reader, &thread_invalidation, &thread_stopped))
             .ok();
         let workspace_observers = observe_workspace(&invalidation, &waker);

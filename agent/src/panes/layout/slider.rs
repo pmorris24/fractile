@@ -1,8 +1,8 @@
 //! A points slider for one spacing value. Dragging only redraws the preview; letting go saves
 //! `config.toml` once, and the arrow keys step and save a point at a time.
 
+use fractile::spacing::Spacing;
 use rune::{Align, Drag, El, Phase, Tx, el, row, text};
-use spaceman::spacing::Spacing;
 
 use crate::{Ui, controls::Paint};
 

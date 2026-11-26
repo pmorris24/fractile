@@ -3,11 +3,11 @@
 //! than moving windows. Esc cancels, ⌫ unbinds, and a chord without ⌥, ⌃ or ⌘, or one another
 //! shortcut uses, keeps listening and says why.
 
-use rune::{Mods, PhysicalInput, PhysicalKeyCode};
-use spaceman::{
+use fractile::{
     WorkspaceId,
     shortcuts::{self, Chord, Modifiers, Shortcuts},
 };
+use rune::{Mods, PhysicalInput, PhysicalKeyCode};
 
 use super::catalog::{self, Action, Occupant};
 use crate::Ui;

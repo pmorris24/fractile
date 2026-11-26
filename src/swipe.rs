@@ -10,7 +10,7 @@ const DOMINANCE: f64 = 2.0;
 /// A gap this long between frames means the swipe's end was missed.
 const STALE_SECONDS: f64 = 0.5;
 
-/// How many fingers made a swipe. Spaceman steps workspaces on the count
+/// How many fingers made a swipe. Fractile steps workspaces on the count
 /// `Config::swipe_fingers` picks and leaves the other to macOS.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Fingers {

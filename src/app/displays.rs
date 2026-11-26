@@ -81,7 +81,7 @@ impl<B: WorkspaceBackend> WorkspaceRuntime<B> {
             } else {
                 self.displays.known.clone()
             };
-            // macOS moves windows off a removed display, and Spaceman parks and
+            // macOS moves windows off a removed display, and Fractile parks and
             // restores them: a frame read back against a target applied before
             // the change says nothing about what the app accepts, so it must
             // not freeze the tile as refused.

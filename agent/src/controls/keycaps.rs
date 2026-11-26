@@ -3,9 +3,9 @@
 //! the card. A held key sinks its face into the skirt; the key's bounds never change. Sizes are
 //! `KEYS` (`tokens.rs`).
 
+use fractile::shortcuts::Chord;
 use rune::{Color, Edge, El, Shadow, Spring, SpringPair, TextStyle, Transition, col, row, text};
 use rune_kit::Kit;
-use spaceman::shortcuts::Chord;
 
 use super::{KEYS, Paint};
 

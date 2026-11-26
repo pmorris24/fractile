@@ -1,5 +1,5 @@
 //! #203: a tile whose display disconnects before its layout settles returns
-//! to its tile when the display reconnects. Spaceman and macOS moved it, not
+//! to its tile when the display reconnects. Fractile and macOS moved it, not
 //! its app, so that position is no refusal of the tile.
 use super::*;
 use std::time::Duration;

@@ -1,7 +1,7 @@
 //! The shortcuts Settings › Shortcuts can rebind, each with its built-in chord, and what a
 //! chord does now under `[shortcuts]`.
 
-use spaceman::{
+use fractile::{
     WorkspaceId,
     shortcuts::{self, Chord, Command, Key, Modifiers, Shortcuts},
 };
@@ -12,7 +12,7 @@ pub struct Action {
     /// Stable, for element keys and the recorder.
     pub id: &'static str,
     pub title: &'static str,
-    /// In `spaceman ctl` syntax, as `[shortcuts.bindings]` writes it.
+    /// In `fractile ctl` syntax, as `[shortcuts.bindings]` writes it.
     pub command: &'static str,
     /// The built-in chord's key, and whether it adds Shift to the base modifier.
     pub default: Option<(bool, Key)>,
@@ -330,7 +330,7 @@ mod tests {
     use super::*;
 
     fn parse(bindings: &str) -> Shortcuts {
-        spaceman::config::Config::parse(&format!("version = 1\n[shortcuts.bindings]\n{bindings}"))
+        fractile::config::Config::parse(&format!("version = 1\n[shortcuts.bindings]\n{bindings}"))
             .unwrap()
             .shortcuts()
             .clone()

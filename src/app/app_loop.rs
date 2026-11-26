@@ -566,7 +566,7 @@ impl MainThreadAgent {
         }
         let focus = permission_guide::settings_focus();
         if self.return_from_settings.poll(Instant::now(), focus) {
-            log_event!("accessibility granted in System Settings; bringing Spaceman forward");
+            log_event!("accessibility granted in System Settings; bringing Fractile forward");
             if let Err(error) = (self.callbacks.open_settings)() {
                 status_item::set_status(&format!("Could not open Settings: {error}"));
             }

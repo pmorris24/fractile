@@ -3,7 +3,7 @@
 ## Goal
 
 Reduce user-visible latency from `AXWindowCreated` event arrival to the first application of the
-correct Spaceman frame without weakening reconciliation, cancellation, fallback recovery, or idle
+correct Fractile frame without weakening reconciliation, cancellation, fallback recovery, or idle
 efficiency.
 
 ## Benchmark

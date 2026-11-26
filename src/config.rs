@@ -747,17 +747,17 @@ pub fn now() -> std::time::Duration {
         .unwrap_or_default()
 }
 
-/// Optional `SPACEMAN_MANAGED_DISPLAY` override read at startup.
+/// Optional `FRACTILE_MANAGED_DISPLAY` override read at startup.
 #[expect(
     clippy::disallowed_methods,
     reason = "startup environment variables are read in config.rs"
 )]
 pub fn managed_display_env() -> Result<Option<String>, String> {
-    match std::env::var("SPACEMAN_MANAGED_DISPLAY") {
+    match std::env::var("FRACTILE_MANAGED_DISPLAY") {
         Ok(value) => Ok(Some(value)),
         Err(std::env::VarError::NotPresent) => Ok(None),
         Err(std::env::VarError::NotUnicode(_)) => {
-            Err("SPACEMAN_MANAGED_DISPLAY must be valid UTF-8".into())
+            Err("FRACTILE_MANAGED_DISPLAY must be valid UTF-8".into())
         }
     }
 }
@@ -769,18 +769,18 @@ pub fn modified() -> Option<std::time::SystemTime> {
 }
 
 pub fn config_path() -> Option<PathBuf> {
-    std::env::var_os("SPACEMAN_CONFIG")
+    std::env::var_os("FRACTILE_CONFIG")
         .map(PathBuf::from)
         .or_else(|| application_support_path("config.toml"))
 }
 
 pub fn application_support_path(file: &str) -> Option<PathBuf> {
-    std::env::var_os("SPACEMAN_APPLICATION_SUPPORT")
+    std::env::var_os("FRACTILE_APPLICATION_SUPPORT")
         .map(PathBuf::from)
         .or_else(|| {
             std::env::var_os("HOME")
                 .map(PathBuf::from)
-                .map(|home| home.join("Library/Application Support/Spaceman"))
+                .map(|home| home.join("Library/Application Support/Fractile"))
         })
         .map(|directory| directory.join(file))
 }
@@ -1223,7 +1223,7 @@ monitor = "main"
     #[test]
     fn saving_a_workspace_monitor_keeps_hud_position() {
         let dir = std::env::temp_dir().join(format!(
-            "spaceman-config-hud-position-{}-{}",
+            "fractile-config-hud-position-{}-{}",
             std::process::id(),
             now().as_nanos()
         ));
@@ -1267,7 +1267,7 @@ monitor = "main"
     #[test]
     fn saving_a_workspace_monitor_keeps_layout() {
         let dir = std::env::temp_dir().join(format!(
-            "spaceman-config-layout-{}-{}",
+            "fractile-config-layout-{}-{}",
             std::process::id(),
             now().as_nanos()
         ));
@@ -1369,7 +1369,7 @@ monitor = "main"
     #[test]
     fn saving_a_workspace_monitor_keeps_the_labs_table() {
         let directory = std::env::temp_dir().join(format!(
-            "spaceman-labs-{}-{}",
+            "fractile-labs-{}-{}",
             std::process::id(),
             now().as_nanos()
         ));
@@ -1437,7 +1437,7 @@ monitor = "main"
     #[test]
     fn saving_a_workspace_monitor_keeps_mouse_follows_focus() {
         let dir = std::env::temp_dir().join(format!(
-            "spaceman-config-mff-{}-{}",
+            "fractile-config-mff-{}-{}",
             std::process::id(),
             now().as_nanos()
         ));
@@ -1457,7 +1457,7 @@ monitor = "main"
     #[test]
     fn saving_a_workspace_monitor_keeps_the_workspace_order() {
         let dir = std::env::temp_dir().join(format!(
-            "spaceman-config-order-{}-{}",
+            "fractile-config-order-{}-{}",
             std::process::id(),
             now().as_nanos()
         ));
@@ -1484,7 +1484,7 @@ monitor = "main"
     #[test]
     fn save_workspace_monitor_persists_overrides_and_clears_built_in_defaults() {
         let dir = std::env::temp_dir().join(format!(
-            "spaceman-config-save-{}-{}",
+            "fractile-config-save-{}-{}",
             std::process::id(),
             now().as_nanos()
         ));
@@ -1523,7 +1523,7 @@ monitor = "main"
     #[test]
     fn save_workspace_monitor_preserves_symlink_target_without_sidecar_files() {
         let dir = std::env::temp_dir().join(format!(
-            "spaceman-config-symlink-{}-{}",
+            "fractile-config-symlink-{}-{}",
             std::process::id(),
             now().as_nanos()
         ));
@@ -1705,7 +1705,7 @@ right = 128
     #[test]
     fn saving_a_workspace_monitor_keeps_spacing() {
         let dir = std::env::temp_dir().join(format!(
-            "spaceman-config-spacing-{}-{}",
+            "fractile-config-spacing-{}-{}",
             std::process::id(),
             now().as_nanos()
         ));
@@ -1734,7 +1734,7 @@ right = 128
     #[test]
     fn saving_a_workspace_monitor_keeps_shortcuts() {
         let dir = std::env::temp_dir().join(format!(
-            "spaceman-config-shortcuts-{}-{}",
+            "fractile-config-shortcuts-{}-{}",
             std::process::id(),
             now().as_nanos()
         ));

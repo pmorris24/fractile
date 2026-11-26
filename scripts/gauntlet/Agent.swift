@@ -1,4 +1,4 @@
-// The Spaceman under test: launched with its own state and config, read through `spaceman ctl`
+// The Fractile under test: launched with its own state and config, read through `fractile ctl`
 // and its state files.
 import Foundation
 
@@ -11,7 +11,7 @@ private func windowId(_ value: Any?) -> UInt32? {
     ((value as? [String: Any])?["window_id"] as? NSNumber)?.uint32Value
 }
 
-/// `spaceman ctl debug`, which is title-free by design.
+/// `fractile ctl debug`, which is title-free by design.
 struct Debug {
     let raw: [String: Any]
 
@@ -59,17 +59,17 @@ final class Agent {
         self.config = config
     }
 
-    var cli: String { app.appendingPathComponent("Contents/MacOS/spaceman").path }
-    private var agentExecutable: String { app.appendingPathComponent("Contents/MacOS/spaceman-agent").path }
+    var cli: String { app.appendingPathComponent("Contents/MacOS/fractile").path }
+    private var agentExecutable: String { app.appendingPathComponent("Contents/MacOS/fractile-agent").path }
 
     var environment: [String: String] {
         [
-            "SPACEMAN_APPLICATION_SUPPORT": state.path,
-            "SPACEMAN_CONFIG": config.path,
+            "FRACTILE_APPLICATION_SUPPORT": state.path,
+            "FRACTILE_CONFIG": config.path,
         ]
     }
 
-    /// Launches through LaunchServices, so Accessibility is checked against Spaceman.app itself
+    /// Launches through LaunchServices, so Accessibility is checked against Fractile.app itself
     /// rather than whatever shell started the gauntlet.
     func launch() -> String? {
         var arguments = ["-n", "-a", app.path]

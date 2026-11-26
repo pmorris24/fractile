@@ -3,7 +3,7 @@ use super::*;
 mod table;
 pub(super) use table::{ParkRecord, ParkTable};
 
-/// Accessibility lookups fail transiently, notably right after Spaceman or an
+/// Accessibility lookups fail transiently, notably right after Fractile or an
 /// application launches. A window the window server still lists keeps its
 /// slot for this long before an Accessibility "gone" is believed.
 pub(super) const INACCESSIBLE_GRACE: Duration = Duration::from_secs(30);

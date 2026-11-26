@@ -23,12 +23,12 @@ Choose which window shows                              // fullscreen.focus
 ├── Option+Shift+` / ctl focus prev -> the same ring, backward
 ├── Option+H/K -> previous tile, Option+L/J -> next tile, no wrap
 │   └── Past either end -> adjacent display, as in split layouts
-├── Command+`       -> macOS same-app cycle; Spaceman remembers the result
+├── Command+`       -> macOS same-app cycle; Fractile remembers the result
 └── Click / Dock / app switch -> whatever macOS focuses is shown and remembered
 
 Mode persistence                                        // fullscreen.persist
 ├── Switch away and back -> still fullscreen, same window on top
-├── Spaceman restart     -> mode and remembered top window restored
+├── Fractile restart     -> mode and remembered top window restored
 ├── Ghostty native-tab replacement -> keeps mode and slot
 ├── Floating / dialog window opens -> floats above without exiting Fullscreen Layout
 ├── New tiled window opens, routes, reappears, moves in, or unfloats -> stays in Fullscreen Layout
@@ -59,13 +59,13 @@ Unit (FakeBackend), `src/app/tests/layout.rs`:
 `routing_moving_and_unfloating_preserve_fullscreen_layout`,
 `routing_onto_a_hidden_fullscreen_workspace_preserves_mode_without_hud`, and
 `ghostty_native_tab_replacement_preserves_workspace_and_fullscreen_layout`. They prove frames,
-persisted mode, and which window Spaceman asks to focus or raise; none observes real z-order.
+persisted mode, and which window Fractile asks to focus or raise; none observes real z-order.
 
 ## How To Get To It (User POV)
 
 ```ts
 Focus a window on the target workspace (a tile or a floating window it owns)
-├── Option+Shift+F / spaceman ctl fullscreen -> toggle
+├── Option+Shift+F / fractile ctl fullscreen -> toggle
 └── Option+/                          -> exits (and flips the axis); there is no "exit only" key besides Option+Shift+F
 ```
 
@@ -92,7 +92,7 @@ independently.
   same frame, so spatial navigation found no target; the stack now uses tile order instead.
 - **Nothing shows how many windows are stacked or which is next.** Hidden windows are full-size
   underneath rather than hidden, so closing the top window reveals whatever macOS raises next, not
-  necessarily the next tile in Spaceman's order. No test covers that close path.
+  necessarily the next tile in Fractile's order. No test covers that close path.
 - **Fullscreen Layout is sticky:** new tiled windows (opened, routed, reappearing from a park,
   moved in, or unfloated) join the stack without exiting Fullscreen Layout and show the Workspace HUD
   when the workspace is visible. Only `Option+Shift+F`, `Option+/`, or emptying the workspace leaves

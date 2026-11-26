@@ -1,4 +1,4 @@
-use spaceman::{
+use fractile::{
     AppInstanceId, ObservedWindow, PhysicalWindowId, Rect, WorkspaceId,
     config::{Config, WindowDisposition},
 };

@@ -43,7 +43,7 @@ pub struct Spacing {
     pub single_window_max_height: i32,
 }
 
-/// One spacing setting, as `config.toml`, `spaceman config` and Settings name it.
+/// One spacing setting, as `config.toml`, `fractile config` and Settings name it.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SpacingKey {
     Inner,
