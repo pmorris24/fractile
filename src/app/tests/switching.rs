@@ -625,7 +625,7 @@ fn status_menu_lists_every_workspace_of_each_display_with_its_apps() {
                 display_id: "main-id".into(),
                 display: "Main".into(),
                 workspaces: vec![
-                    entry(WorkspaceId::ONE, true, &[7, 8]),
+                    entry(WorkspaceId::ONE, true, &[7, 8, 7]),
                     entry(id(2), false, &[]),
                     entry(three, false, &[9]),
                     entry(id(4), false, &[]),
@@ -647,7 +647,7 @@ fn status_menu_lists_every_workspace_of_each_display_with_its_apps() {
     assert_eq!(
         menu[0].workspaces,
         vec![
-            entry(WorkspaceId::ONE, false, &[7, 8]),
+            entry(WorkspaceId::ONE, false, &[7, 8, 7]),
             entry(id(2), false, &[]),
             entry(three, true, &[9]),
             entry(id(4), false, &[]),

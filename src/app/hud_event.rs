@@ -22,12 +22,13 @@ impl<B: WorkspaceBackend> WorkspaceRuntime<B> {
                     .owned_workspaces(&display.id, outputs)
                     .into_iter()
                     .map(|workspace| {
-                        let mut apps = Vec::new();
-                        for window in self.workspaces.windows(workspace) {
-                            if !apps.contains(&window.app.pid) {
-                                apps.push(window.app.pid);
-                            }
-                        }
+                        // One per window, so two windows of an app show twice.
+                        let apps = self
+                            .workspaces
+                            .windows(workspace)
+                            .iter()
+                            .map(|window| window.app.pid)
+                            .collect();
                         status_item::MenuWorkspace {
                             workspace,
                             current: current == Some(workspace),

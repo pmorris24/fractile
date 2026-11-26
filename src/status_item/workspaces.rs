@@ -27,7 +27,8 @@ pub(crate) struct DisplayWorkspaces {
 pub(crate) struct MenuWorkspace {
     pub(crate) workspace: WorkspaceId,
     pub(crate) current: bool,
-    /// Process IDs of the apps with windows on the workspace, in tile order, without repeats.
+    /// The process ID of each window's app on the workspace, in tile order: an app with two
+    /// windows there is listed twice.
     pub(crate) apps: Vec<i32>,
 }
 
