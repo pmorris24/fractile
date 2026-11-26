@@ -129,7 +129,7 @@ the HUD; only the filter you write lives in `config.toml`.
 ## Workspace HUD
 
 `settings.hud` turns the non-activating Workspace HUD capsule on (the default) or off, and
-`settings.hud_style` picks `"icons"` (each workspace's number and its apps' icons, the default) or
+`settings.hud_style` picks `"icons"` (each workspace's number and an icon per window, the default) or
 `"layouts"`. `settings.hud_position` puts the capsule on each display's `"bottom"` edge (the
 default, just above the Dock) or its `"top"` edge (just below the menu bar); a top capsule slides
 down into place and back up, and a bottom one rises and settles back down. A file without the key

@@ -38,20 +38,15 @@ fn number_style() -> TextStyle {
     }
 }
 
-/// Each app once, in tile order, then the floating ones.
+/// An icon per window, in tile order, then the floating apps (which the engine sends once each),
+/// so an app with two windows here shows twice and two workspaces of the same apps tell apart.
 #[must_use]
 pub fn apps(entry: &UiHudWorkspace) -> Vec<&str> {
-    let mut apps: Vec<&str> = Vec::new();
     let tiles = entry.tiles.iter().filter_map(|tile| tile.bundle.as_deref());
-    for bundle in tiles.chain(entry.floating.iter().map(String::as_str)) {
-        if apps.len() == MAX_APPS {
-            break;
-        }
-        if !apps.contains(&bundle) {
-            apps.push(bundle);
-        }
-    }
-    apps
+    tiles
+        .chain(entry.floating.iter().map(String::as_str))
+        .take(MAX_APPS)
+        .collect()
 }
 
 fn number_width(label: &str) -> f32 {
@@ -182,10 +177,19 @@ fn group(
                 .pl(NUMBER_GAP)
                 .gap(ICON_GAP)
                 .center_y()
-                .children(
-                    apps.iter()
-                        .map(|bundle| app_icon(icons, workspace, bundle, ICON, interactive)),
-                ),
+                .children(apps.iter().enumerate().map(|(index, bundle)| {
+                    // The same app twice: keyed by which of its windows it is.
+                    let nth = apps[..index]
+                        .iter()
+                        .filter(|other| *other == bundle)
+                        .count();
+                    let icon = app_icon(icons, workspace, bundle, ICON, interactive);
+                    if nth == 0 {
+                        icon
+                    } else {
+                        icon.key(format!("app-{bundle}-{nth}"))
+                    }
+                })),
         );
     }
     group

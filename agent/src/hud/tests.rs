@@ -227,10 +227,13 @@ fn the_layouts_row_is_as_wide_as_the_prototype_s() {
 }
 
 #[test]
-fn icons_show_each_app_once_in_tile_order_then_floating() {
+fn icons_show_every_window_in_tile_order_then_floating() {
     let mut entry = workspace(1, &["term", "web", "term", "notes"]);
     entry.floating = vec!["chat".to_owned(), "web".to_owned()];
-    assert_eq!(icons::apps(&entry), ["term", "web", "notes", "chat"]);
+    assert_eq!(
+        icons::apps(&entry),
+        ["term", "web", "term", "notes", "chat", "web"]
+    );
     assert!(icons::apps(&workspace(2, &[])).is_empty());
 }
 
