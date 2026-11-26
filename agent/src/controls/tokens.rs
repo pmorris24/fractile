@@ -66,7 +66,7 @@ pub struct Window {
 }
 
 pub const WINDOW: Window = Window {
-    size: (920.0, 660.0),
+    size: (1180.0, 780.0),
     min: (860.0, 580.0),
     panel_inset: 8.0,
 };
@@ -183,6 +183,6 @@ const _: () = assert!(
 );
 // Cards are 600 wide at the smallest window, 660 as it opens, and stop at the content width.
 const _: () = assert!(WINDOW.card_w(WINDOW.min.0) == 600.0);
-const _: () = assert!(WINDOW.card_w(WINDOW.size.0) == 660.0);
+const _: () = assert!(WINDOW.card_w(WINDOW.size.0) == METRICS.content_max);
 const _: () = assert!(WINDOW.card_w(1200.0) == METRICS.content_max);
 const _: () = assert!(WINDOW.size.0 >= WINDOW.min.0 && WINDOW.size.1 >= WINDOW.min.1);

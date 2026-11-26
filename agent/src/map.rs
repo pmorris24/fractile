@@ -32,7 +32,7 @@ use crate::{
     panes::workspaces::{self as screens, Choice, ConnectedDisplay, Section},
     playground::{Scene, reset_fixture},
     rules::{Doc, Place, Rule},
-    view::scroll_body,
+    view::{content_max, scroll_body_max},
 };
 use defaults::DefaultFloat;
 
@@ -568,7 +568,7 @@ pub fn pane(ui: &Ui, p: Paint, layer: &mut Vec<El>) -> El {
         .key("rules")
         .child(map)
         .children(view.default_floats(layer));
-    scroll_body("rules-body", rules)
+    scroll_body_max("rules-body", rules, content_max(Pane::Rules))
 }
 
 #[derive(Clone, Copy)]

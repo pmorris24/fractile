@@ -18,9 +18,10 @@ use crate::panes::workspaces::{Choice, ConnectedDisplay, Section, fixture_three}
 /// The panel's height bounds, and the space kept clear around the screens inside it; the
 /// bottom margin holds the hint.
 const MIN_H: f32 = 180.0;
-/// The most of the panel's height the screens take at their true scale; a screen grows past
-/// its share only to fit its workspaces.
+/// The most of the panel's height the screens take at their true scale, as a share of its
+/// width and at least `MAX_H`; a screen grows past its share only to fit its workspaces.
 const MAX_H: f32 = 420.0;
+const MAX_H_SHARE: f32 = 0.6;
 const PAD: f32 = 16.0;
 const PAD_BOTTOM: f32 = 32.0;
 /// Between two screens that touch, so each reads as its own.
@@ -245,7 +246,8 @@ fn fit(screens: &[Fit], width: f32) -> (f32, Vec<Frame>) {
         bottom = bottom.max(f.y + f.height);
     }
     let (span_w, span_h) = ((right - left).max(1) as f32, (bottom - top).max(1) as f32);
-    let scale = ((width - 2.0 * PAD) / span_w).min((MAX_H - PAD - PAD_BOTTOM) / span_h);
+    let max_h = MAX_H.max(width * MAX_H_SHARE);
+    let scale = ((width - 2.0 * PAD) / span_w).min((max_h - PAD - PAD_BOTTOM) / span_h);
     let ox = (width - span_w * scale) / 2.0;
     let mut boxes: Vec<Frame> = screens
         .iter()

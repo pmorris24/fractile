@@ -512,7 +512,9 @@ fn setup(ui: &mut Ui, waker: Waker) {
 
 fn poll(ui: &mut Ui, clock: f64, tx: &mut Tx) -> bool {
     if !ui.fixture && !ui.frame_remembered {
-        ui.frame_remembered = rune_mac::remember_frame("Spaceman");
+        // Named for the size Settings opens at, so a frame saved at the old, smaller one does
+        // not hold the window there.
+        ui.frame_remembered = rune_mac::remember_frame("Spaceman 1180");
     }
     let mut changed = onboarding::poll(ui, tx);
     changed |= panes::workspaces::poll_displays(ui, clock);
@@ -758,8 +760,8 @@ mod tests {
             !options.borderless,
             "a titled window keeps its traffic lights"
         );
-        // It opens at 920 × 660, where General, Layout and Rules show whole.
-        assert_eq!(spec().size, (920.0, 660.0));
+        // It opens at 1180 × 780, where the Screens arrangement of a three-display desk reads.
+        assert_eq!(spec().size, (1180.0, 780.0));
         assert_eq!(spec().min_size, Some((860.0, 580.0)));
     }
 

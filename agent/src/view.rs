@@ -39,7 +39,7 @@ pub fn view(ui: &Ui, cx: &mut Cx<Ui>) -> El {
         .border(p.hair, p.k.c.border_weak)
         .padding(p.hair)
         .clip_soft(0.0)
-        .child(pane_header(p, ui.pane.title()))
+        .child(pane_header(p, ui.pane.title(), content_max(ui.pane)))
         .children(error_banner(ui, p))
         .child(body);
     let window = row()
@@ -144,22 +144,34 @@ fn nav_item(p: Paint, pane: Pane, on: bool) -> El {
 /// The panel's content column: as wide as the panel until the cards reach `content_max`, then
 /// centred. The header, the error banner and the pane body all sit in one, so the title stays on
 /// the cards' text rail at every window size.
-fn column(key: &str) -> El {
+fn column(key: &str, max: f32) -> El {
     col()
         .key(key)
         .w_full()
-        .max_w(METRICS.content_max + 2.0 * METRICS.card_edge())
+        .max_w(max + 2.0 * METRICS.card_edge())
         .self_center()
 }
 
+/// How wide `pane`'s cards get: `content_max`, except Screens, whose arrangement draws every
+/// display to scale and uses all the room a bigger window gives it.
+pub fn content_max(pane: Pane) -> f32 {
+    match pane {
+        Pane::Rules => SCREENS_MAX,
+        _ => METRICS.content_max,
+    }
+}
+
+/// The widest Screens gets: room for a desk of three displays at a size worth reading.
+const SCREENS_MAX: f32 = 1600.0;
+
 /// The panel's title bar, which also moves the window. The title sits on the text rail.
-fn pane_header(p: Paint, title: &str) -> El {
+fn pane_header(p: Paint, title: &str, max: f32) -> El {
     col()
         .window_drag()
         .key("pane-header")
         .h(METRICS.header_h)
         .child(
-            column("rail").h_full().child(
+            column("rail", max).h_full().child(
                 row()
                     .key("title-row")
                     .h_full()
@@ -193,26 +205,29 @@ fn error_banner(ui: &Ui, p: Paint) -> Option<El> {
         .or(agent_error)?;
     // A card-shaped notice on the card edge, its copy on the text rail.
     Some(
-        column("error-rail").px(METRICS.card_edge()).pb(8.0).child(
-            row()
-                .key("error")
-                .px(METRICS.row_px)
-                .py(8.0)
-                .gap(8.0)
-                .center_y()
-                .radius(p.k.radius.lg)
-                .fill(p.k.c.danger.bg)
-                .child(
-                    text(copy)
-                        .key("copy")
-                        .font(p.description())
-                        .color(p.text())
-                        .wrap()
-                        .grow(1.0)
-                        .shrink(),
-                )
-                .child(controls::status_dot(p.k.c.danger.fg)),
-        ),
+        column("error-rail", content_max(ui.pane))
+            .px(METRICS.card_edge())
+            .pb(8.0)
+            .child(
+                row()
+                    .key("error")
+                    .px(METRICS.row_px)
+                    .py(8.0)
+                    .gap(8.0)
+                    .center_y()
+                    .radius(p.k.radius.lg)
+                    .fill(p.k.c.danger.bg)
+                    .child(
+                        text(copy)
+                            .key("copy")
+                            .font(p.description())
+                            .color(p.text())
+                            .wrap()
+                            .grow(1.0)
+                            .shrink(),
+                    )
+                    .child(controls::status_dot(p.k.c.danger.fg)),
+            ),
     )
 }
 
@@ -222,6 +237,11 @@ fn error_banner(ui: &Ui, p: Paint) -> Option<El> {
 /// the fade's extra height, and its inset matches the fade, so resting content keeps its place
 /// and only content scrolled into either edge dissolves.
 pub fn scroll_body(key: &str, content: El) -> El {
+    scroll_body_max(key, content, METRICS.content_max)
+}
+
+/// `scroll_body` whose cards get up to `max` wide.
+pub fn scroll_body_max(key: &str, content: El, max: f32) -> El {
     let (top, bottom) = SCROLL_FADE;
     col()
         .key(key)
@@ -234,7 +254,7 @@ pub fn scroll_body(key: &str, content: El) -> El {
             stick_bottom: false,
         })
         .child(
-            column("inset")
+            column("inset", max)
                 .px(METRICS.card_edge())
                 .pt(top)
                 .pb(bottom)
