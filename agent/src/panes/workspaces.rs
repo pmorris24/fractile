@@ -64,7 +64,14 @@ pub(crate) fn poll_displays(ui: &mut Ui, clock: f64) -> bool {
         return false;
     };
     let known = ui.known_displays.get_or_insert_with(remembered::load);
-    let noted = remembered::note(known, &connected);
+    let mut noted = false;
+    if known.is_empty()
+        && let Some(desk) = remembered::from_macos(&connected)
+    {
+        *known = desk;
+        noted = true;
+    }
+    noted |= remembered::note(known, &connected);
     if noted {
         remembered::save(known);
     }

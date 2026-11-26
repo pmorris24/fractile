@@ -5,12 +5,19 @@
 //! of them leaves it as it is, so the panel keeps drawing that desk, each screen where it was
 //! and each workspace on the screen it returns to. Any other set, more displays or different
 //! ones, replaces it.
+//!
+//! Before Settings has seen a desk, the record starts from the one macOS remembers: the window
+//! server keeps every set of displays it has arranged, with each screen's place, in a
+//! preferences file of its own. That file is private and undocumented, so reading it is only a
+//! head start: when it moves or changes shape the record starts empty, as it did before.
 
 use std::path::PathBuf;
 
 use spaceman::Rect;
 
-use super::ConnectedDisplay;
+use spaceman::macos::{DisplayOutput, DisplayOutputs};
+
+use super::{ConnectedDisplay, displays};
 
 /// The file next to `config.toml` that holds the record, one display per line.
 const FILE: &str = "known-displays.txt";
@@ -46,6 +53,112 @@ pub(crate) fn away(known: &[ConnectedDisplay], connected: &[ConnectedDisplay]) -
         .filter(|display| !connected.iter().any(|other| other.id == display.id))
         .map(|display| display.id.clone())
         .collect()
+}
+
+/// Where the window server keeps the display sets it has arranged.
+const MACOS_FILE: &str = "/Library/Preferences/com.apple.windowserver.displays.plist";
+
+/// The desk macOS remembers around the `connected` displays: the first set it lists (it keeps
+/// the latest first) holding every connected display and more besides. Names come from the
+/// connected displays; macOS keeps none for the others.
+pub(crate) fn from_macos(connected: &[ConnectedDisplay]) -> Option<Vec<ConnectedDisplay>> {
+    pick(&display_sets(&read_macos()?), connected)
+}
+
+#[cfg(target_os = "macos")]
+fn read_macos() -> Option<serde_json::Value> {
+    let output = std::process::Command::new("/usr/bin/plutil")
+        .args(["-convert", "json", "-o", "-", MACOS_FILE])
+        .output()
+        .ok()?;
+    if !output.status.success() {
+        return None;
+    }
+    serde_json::from_slice(&output.stdout).ok()
+}
+
+#[cfg(not(target_os = "macos"))]
+fn read_macos() -> Option<serde_json::Value> {
+    None
+}
+
+/// Every display set in the window server's file: each display's UUID and frame, y down from
+/// the main display's top-left as Core Graphics has it.
+fn display_sets(plist: &serde_json::Value) -> Vec<Vec<(String, Rect)>> {
+    let Some(configs) = plist
+        .pointer("/DisplaySets/Configs")
+        .and_then(serde_json::Value::as_array)
+    else {
+        return Vec::new();
+    };
+    configs
+        .iter()
+        .filter_map(|config| {
+            config
+                .get("DisplayConfig")?
+                .as_array()?
+                .iter()
+                .map(|display| {
+                    let id = display.get("UUID")?.as_str()?.to_owned();
+                    let info = display.get("CurrentInfo")?;
+                    let number = |key: &str| {
+                        let value = info.get(key)?.as_f64()?;
+                        #[allow(clippy::cast_possible_truncation)]
+                        Some(value.round() as i32)
+                    };
+                    let frame = Rect {
+                        x: number("OriginX")?,
+                        y: number("OriginY")?,
+                        width: number("Wide")?,
+                        height: number("High")?,
+                    };
+                    Some((id, frame))
+                })
+                .collect::<Option<Vec<_>>>()
+        })
+        .collect()
+}
+
+/// The first set holding every connected display and more, whose screens sit side by side
+/// (a mirrored set stacks them on one spot) with one at the origin, which macOS makes main.
+fn pick(
+    sets: &[Vec<(String, Rect)>],
+    connected: &[ConnectedDisplay],
+) -> Option<Vec<ConnectedDisplay>> {
+    let overlap = |a: Rect, b: Rect| {
+        a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height
+    };
+    let set = sets.iter().find(|set| {
+        set.len() > connected.len()
+            && connected
+                .iter()
+                .all(|display| set.iter().any(|(id, _)| *id == display.id))
+            && set
+                .iter()
+                .filter(|(_, frame)| frame.x == 0 && frame.y == 0)
+                .count()
+                == 1
+            && set
+                .iter()
+                .enumerate()
+                .all(|(i, (_, a))| set.iter().skip(i + 1).all(|(_, b)| !overlap(*a, *b)))
+    })?;
+    let outputs = DisplayOutputs::new(
+        set.iter()
+            .map(|(id, frame)| DisplayOutput {
+                id: id.clone(),
+                name: connected
+                    .iter()
+                    .find(|display| display.id == *id)
+                    .map(|display| display.name.clone())
+                    .unwrap_or_default(),
+                frame: *frame,
+                is_main: frame.x == 0 && frame.y == 0,
+            })
+            .collect(),
+    )
+    .ok()?;
+    Some(displays::connected(&outputs))
 }
 
 /// Forgets the unplugged display `id`. Returns whether it was in the record.
@@ -181,6 +294,45 @@ mod tests {
             display("side", 1000, -200, false),
         ];
         assert!(away(&known, &[display("tv", 0, 0, true)]).is_empty());
+    }
+
+    #[test]
+    fn the_desk_macos_remembers_seeds_the_record() {
+        let plist = serde_json::json!({ "DisplaySets": { "Configs": [
+            // Mirrored: both on one spot.
+            { "DisplayConfig": [
+                { "UUID": "laptop", "CurrentInfo": { "OriginX": 0, "OriginY": 0, "Wide": 1512, "High": 982 } },
+                { "UUID": "tv", "CurrentInfo": { "OriginX": 0, "OriginY": 0, "Wide": 1920, "High": 1080 } },
+            ] },
+            { "DisplayConfig": [
+                { "UUID": "laptop", "CurrentInfo": { "OriginX": -1800, "OriginY": 358, "Wide": 1800, "High": 1169 } },
+                { "UUID": "studio", "CurrentInfo": { "OriginX": 0, "OriginY": 0, "Wide": 3360, "High": 1890 } },
+                { "UUID": "side", "CurrentInfo": { "OriginX": 3360, "OriginY": -508, "Wide": 2560, "High": 1440 } },
+            ] },
+            { "DisplayConfig": [
+                { "UUID": "laptop", "CurrentInfo": { "OriginX": 0, "OriginY": 0, "Wide": 1512, "High": 982 } },
+            ] },
+        ] } });
+        let sets = display_sets(&plist);
+        assert_eq!(sets.len(), 3);
+        let mut laptop = display("laptop", 0, 0, true);
+        laptop.name = "Built-in Retina Display".into();
+        let desk = pick(&sets, std::slice::from_ref(&laptop)).unwrap();
+        assert_eq!(desk.len(), 3);
+        let studio = desk.iter().find(|d| d.id == "studio").unwrap();
+        assert!(studio.is_main);
+        assert_eq!(studio.selector, "main");
+        let seen = desk.iter().find(|d| d.id == "laptop").unwrap();
+        assert_eq!(seen.name, "Built-in Retina Display");
+        assert_eq!((seen.frame.x, seen.frame.y), (-1800, 358));
+        assert!(!seen.is_main);
+        // The laptop alone is part of it, so the record keeps the desk.
+        let mut known = desk.clone();
+        assert!(!note(&mut known, &[laptop]));
+        assert_eq!(away(&known, &[display("laptop", 0, 0, true)]).len(), 2);
+        // No set holds more than what is connected, or the file is not there: no head start.
+        assert!(pick(&sets, &desk).is_none());
+        assert!(display_sets(&serde_json::json!({})).is_empty());
     }
 
     #[test]

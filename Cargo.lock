@@ -3471,6 +3471,7 @@ dependencies = [
  "rune-kit",
  "rune-mac",
  "rune-theme-opencode",
+ "serde_json",
  "spaceman",
  "toml_edit 0.23.10+spec-1.0.0",
 ]
