@@ -84,7 +84,16 @@ fn the_hud_row_follows_the_configured_order() {
             .iter()
             .map(|entry| entry.workspace)
             .collect::<Vec<_>>(),
-        [WorkspaceId::ONE, named('Q'), named('W'), named('E')]
+        // The configured order first, then the display's other workspaces, empty ones too.
+        [
+            WorkspaceId::ONE,
+            named('Q'),
+            named('W'),
+            named('E'),
+            WorkspaceId::TWO,
+            WorkspaceId::THREE,
+            WorkspaceId::FOUR,
+        ]
     );
 }
 

@@ -236,7 +236,7 @@ Workspace HUD ([settings] hud, on by default)               // ws.hud
 ├── A switch, a window moved to another workspace, a split-axis or Fullscreen Layout toggle, or a
 │   tiled window joining a visible Fullscreen Layout workspace
 │   -> a capsule on every display, each with its own row: every workspace on that
-│      display holding windows, plus the visible one, in workspace order; a marker on the visible one
+│      display, empty ones included, in workspace order; a marker on the visible one
 ├── hud_position = "bottom" (default) -> the capsule rests 60 pt above each display's bottom edge,
 │   clear of the Dock; "top" -> 60 pt below its top edge, clear of the menu bar
 ├── hud_style = "icons" (default) -> each workspace as its number and an icon per window (tile

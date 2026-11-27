@@ -7,8 +7,9 @@
 | `fractile-lockup.svg` | The mark beside the wordmark, as on the sidebar. |
 
 The mark here was traced from a screenshot of the original logo. Swap in the original vector when
-it is available, then copy its paths into `agent/assets/mark.svg` (the in-app mark) and
-`scripts/generate-app-icon.swift` (which writes `app/AppIcon.icon/Assets/Mark.svg`).
+it is available, then copy its paths into `agent/assets/mark.svg` (the in-app mark),
+`scripts/generate-app-icon.swift` (which writes `app/AppIcon.icon/Assets/Mark.svg`) and
+`scripts/make-icns.swift` (the icon built without Xcode).
 
 ## Colours
 
@@ -19,7 +20,8 @@ it is available, then copy its paths into `agent/assets/mark.svg` (the in-app ma
 
 ## Where it shows
 
-- The app icon (`app/AppIcon.icon`): black mark on paper. Compiling it needs the full Xcode app
-  (`actool`). Without Xcode, builds get macOS's generic icon.
+- The app icon (`app/AppIcon.icon`): black mark on paper. With the full Xcode app, `actool`
+  compiles it. Without Xcode, `scripts/make-icns.swift` draws the same icon and packs it with
+  `iconutil`, so the Dock and Finder still show it.
 - Settings: the lockup above the version at the foot of the sidebar (`agent/src/brand.rs`).
 - The setup tour's welcome step: the mark on its paper badge.

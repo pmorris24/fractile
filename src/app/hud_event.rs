@@ -130,8 +130,10 @@ impl<B: WorkspaceBackend> WorkspaceRuntime<B> {
                     id: display.id.clone(),
                     visible: current,
                     from,
+                    // Every workspace of the display, empty ones included, so the row always
+                    // reads the same and a workspace keeps its place in it.
                     workspaces: self
-                        .listed_workspaces(&display.id, current, outputs)
+                        .owned_workspaces(&display.id, outputs)
                         .into_iter()
                         .map(|workspace| self.hud_workspace(workspace, hud_preview_rect(portrait)))
                         .collect(),

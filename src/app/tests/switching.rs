@@ -423,17 +423,18 @@ fn the_hud_gives_each_display_its_own_row_and_only_the_switched_one_moves() {
     assert_eq!(
         rows,
         vec![
+            // Each display lists every one of its workspaces, empty ones included.
             (
                 "main-id",
                 Some(WorkspaceId::ONE),
                 None,
-                vec![WorkspaceId::ONE]
+                (1..=4).map(|n| WorkspaceId::new(n).unwrap()).collect()
             ),
             (
                 "secondary-id",
                 Some(target),
                 Some(WorkspaceId::FIVE),
-                vec![WorkspaceId::FIVE, target]
+                (5..=10).map(|n| WorkspaceId::new(n).unwrap()).collect()
             ),
         ]
     );

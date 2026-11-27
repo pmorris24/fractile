@@ -60,7 +60,7 @@ cp "$root/target/release/fractile" "$bundle/Contents/MacOS/fractile"
 cp "$root/app/Info.plist" "$bundle/Contents/Info.plist"
 rm -rf "$icon_output"
 mkdir -p "$icon_output"
-# actool ships only with the full Xcode app. Without it, build with the generic app icon.
+# actool ships only with the full Xcode app.
 if xcrun --find actool >/dev/null 2>&1; then
   xcrun actool "$root/app/AppIcon.icon" \
     --compile "$icon_output" \
@@ -74,7 +74,9 @@ if xcrun --find actool >/dev/null 2>&1; then
     --notices >&2
   cp "$icon_output/AppIcon.icns" "$icon_output/Assets.car" "$bundle/Contents/Resources/"
 else
-  echo "warning: actool not found (needs full Xcode); building without the app icon" >&2
+  # Without Xcode, draw the icon (the F mark on its paper tile) and pack it with iconutil, which
+  # macOS ships. It lacks the Liquid Glass layers app/AppIcon.icon gets from actool.
+  swift "$root/scripts/make-icns.swift" "$bundle/Contents/Resources/AppIcon.icns" >&2
 fi
 plutil -lint "$bundle/Contents/Info.plist" >/dev/null
 codesign --force --timestamp --options runtime --sign "$identity" \

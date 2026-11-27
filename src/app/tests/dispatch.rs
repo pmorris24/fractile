@@ -366,7 +366,10 @@ fn hud_emits_only_for_workspace_move_and_layout_actions() {
             .iter()
             .map(|entry| entry.workspace)
             .collect::<Vec<_>>(),
-        vec![WorkspaceId::ONE, WorkspaceId::TWO]
+        // Every workspace of the display, empty ones included.
+        (1..=4)
+            .map(|n| WorkspaceId::new(n).unwrap())
+            .collect::<Vec<_>>()
     );
 }
 
