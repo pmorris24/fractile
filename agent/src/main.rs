@@ -87,8 +87,8 @@ pub struct Ui {
     /// The last arrangement of displays seen, which Settings › Screens keeps drawing after some
     /// of them are unplugged; read from disk once, on the first display read.
     pub(crate) known_displays: Option<panes::workspaces::remembered::Record>,
-    /// What the Dock icon last showed, so it is redrawn only when that changes.
-    pub(crate) dock_face: Option<dock_icon::Face>,
+    /// The live Dock icon: its layout and whether its windows are moving.
+    pub(crate) dock_icon: dock_icon::DockIcon,
     /// Lab slug requested by a `fractile://labs/<slug>` deep link, preserved
     /// cleanly for Labs cards to highlight.
     pub highlight_lab: Option<String>,
@@ -135,7 +135,7 @@ impl Ui {
             displays: Vec::new(),
             displays_at: None,
             known_displays: None,
-            dock_face: None,
+            dock_icon: dock_icon::DockIcon::default(),
             highlight_lab: None,
             highlight_feature: None,
             error: None,
@@ -516,6 +516,13 @@ fn setup(ui: &mut Ui, waker: Waker) {
 }
 
 fn poll(ui: &mut Ui, clock: f64, tx: &mut Tx) -> bool {
+    // The Dock icon's windows rearranging: a frame, and the next one asked for.
+    if let Some((svg, more)) = ui.dock_icon.tick(clock, dock_icon::still()) {
+        dock_icon::show(&svg);
+        if more {
+            tx.wake_after(std::time::Duration::from_secs_f64(dock_icon::FRAME));
+        }
+    }
     if !ui.fixture && !ui.frame_remembered {
         // Named for the size Settings opens at, so a frame saved at the old, smaller one does
         // not hold the window there.
@@ -536,10 +543,10 @@ fn poll(ui: &mut Ui, clock: f64, tx: &mut Tx) -> bool {
         if let Some(driver) = &ui.hud_driver {
             driver.set_enabled(snapshot.hud);
         }
-        let face = dock_icon::face(&snapshot);
-        if !ui.fixture && ui.dock_face.as_ref() != Some(&face) {
-            dock_icon::show(&face);
-            ui.dock_face = Some(face);
+        if !ui.fixture
+            && let Some(svg) = ui.dock_icon.snapshot(&snapshot, clock)
+        {
+            dock_icon::show(&svg);
         }
         ui.agent = Some(snapshot);
         ui.look_up_apps();

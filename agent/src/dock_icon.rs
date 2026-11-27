@@ -1,107 +1,136 @@
-//! The live Dock icon: Fractile's icon redrawn from the focused workspace. Its windows are that
-//! workspace's real tile layout, the first tile lit orange as in the app icon, with the
-//! workspace's number on a paper disc at the bottom right (clear of the top right, where macOS
-//! puts its red badges). It changes only when the workspace or its layout does.
+//! The live Dock icon: Fractile's icon over a simulated screen of window outlines in the app
+//! icon's split (a half, a quarter, two eighths). Each time the focused workspace changes, the
+//! windows trade places, each sliding and resizing into the next slot over [`DURATION`] seconds,
+//! the focused one outlined in orange, then hold still. It shows what Fractile does at Dock size;
+//! it is not the workspace's own layout.
 //!
-//! The drawing is an SVG with brand/fractile-icon.svg's tile, F and colours; macOS draws it.
+//! Each frame is an SVG with brand/fractile-icon.svg's tile, F and colours; macOS draws it.
 
-use fractile::{
-    WorkspaceId,
-    app::{HUD_PORTRAIT_PREVIEW_RECT, HUD_PREVIEW_RECT, UiAgentSnapshot},
-};
+use fractile::{WorkspaceId, app::UiAgentSnapshot};
 
-/// A window, in the icon's 1024-point space: x, y, width, height.
-type Frame = (f32, f32, f32, f32);
+/// A window in unit space (the icon's window area is 1 by 1): x, y, width, height.
+type Unit = (f32, f32, f32, f32);
 
-/// What the icon shows: redrawn only when this changes.
-#[derive(Clone, Debug, PartialEq)]
-pub(crate) struct Face {
-    pub workspace: Option<WorkspaceId>,
-    pub windows: Vec<Frame>,
+/// The slots, in the order windows move through them: the half, the quarter, then the eighths.
+const SLOTS: [Unit; 4] = [
+    (0.0, 0.0, 0.5, 1.0),
+    (0.5, 0.0, 0.5, 0.5),
+    (0.75, 0.5, 0.25, 0.5),
+    (0.5, 0.5, 0.25, 0.5),
+];
+
+/// How long the windows take to rearrange, in seconds.
+pub(crate) const DURATION: f64 = 0.45;
+/// Between frames while they do.
+pub(crate) const FRAME: f64 = 1.0 / 30.0;
+
+/// What the Dock icon shows and whether it is moving.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub(crate) struct DockIcon {
+    /// The focused workspace last seen; a change sets the windows moving.
+    workspace: Option<WorkspaceId>,
+    /// How many places the windows have moved on: window `i` sits in slot `(i + turn) % 4`.
+    turn: usize,
+    /// While the windows move: when they started, on Rune's clock.
+    moving: Option<f64>,
+    /// Nothing drawn yet.
+    drawn: bool,
 }
 
-/// The windows' area inside the icon's tile, and the gap between them.
-const AREA: Frame = (164.0, 164.0, 696.0, 696.0);
-const GAP: f32 = 26.0;
-
-/// The icon's own split, for a workspace with nothing tiled: a half, a quarter, two eighths.
-fn resting() -> Vec<Frame> {
-    vec![
-        (164.0, 164.0, 335.0, 696.0),
-        (525.0, 164.0, 335.0, 335.0),
-        (525.0, 525.0, 154.5, 335.0),
-        (705.5, 525.0, 154.5, 335.0),
-    ]
-}
-
-/// The face for `snapshot`'s focused workspace: its tiles fitted into the icon's window area.
-pub(crate) fn face(snapshot: &UiAgentSnapshot) -> Face {
-    let workspace = snapshot
-        .focused_workspace
-        .or_else(|| snapshot.active_workspaces.first().copied());
-    let entry = workspace.and_then(|workspace| {
-        snapshot
-            .windows
-            .iter()
-            .find(|entry| entry.windows.workspace == workspace)
-    });
-    let windows = match entry {
-        Some(entry) if entry.windows.fullscreen && !entry.windows.tiles.is_empty() => vec![AREA],
-        Some(entry) if !entry.windows.tiles.is_empty() => {
-            let preview = if entry.portrait {
-                HUD_PORTRAIT_PREVIEW_RECT
-            } else {
-                HUD_PREVIEW_RECT
-            };
-            let (px, py) = (preview.x as f32, preview.y as f32);
-            let (pw, ph) = (preview.width.max(1) as f32, preview.height.max(1) as f32);
-            entry
-                .windows
-                .tiles
-                .iter()
-                .map(|tile| {
-                    let r = tile.rect;
-                    let x = AREA.0 + (r.x as f32 - px) / pw * AREA.2;
-                    let y = AREA.1 + (r.y as f32 - py) / ph * AREA.3;
-                    let w = r.width as f32 / pw * AREA.2;
-                    let h = r.height as f32 / ph * AREA.3;
-                    // Half the gap off each side that meets another window.
-                    let inset = |start: f32, length: f32, origin: f32, span: f32| {
-                        let lead = if start - origin > 1.0 { GAP / 2.0 } else { 0.0 };
-                        let trail = if origin + span - (start + length) > 1.0 {
-                            GAP / 2.0
-                        } else {
-                            0.0
-                        };
-                        (start + lead, (length - lead - trail).max(1.0))
-                    };
-                    let (x, w) = inset(x, w, AREA.0, AREA.2);
-                    let (y, h) = inset(y, h, AREA.1, AREA.3);
-                    (x, y, w, h)
-                })
-                .collect()
+impl DockIcon {
+    /// Takes in a snapshot: a newly focused workspace sets the windows moving. Returns the
+    /// frame to show now, if any.
+    pub(crate) fn snapshot(&mut self, snapshot: &UiAgentSnapshot, clock: f64) -> Option<String> {
+        let workspace = snapshot
+            .focused_workspace
+            .or_else(|| snapshot.active_workspaces.first().copied());
+        if !self.drawn {
+            self.drawn = true;
+            self.workspace = workspace;
+            return Some(frame(self.turn, self.turn, 1.0));
         }
-        _ => resting(),
+        if workspace == self.workspace {
+            return None;
+        }
+        self.workspace = workspace;
+        self.turn += 1;
+        self.moving = Some(clock);
+        Some(frame(self.turn - 1, self.turn, 0.0))
+    }
+
+    /// The frame for `clock` while the windows move, and whether more follow.
+    pub(crate) fn tick(&mut self, clock: f64, still: bool) -> Option<(String, bool)> {
+        let started = self.moving?;
+        let t = if still {
+            1.0
+        } else {
+            ((clock - started) / DURATION).clamp(0.0, 1.0)
+        };
+        let done = t >= 1.0;
+        if done {
+            self.moving = None;
+        }
+        Some((frame(self.turn - 1, self.turn, ease(t as f32)), !done))
+    }
+}
+
+/// Ease in and out, so the windows settle.
+fn ease(t: f32) -> f32 {
+    if t < 0.5 {
+        4.0 * t * t * t
+    } else {
+        1.0 - (-2.0 * t + 2.0).powi(3) / 2.0
+    }
+}
+
+fn lerp(a: Unit, b: Unit, t: f32) -> Unit {
+    (
+        a.0 + (b.0 - a.0) * t,
+        a.1 + (b.1 - a.1) * t,
+        a.2 + (b.2 - a.2) * t,
+        a.3 + (b.3 - a.3) * t,
+    )
+}
+
+/// The windows' area inside the icon's tile, the gap between windows, and their outline.
+const AREA: (f32, f32, f32, f32) = (164.0, 164.0, 696.0, 696.0);
+const GAP: f32 = 26.0;
+const LINE: f32 = 10.0;
+const FOCUS_LINE: f32 = 13.0;
+
+/// A unit window in the icon's 1024-point space, half a gap off each side that meets another.
+fn place(unit: Unit) -> (f32, f32, f32, f32) {
+    let side = |start: f32, length: f32| {
+        let lead = if start > 0.001 { GAP / 2.0 } else { 0.0 };
+        let trail = if start + length < 0.999 {
+            GAP / 2.0
+        } else {
+            0.0
+        };
+        (start, lead, trail, length)
     };
-    Face { workspace, windows }
+    let (x, xl, xt, w) = side(unit.0, unit.2);
+    let (y, yl, yt, h) = side(unit.1, unit.3);
+    (
+        AREA.0 + x * AREA.2 + xl,
+        AREA.1 + y * AREA.3 + yl,
+        (w * AREA.2 - xl - xt).max(1.0),
+        (h * AREA.3 - yl - yt).max(1.0),
+    )
 }
 
 /// The F's outline, in brand/fractile-mark.svg's units.
 const F: &str =
     "M3 113 V58 L42 3 H117 L101 26 H54 L35 52 V113 Z M44 50 H115 L99 73 H40 L35 80 V64 Z";
 
-fn round(rect: Frame) -> f32 {
-    (rect.2 * 0.3).min(rect.3 * 0.3).min(100.5)
-}
-
-/// The icon for `face`, as SVG.
-pub(crate) fn svg(face: &Face) -> String {
+/// The icon `t` of the way from turn `from` to turn `to`, as SVG: window `i` moves from slot
+/// `(i + from) % 4` to slot `(i + to) % 4`, and window 0 is the focused one.
+fn frame(from: usize, to: usize, t: f32) -> String {
     let mut out = String::with_capacity(6_000);
     out.push_str(concat!(
         r##"<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024"><defs>"##,
         r##"<linearGradient id="tile" x1="0" y1="100" x2="0" y2="924" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#26262C"/><stop offset="1" stop-color="#0C0C0F"/></linearGradient>"##,
         r##"<linearGradient id="rim" x1="0" y1="100" x2="0" y2="512" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.18"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></linearGradient>"##,
-        r##"<linearGradient id="focus" x1="0" y1="164" x2="0" y2="860" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FF7A48"/><stop offset="1" stop-color="#F2471C"/></linearGradient>"##,
         r##"<linearGradient id="mark" x1="0" y1="3" x2="0" y2="116" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E6E4DD"/></linearGradient>"##,
         r##"<clipPath id="clip"><rect x="100" y="100" width="824" height="824" rx="185"/></clipPath></defs>"##,
     ));
@@ -114,21 +143,19 @@ pub(crate) fn svg(face: &Face) -> String {
         ));
     }
     out.push_str(r##"<rect x="100" y="100" width="824" height="824" rx="185" fill="url(#tile)"/><g clip-path="url(#clip)">"##);
-    for (index, window) in face.windows.iter().enumerate() {
-        let fill = if index == 0 {
-            r##"fill="url(#focus)""##
-        } else {
-            r##"fill="#FFFFFF" fill-opacity="0.07""##
-        };
-        out.push_str(&format!(
-            r#"<rect x="{:.1}" y="{:.1}" width="{:.1}" height="{:.1}" rx="{:.1}" {fill}/>"#,
-            window.0,
-            window.1,
-            window.2,
-            window.3,
-            round(*window)
+    let at = |window: usize, turn: usize| SLOTS[(window + turn) % SLOTS.len()];
+    for window in 1..SLOTS.len() {
+        out.push_str(&outline(
+            place(lerp(at(window, from), at(window, to), t)),
+            LINE,
+            "#FFFFFF",
+            0.34,
+            0.035,
         ));
     }
+    // The focused window, on top of the others as they pass.
+    let focus = place(lerp(at(0, from), at(0, to), t));
+    out.push_str(&outline(focus, FOCUS_LINE, "#FF6A3D", 1.0, 0.2));
     out.push_str(r##"</g><rect x="100" y="100" width="824" height="824" rx="185" fill="none" stroke="url(#rim)" stroke-width="4"/>"##);
     out.push_str(r#"<g transform="translate(252.63 266.88) scale(4.1228)">"#);
     for step in 1..=8 {
@@ -139,42 +166,37 @@ pub(crate) fn svg(face: &Face) -> String {
         ));
     }
     out.push_str(&format!(
-        r#"<path d="{F}" fill="url(#mark)" stroke="url(#mark)" stroke-width="3" stroke-linejoin="round"/></g>"#
+        r#"<path d="{F}" fill="url(#mark)" stroke="url(#mark)" stroke-width="3" stroke-linejoin="round"/></g></svg>"#
     ));
-    if let Some(workspace) = face.workspace {
-        let label = workspace.to_string();
-        let size = if label.chars().count() > 1 { 92 } else { 112 };
-        out.push_str(concat!(
-            r##"<circle cx="812" cy="812" r="112" fill="#000" fill-opacity="0.35"/>"##,
-            r##"<circle cx="812" cy="806" r="104" fill="#F4F2EC"/>"##,
-        ));
-        out.push_str(&format!(
-            r##"<text x="812" y="{}" text-anchor="middle" font-family="-apple-system, Helvetica Neue, Helvetica" font-weight="700" font-size="{size}" fill="#111111">{}</text>"##,
-            806 + size * 36 / 100,
-            escape(&label)
-        ));
-    }
-    out.push_str("</svg>");
     out
 }
 
-fn escape(text: &str) -> String {
-    text.replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
+/// A window's outline, drawn inside its frame, with a faint fill.
+fn outline(frame: (f32, f32, f32, f32), line: f32, color: &str, stroke: f32, fill: f32) -> String {
+    let (x, y, w, h) = (
+        frame.0 + line / 2.0,
+        frame.1 + line / 2.0,
+        (frame.2 - line).max(1.0),
+        (frame.3 - line).max(1.0),
+    );
+    let radius = (frame.2 * 0.3).min(frame.3 * 0.3).min(100.5) - line / 2.0;
+    format!(
+        r#"<rect x="{x:.1}" y="{y:.1}" width="{w:.1}" height="{h:.1}" rx="{:.1}" fill="{color}" fill-opacity="{fill}" stroke="{color}" stroke-opacity="{stroke}" stroke-width="{line}"/>"#,
+        radius.max(1.0)
+    )
 }
 
-/// Sets `face` as the Dock icon. Main thread only.
+/// Sets `svg` as the Dock icon. Main thread only.
 #[cfg(target_os = "macos")]
 #[allow(unsafe_code)]
-pub(crate) fn show(face: &Face) {
+pub(crate) fn show(svg: &str) {
     use objc2::{AllocAnyThread, MainThreadMarker};
     use objc2_app_kit::{NSApplication, NSImage};
     use objc2_foundation::NSData;
     let Some(marker) = MainThreadMarker::new() else {
         return;
     };
-    let data = NSData::with_bytes(svg(face).as_bytes());
+    let data = NSData::with_bytes(svg.as_bytes());
     let Some(image) = NSImage::initWithData(NSImage::alloc(), &data) else {
         return;
     };
@@ -183,69 +205,67 @@ pub(crate) fn show(face: &Face) {
 }
 
 #[cfg(not(target_os = "macos"))]
-pub(crate) fn show(_face: &Face) {}
+pub(crate) fn show(_svg: &str) {}
+
+/// Reduce Motion: the windows jump to the next layout instead of moving.
+#[cfg(target_os = "macos")]
+pub(crate) fn still() -> bool {
+    objc2_app_kit::NSWorkspace::sharedWorkspace().accessibilityDisplayShouldReduceMotion()
+}
+
+#[cfg(not(target_os = "macos"))]
+pub(crate) fn still() -> bool {
+    false
+}
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use fractile::{
-        Rect,
-        app::{UiHudTile, UiHudWorkspace, UiLaunchAtLogin, UiWorkspaceWindows},
-    };
+    use fractile::app::UiLaunchAtLogin;
 
-    fn snapshot(focused: WorkspaceId, tiles: Vec<Rect>) -> UiAgentSnapshot {
+    fn snapshot(focused: WorkspaceId) -> UiAgentSnapshot {
         UiAgentSnapshot {
             accessibility: true,
             automatic: true,
             hud: true,
             launch_at_login: UiLaunchAtLogin::Off,
-            active_workspaces: vec![WorkspaceId::ONE, focused],
+            active_workspaces: vec![focused],
             focused_workspace: Some(focused),
-            windows: vec![UiWorkspaceWindows {
-                windows: UiHudWorkspace {
-                    workspace: focused,
-                    fullscreen: false,
-                    tiles: tiles
-                        .into_iter()
-                        .enumerate()
-                        .map(|(key, rect)| UiHudTile {
-                            key: key as u64,
-                            rect,
-                            bundle: None,
-                        })
-                        .collect(),
-                    floating: Vec::new(),
-                },
-                portrait: false,
-            }],
+            windows: Vec::new(),
             last_error: None,
         }
     }
 
     #[test]
-    fn the_icon_follows_the_focused_workspace_and_its_layout() {
-        let p = HUD_PREVIEW_RECT;
-        let half = |left: bool| Rect {
-            x: if left { p.x } else { p.x + p.width / 2 },
-            y: p.y,
-            width: p.width / 2,
-            height: p.height,
-        };
-        let two = face(&snapshot(WorkspaceId::FIVE, vec![half(true), half(false)]));
-        assert_eq!(two.workspace, Some(WorkspaceId::FIVE));
-        assert_eq!(two.windows.len(), 2);
-        // Side by side, filling the area, a gap between them.
-        let (a, b) = (two.windows[0], two.windows[1]);
-        assert!((a.0 - AREA.0).abs() < 0.5 && (b.0 + b.2 - (AREA.0 + AREA.2)).abs() < 0.5);
-        assert!((b.0 - (a.0 + a.2) - GAP).abs() < 0.5);
-        assert!((a.3 - AREA.3).abs() < 0.5);
-        // Nothing tiled: the icon's own split.
-        let empty = face(&snapshot(WorkspaceId::TWO, Vec::new()));
-        assert_eq!(empty.windows, resting());
-        // The SVG carries the first window lit and the number.
-        let drawn = svg(&two);
-        assert_eq!(drawn.matches("url(#focus)").count(), 1);
-        assert!(drawn.contains(">5</text>"));
-        assert!(drawn.starts_with("<svg") && drawn.ends_with("</svg>"));
+    fn a_switch_moves_every_window_one_slot_on_and_then_they_hold_still() {
+        let mut icon = DockIcon::default();
+        // First sight: the split, still.
+        assert!(icon.snapshot(&snapshot(WorkspaceId::ONE), 0.0).is_some());
+        assert!(icon.tick(0.5, false).is_none());
+        assert!(icon.snapshot(&snapshot(WorkspaceId::ONE), 1.0).is_none());
+        // A switch sets them moving, and they land a slot on.
+        assert!(icon.snapshot(&snapshot(WorkspaceId::TWO), 2.0).is_some());
+        let (_, more) = icon.tick(2.0 + DURATION / 2.0, false).unwrap();
+        assert!(more);
+        let (last, more) = icon.tick(2.0 + DURATION, false).unwrap();
+        assert!(!more);
+        assert_eq!(last, frame(1, 1, 1.0));
+        assert!(icon.tick(3.0, false).is_none());
+        // Under Reduce Motion they land at once.
+        icon.snapshot(&snapshot(WorkspaceId::THREE), 4.0);
+        let (_, more) = icon.tick(4.0, true).unwrap();
+        assert!(!more);
+    }
+
+    #[test]
+    fn each_frame_outlines_four_windows_the_focused_one_orange_and_no_badge() {
+        for turn in 0..4 {
+            let drawn = frame(turn, turn, 1.0);
+            assert_eq!(drawn.matches(r##"stroke="#FFFFFF""##).count(), 3);
+            assert_eq!(drawn.matches(r##"stroke="#FF6A3D""##).count(), 1);
+            assert!(!drawn.contains("<text") && !drawn.contains("<circle"));
+        }
+        // The focused window moves on with each turn.
+        assert_ne!(frame(0, 0, 1.0), frame(1, 1, 1.0));
     }
 }

@@ -129,9 +129,10 @@ the HUD; only the filter you write lives in `config.toml`.
 ## Dock icon
 
 `settings.show_in_dock` (Settings › General › Show in Dock, on by default) keeps Fractile in the
-Dock while it runs; off, it shows there only while Settings is open. The Dock icon is live: it
-draws the focused workspace's tile layout with the first window lit orange, and the workspace's
-number at the bottom right, and redraws when either changes.
+Dock while it runs; off, it shows there only while Settings is open. The Dock icon is live: behind
+the F, window outlines in the app icon's split (a half, a quarter, two eighths) trade places each
+time you switch workspace, sliding into the next slot over about half a second with the focused one
+outlined in orange, then hold still. Under Reduce Motion they move at once.
 
 ## Workspace HUD
 
