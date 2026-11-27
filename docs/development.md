@@ -125,3 +125,22 @@ rg -n 'Pause Tiling|Resume Tiling|Settings\.\.\.|Quit Fractile' --glob '*.md'
 rg -n 'Automatic Tiling|Retile Now|starts paused|paused startup' --glob '*.md' --glob '!docs/development.md'
 git diff --check
 ```
+
+## Release Build
+
+`scripts/package-dmg.sh` builds the signed app and wraps it in `dist/Fractile-<version>.dmg`, a
+disk image with Fractile.app and an Applications shortcut to drag it onto. The script signs the
+image with the same Developer ID, then has Apple notarize and staple both the app and the image,
+so the download opens on any Mac with no Gatekeeper warning. Raise `CFBundleShortVersionString`
+(and `CFBundleVersion`) in `app/Info.plist` before each release.
+
+Notarization needs a notarytool keychain profile, made once:
+
+```sh
+xcrun notarytool store-credentials fractile \
+  --apple-id <your Apple ID> --team-id <your team ID> \
+  --password <app-specific password from appleid.apple.com>
+```
+
+Without it the image is built and signed but not notarized. Set `FRACTILE_NOTARY_PROFILE` to use
+another profile name.
