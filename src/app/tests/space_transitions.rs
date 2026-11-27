@@ -101,6 +101,25 @@ fn restore_keeps_recovery_for_a_parked_window_on_another_desktop() {
     assert!(!runtime.inaccessible_since.contains_key(&elsewhere));
 }
 
+/// A parked Terminal window merged into another window as a tab: the window server still lists
+/// it, back on a screen, but Accessibility cannot reach it. Nothing hides it any more, so its
+/// recovery frame retires and restore (and so quit and restart) can finish.
+#[test]
+fn restore_forgets_a_parked_window_that_is_back_on_a_screen_but_unreachable() {
+    let tab = window(10);
+    let normal = frame(50);
+    let mut backend = FakeBackend::default();
+    // Listed by the window server at an ordinary spot on the display, unreachable.
+    backend.server_frames.insert(tab.clone(), frame(200));
+    let mut runtime = runtime_with_parked(backend, [(tab.clone(), normal)]);
+    runtime.note_outputs(&outputs());
+    bind(&mut runtime, WorkspaceId::new(2).unwrap(), &tab);
+
+    assert_eq!(runtime.restore_all(), 0);
+    assert!(runtime.parked.is_empty());
+    assert!(!runtime.inaccessible_since.contains_key(&tab));
+}
+
 /// #334: activating a window on another desktop slides it in while the
 /// outgoing desktop's tile is still on screen. Accessibility already reports
 /// the arriving window, but laying both out together would shrink the

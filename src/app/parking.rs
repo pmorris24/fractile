@@ -371,11 +371,29 @@ impl<B: WorkspaceBackend> WorkspaceRuntime<B> {
     /// failed to find it for [`INACCESSIBLE_GRACE`]. A parked window never
     /// times out: Accessibility cannot reach a window on another macOS
     /// desktop, and dropping its recovery frame would strand it off screen
-    /// (#328), so only the window server or its process may retire it.
+    /// (#328), so only the window server or its process may retire it, or the window turning
+    /// up on a screen: then nothing hides it any more (Terminal merged it into another window
+    /// as a tab, or its app moved it), and holding its recovery frame would only block quit.
     fn confirm_gone(&mut self, window: &crate::PhysicalWindowId) -> bool {
-        if self.backend.window_server_frame(window).is_none()
-            || !self.backend.is_process_running(&window.app)
+        let server_frame = self.backend.window_server_frame(window);
+        let Some(server_frame) =
+            server_frame.filter(|_| self.backend.is_process_running(&window.app))
+        else {
+            self.inaccessible_since.remove(window);
+            return true;
+        };
+        if self.parked.contains_key(window)
+            && self.displays.known_outputs().is_some_and(|outputs| {
+                outputs
+                    .frames()
+                    .any(|display| display.contains_center(server_frame))
+            })
         {
+            log_event!(
+                "forgetting recovery for {:?}: Accessibility cannot reach it and it is back on a screen at {:?}, so nothing hides it",
+                window,
+                server_frame
+            );
             self.inaccessible_since.remove(window);
             return true;
         }
