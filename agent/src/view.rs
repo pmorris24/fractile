@@ -76,6 +76,12 @@ fn sidebar(ui: &Ui, p: Paint) -> El {
         .child(nav)
         .child(el().key("spacer").grow(1.0))
         .child(
+            crate::brand::lockup(p, 15.0)
+                .pl(SIDEBAR_PX)
+                .pb(6.0)
+                .a11y_hidden(),
+        )
+        .child(
             text(format!("Version {}", fractile::build_version()))
                 .key("version")
                 .font(p.tabular(p.meta()))

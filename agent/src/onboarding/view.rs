@@ -267,16 +267,15 @@ fn welcome(p: Paint) -> El {
         ))
 }
 
-/// Fractile's split-tile mark inside a concentric halo ring.
+/// Fractile's F mark on its paper badge, inside a concentric halo ring: the app icon, large.
 fn welcome_hero(p: Paint) -> El {
     let c = &p.k.c;
-    let badge_ink = rune::oklch(0.21, 0.012, 265.0);
-    let tile_ink = rune::oklch(0.97, 0.012, 270.0);
-    let mut badge = el()
+    let mut badge = row()
         .key("mark-badge")
         .size(92.0, 92.0)
         .radius(22.0)
-        .fill(badge_ink)
+        .center()
+        .fill(crate::brand::paper())
         .border(p.hair, Color::WHITE.alpha(0.10))
         .box_shadow(Shadow {
             y: 2.0,
@@ -290,27 +289,7 @@ fn welcome_hero(p: Paint) -> El {
             color: Color::BLACK.alpha(if p.k.dark { 0.55 } else { 0.18 }),
             ..Shadow::default()
         })
-        .child(
-            el().key("tile-master")
-                .size(34.0, 44.0)
-                .radius(7.0)
-                .fill(tile_ink)
-                .absolute(17.0, 24.0),
-        )
-        .child(
-            el().key("tile-top")
-                .size(22.0, 20.5)
-                .radius(5.5)
-                .fill(tile_ink.alpha(0.88))
-                .absolute(53.0, 24.0),
-        )
-        .child(
-            el().key("tile-bottom")
-                .size(22.0, 20.5)
-                .radius(5.5)
-                .fill(tile_ink.alpha(0.66))
-                .absolute(53.0, 47.5),
-        );
+        .child(icon(&crate::brand::MARK, 52.0).color(crate::brand::ink()));
     if !p.k.dark {
         badge = badge.border(p.hair, Color::BLACK.alpha(0.12));
     }

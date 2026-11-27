@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 160" width="600" height="160">
+  <title>Fractile</title>
+  <g transform="translate(20 22)" fill="#111111" stroke="#111111" stroke-width="3" stroke-linejoin="round">
+    <path d="M3 113 V58 L42 3 H117 L101 26 H54 L35 52 V113 Z"/>
+    <path d="M44 50 H115 L99 73 H40 L35 80 V64 Z"/>
+  </g>
+  <text x="168" y="128" fill="#111111" font-family="'General Sans', Manrope, 'SF Pro Display', 'Helvetica Neue', sans-serif" font-size="112" font-weight="700" letter-spacing="-3">fractile</text>
+</svg>

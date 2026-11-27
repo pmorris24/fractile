@@ -8,6 +8,7 @@ static ALLOCATOR: procwatch::alloc::Counting = procwatch::alloc::Counting::syste
 
 mod activity;
 mod apps;
+mod brand;
 mod controls;
 #[cfg(test)]
 mod design_tokens;

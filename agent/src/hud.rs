@@ -44,7 +44,7 @@ pub use menu::HudSink;
 pub use menu::LiveHudSink;
 #[cfg(test)]
 use menu::NoopHudSink;
-pub use pill::{Icons, PILL_HEIGHT};
+pub use pill::{Icons, PILL_HEIGHT, srgb as pill_srgb};
 pub(crate) use stage::{HudPreview, SCENES, miniature, stage, triggers};
 
 use crate::{apps, controls::Paint};

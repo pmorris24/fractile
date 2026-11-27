@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 116" width="120" height="116">
+  <title>Fractile</title>
+  <g fill="#111111" stroke="#111111" stroke-width="3" stroke-linejoin="round">
+    <path d="M3 113 V58 L42 3 H117 L101 26 H54 L35 52 V113 Z"/>
+    <path d="M44 50 H115 L99 73 H40 L35 80 V64 Z"/>
+  </g>
+</svg>
