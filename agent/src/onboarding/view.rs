@@ -267,15 +267,40 @@ fn welcome(p: Paint) -> El {
         ))
 }
 
-/// Fractile's F mark on its paper badge, inside a concentric halo ring: the app icon, large.
+/// Fractile's app icon, drawn at `BADGE` points inside a concentric halo ring: the dark tile, the
+/// windows of a split screen with the left one lit orange, and the F on top. The measurements are
+/// brand/fractile-icon.svg's, whose 824-point tile is the badge.
 fn welcome_hero(p: Paint) -> El {
+    const BADGE: f32 = 92.0;
     let c = &p.k.c;
-    let mut badge = row()
+    let k = BADGE / 824.0;
+    // A window of the split screen, from the SVG's coordinates (the tile starts at 100).
+    let window = |key: &str, x: f32, y: f32, w: f32, h: f32, r: f32| {
+        el().key(key)
+            .absolute((x - 100.0) * k, (y - 100.0) * k)
+            .size(w * k, h * k)
+            .radius(r * k)
+    };
+    let down = std::f32::consts::PI;
+    let orange = [
+        (0.0, crate::hud::pill_srgb(0xff7a48)),
+        (1.0, crate::hud::pill_srgb(0xf2471c)),
+    ];
+    let quiet = Color::WHITE.alpha(0.07);
+    // The F: the mark asset is 120 points with the F 114 across, set 3 in and 5 down.
+    let mark = 470.0 * k * 120.0 / 114.0;
+    let mut badge = el()
         .key("mark-badge")
-        .size(92.0, 92.0)
-        .radius(22.0)
-        .center()
-        .fill(crate::brand::paper())
+        .size(BADGE, BADGE)
+        .radius(185.0 * k)
+        .fill(crate::hud::pill_srgb(0x0c0c0f))
+        .linear_gradient(
+            down,
+            [
+                (0.0, crate::hud::pill_srgb(0x26262c)),
+                (1.0, crate::hud::pill_srgb(0x0c0c0f)),
+            ],
+        )
         .border(p.hair, Color::WHITE.alpha(0.10))
         .box_shadow(Shadow {
             y: 2.0,
@@ -289,7 +314,22 @@ fn welcome_hero(p: Paint) -> El {
             color: Color::BLACK.alpha(if p.k.dark { 0.55 } else { 0.18 }),
             ..Shadow::default()
         })
-        .child(icon(&crate::brand::MARK, 52.0).color(crate::brand::ink()));
+        .child(window("window-right", 525.0, 164.0, 335.0, 335.0, 100.5).fill(quiet))
+        .child(window("window-a", 525.0, 525.0, 154.5, 335.0, 46.35).fill(quiet))
+        .child(window("window-b", 705.5, 525.0, 154.5, 335.0, 46.35).fill(quiet))
+        .child(
+            window("window-focused", 164.0, 164.0, 335.0, 696.0, 100.5)
+                .fill(orange[1].1)
+                .linear_gradient(down, orange),
+        )
+        .child(
+            icon(&crate::brand::MARK, mark)
+                .color(crate::brand::paper())
+                .absolute(
+                    (265.0 - 100.0) * k - 3.0 * mark / 120.0,
+                    (279.2 - 100.0) * k - 5.0 * mark / 120.0,
+                ),
+        );
     if !p.k.dark {
         badge = badge.border(p.hair, Color::BLACK.alpha(0.12));
     }

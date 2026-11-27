@@ -74,9 +74,10 @@ if xcrun --find actool >/dev/null 2>&1; then
     --notices >&2
   cp "$icon_output/AppIcon.icns" "$icon_output/Assets.car" "$bundle/Contents/Resources/"
 else
-  # Without Xcode, draw the icon (the F mark on its paper tile) and pack it with iconutil, which
-  # macOS ships. It lacks the Liquid Glass layers app/AppIcon.icon gets from actool.
-  swift "$root/scripts/make-icns.swift" "$bundle/Contents/Resources/AppIcon.icns" >&2
+  # Without Xcode, rasterise brand/fractile-icon.svg and pack it with iconutil, which macOS
+  # ships. It lacks the Liquid Glass treatment app/AppIcon.icon gets from actool.
+  swift "$root/scripts/make-icns.swift" "$root/brand/fractile-icon.svg" \
+    "$bundle/Contents/Resources/AppIcon.icns" >&2
 fi
 plutil -lint "$bundle/Contents/Info.plist" >/dev/null
 codesign --force --timestamp --options runtime --sign "$identity" \

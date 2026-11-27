@@ -2,8 +2,8 @@
   "color-space-for-untagged-svg-colors": "display-p3",
   "fill": {
     "linear-gradient": [
-      "display-p3:0.95686,0.95294,0.93333,1.00000",
-      "display-p3:0.90196,0.89412,0.86667,1.00000"
+      "display-p3:0.14902,0.14902,0.17255,1.00000",
+      "display-p3:0.04706,0.04706,0.05882,1.00000"
     ]
   },
   "groups": [
@@ -11,11 +11,41 @@
       "layers": [
         {
           "fill": {
-            "solid": "display-p3:0.06667,0.06667,0.06667,1.00000"
+            "solid": "display-p3:1.00000,1.00000,1.00000,1.00000"
+          },
+          "glass": true,
+          "image-name": "mark.svg",
+          "name": "F",
+          "position": {
+            "scale": 1,
+            "translation-in-points": [
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "fill": {
+            "solid": "display-p3:1.00000,0.35294,0.16471,1.00000"
+          },
+          "glass": true,
+          "image-name": "focus.svg",
+          "name": "Focused window",
+          "position": {
+            "scale": 1,
+            "translation-in-points": [
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "fill": {
+            "solid": "display-p3:1.00000,1.00000,1.00000,0.08000"
           },
           "glass": false,
-          "image-name": "Mark.svg",
-          "name": "F Mark",
+          "image-name": "windows.svg",
+          "name": "Windows",
           "position": {
             "scale": 1,
             "translation-in-points": [
@@ -25,14 +55,14 @@
           }
         }
       ],
-      "name": "F Mark",
+      "name": "Fractile",
       "shadow": {
         "kind": "neutral",
-        "opacity": 0.25
+        "opacity": 0.5
       },
       "translucency": {
-        "enabled": false,
-        "value": 0
+        "enabled": true,
+        "value": 0.2
       }
     }
   ],

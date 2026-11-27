@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <title>Fractile</title>
+  <!-- Fractile's app icon. Layers, back to front: the tile, the windows of a split screen, the
+       focused window in orange, and the F. brand/icon/ has each layer on its own for Icon
+       Composer; scripts/make-icns.swift rasterises this file for builds without Xcode. -->
+  <defs>
+    <linearGradient id="tile" x1="0" y1="100" x2="0" y2="924" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#26262C"/><stop offset="1" stop-color="#0C0C0F"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="0" y1="100" x2="0" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.18"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="focus" x1="0" y1="164" x2="0" y2="860" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FF7A48"/><stop offset="1" stop-color="#F2471C"/>
+    </linearGradient>
+    <linearGradient id="mark" x1="0" y1="3" x2="0" y2="116" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#E6E4DD"/>
+    </linearGradient>
+    <clipPath id="tile-clip"><rect x="100" y="100" width="824" height="824" rx="185"/></clipPath>
+  </defs>
+  <!-- A soft shadow under the tile, as faint stepped copies (macOS draws SVG without blur filters). -->
+  <rect x="99" y="103" width="826" height="824" rx="185" fill="#000000" fill-opacity="0.045"/>
+  <rect x="98" y="106" width="828" height="824" rx="185" fill="#000000" fill-opacity="0.045"/>
+  <rect x="97" y="109" width="830" height="824" rx="185" fill="#000000" fill-opacity="0.045"/>
+  <rect x="96" y="112" width="832" height="824" rx="185" fill="#000000" fill-opacity="0.045"/>
+  <rect x="95" y="115" width="834" height="824" rx="185" fill="#000000" fill-opacity="0.045"/>
+  <rect x="94" y="118" width="836" height="824" rx="185" fill="#000000" fill-opacity="0.045"/>
+  <rect x="93" y="121" width="838" height="824" rx="185" fill="#000000" fill-opacity="0.045"/>
+  <rect x="92" y="124" width="840" height="824" rx="185" fill="#000000" fill-opacity="0.045"/>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#tile)"/>
+  <g clip-path="url(#tile-clip)">
+    <g fill="#FFFFFF" fill-opacity="0.07">
+      <rect x="525" y="164" width="335" height="335" rx="100.5"/>
+      <rect x="525" y="525" width="154.5" height="335" rx="46.35"/>
+      <rect x="705.5" y="525" width="154.5" height="335" rx="46.35"/>
+    </g>
+    <rect x="164" y="164" width="335" height="696" rx="100.5" fill="url(#focus)"/>
+  </g>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="none" stroke="url(#rim)" stroke-width="4"/>
+  <g transform="translate(252.63 266.88) scale(4.1228)">
+    <!-- The F's shadow, the same way. -->
+    <path d="M3 113 V58 L42 3 H117 L101 26 H54 L35 52 V113 Z M44 50 H115 L99 73 H40 L35 80 V64 Z" transform="translate(0 0.45)" fill="#000000" fill-opacity="0.08" stroke="#000000" stroke-opacity="0.08" stroke-width="3.6" stroke-linejoin="round"/>
+    <path d="M3 113 V58 L42 3 H117 L101 26 H54 L35 52 V113 Z M44 50 H115 L99 73 H40 L35 80 V64 Z" transform="translate(0 0.90)" fill="#000000" fill-opacity="0.08" stroke="#000000" stroke-opacity="0.08" stroke-width="4.2" stroke-linejoin="round"/>
+    <path d="M3 113 V58 L42 3 H117 L101 26 H54 L35 52 V113 Z M44 50 H115 L99 73 H40 L35 80 V64 Z" transform="translate(0 1.35)" fill="#000000" fill-opacity="0.08" stroke="#000000" stroke-opacity="0.08" stroke-width="4.8" stroke-linejoin="round"/>
+    <path d="M3 113 V58 L42 3 H117 L101 26 H54 L35 52 V113 Z M44 50 H115 L99 73 H40 L35 80 V64 Z" transform="translate(0 1.80)" fill="#000000" fill-opacity="0.08" stroke="#000000" stroke-opacity="0.08" stroke-width="5.4" stroke-linejoin="round"/>
+    <path d="M3 113 V58 L42 3 H117 L101 26 H54 L35 52 V113 Z M44 50 H115 L99 73 H40 L35 80 V64 Z" transform="translate(0 2.25)" fill="#000000" fill-opacity="0.08" stroke="#000000" stroke-opacity="0.08" stroke-width="6.0" stroke-linejoin="round"/>
+    <path d="M3 113 V58 L42 3 H117 L101 26 H54 L35 52 V113 Z M44 50 H115 L99 73 H40 L35 80 V64 Z" transform="translate(0 2.70)" fill="#000000" fill-opacity="0.08" stroke="#000000" stroke-opacity="0.08" stroke-width="6.6" stroke-linejoin="round"/>
+    <path d="M3 113 V58 L42 3 H117 L101 26 H54 L35 52 V113 Z M44 50 H115 L99 73 H40 L35 80 V64 Z" transform="translate(0 3.15)" fill="#000000" fill-opacity="0.08" stroke="#000000" stroke-opacity="0.08" stroke-width="7.2" stroke-linejoin="round"/>
+    <path d="M3 113 V58 L42 3 H117 L101 26 H54 L35 52 V113 Z M44 50 H115 L99 73 H40 L35 80 V64 Z" transform="translate(0 3.60)" fill="#000000" fill-opacity="0.08" stroke="#000000" stroke-opacity="0.08" stroke-width="7.8" stroke-linejoin="round"/>
+    <path d="M3 113 V58 L42 3 H117 L101 26 H54 L35 52 V113 Z M44 50 H115 L99 73 H40 L35 80 V64 Z" fill="url(#mark)" stroke="url(#mark)" stroke-width="3" stroke-linejoin="round"/>
+  </g>
+</svg>

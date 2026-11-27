@@ -12,13 +12,9 @@ pub static MARK: Icon = Icon {
     body: include_str!("../assets/mark.svg"),
 };
 
-/// The brand's warm off-white and near-black, as the app icon uses them.
+/// The brand's warm off-white: the F on the app icon.
 pub fn paper() -> Color {
     crate::hud::pill_srgb(0xeeece6)
-}
-
-pub fn ink() -> Color {
-    crate::hud::pill_srgb(0x111111)
 }
 
 /// The mark `size` points tall beside the lowercase wordmark in the strong type role, in the
