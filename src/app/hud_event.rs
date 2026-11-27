@@ -169,7 +169,29 @@ impl<B: WorkspaceBackend> WorkspaceRuntime<B> {
                 UiWorkspaceWindows {
                     windows: self.hud_workspace(workspace, hud_preview_rect(portrait)),
                     portrait,
+                    open: self.open_windows(workspace),
                 }
+            })
+            .collect()
+    }
+
+    /// Every window `workspace` owns with a known app: tiles in layout order, then floats.
+    fn open_windows(&self, workspace: WorkspaceId) -> Vec<UiOpenWindow> {
+        let mut floating: Vec<_> = self
+            .workspaces
+            .floating_entries()
+            .filter(|(_, owner)| *owner == workspace)
+            .map(|(window, _)| window.clone())
+            .collect();
+        floating.sort();
+        self.workspaces
+            .engine(workspace)
+            .bound_windows()
+            .into_iter()
+            .chain(floating)
+            .filter_map(|window| {
+                let bundle = self.bundle_id(&window.app)?.to_owned();
+                Some(UiOpenWindow { bundle, window })
             })
             .collect()
     }

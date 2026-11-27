@@ -772,10 +772,74 @@ fn unplugged_screens_keep_their_place_and_workspaces_in_the_arrangement() {
 }
 
 #[test]
-fn an_open_windows_icon_dropped_on_another_workspace_sends_its_app_there() {
+fn an_open_windows_icon_dropped_on_another_workspace_moves_only_that_window() {
     let mut ui = rules_ui();
     ui.displays = arrangement::fixture_desk();
     let windows = items::fixture();
+    let layout = Layout::with_known(&ui.doc, WIDTH, &ui.displays, &[], &windows, &[]);
+    let firefox = "org.mozilla.firefox";
+    // Each of Firefox's two windows on 2 is its own icon, carrying its own window.
+    let carried: Vec<_> = layout
+        .items_for(WorkspaceId::TWO)
+        .iter()
+        .filter_map(|item| match item {
+            items::Item::Window(bundle, window) if bundle == firefox => window.clone(),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(carried.len(), 2);
+    assert_ne!(carried[0], carried[1]);
+    let (_, (cx, cy, cw, ch)) = layout
+        .grid
+        .panel
+        .monitors
+        .iter()
+        .flat_map(|m| &m.cards)
+        .find(|(ws, _)| *ws == WorkspaceId::THREE)
+        .copied()
+        .unwrap();
+    let rule = super::drag::window_rule(firefox, WorkspaceId::TWO, 0);
+    let rules_before = ui.doc.rules();
+    let grab = (10.0, 10.0);
+    let delta = (
+        cx + cw / 2.0 - grab.0,
+        cy + ch / 2.0 + arrangement::TOP - grab.1,
+    );
+    for (phase, d) in [
+        (rune::Phase::Down, (0.0, 0.0)),
+        (rune::Phase::Move, delta),
+        (rune::Phase::Up, delta),
+    ] {
+        drag_step(
+            &mut ui,
+            phase,
+            grab,
+            d,
+            false,
+            &rule,
+            (0.0, 0.0),
+            (20.0, 20.0),
+            |x, y| layout.grid.target_at(x, y),
+        );
+        if phase == rune::Phase::Down {
+            ui.drag.as_mut().unwrap().window = Some(carried[1].clone());
+        }
+    }
+    assert_eq!(ui.error, None);
+    assert!(ui.drag.is_none());
+    // The window moves on its own: no rule sends Firefox anywhere.
+    assert_eq!(ui.doc.rules(), rules_before);
+}
+
+#[test]
+fn an_unnamed_open_windows_icon_dropped_on_another_workspace_sends_its_app_there() {
+    let mut ui = rules_ui();
+    ui.displays = arrangement::fixture_desk();
+    let mut windows = items::fixture();
+    // An engine that names no windows: icons stand for their app.
+    for entry in &mut windows {
+        entry.open.clear();
+    }
     let layout = Layout::with_known(&ui.doc, WIDTH, &ui.displays, &[], &windows, &[]);
     // Firefox has no rule: its two windows on 2 show as icons of their own.
     let firefox = "org.mozilla.firefox";
@@ -783,7 +847,7 @@ fn an_open_windows_icon_dropped_on_another_workspace_sends_its_app_there() {
         layout
             .items_for(WorkspaceId::TWO)
             .iter()
-            .filter(|item| **item == items::Item::Window(firefox.into()))
+            .filter(|item| matches!(item, items::Item::Window(bundle, None) if bundle == firefox))
             .count(),
         2
     );

@@ -807,13 +807,14 @@ impl MapView<'_> {
         let Some(spot) = self.layout.spot(rule) else {
             return item;
         };
-        self.draggable_at(rule, item, spot, layer)
+        self.draggable_at(rule, None, item, spot, layer)
     }
 
-    /// `item`, at `spot` in the map, dragging `rule`.
+    /// `item`, at `spot` in the map, dragging `rule`, or only `window` when it names one.
     fn draggable_at(
         self,
         rule: &Rule,
+        window: Option<fractile::PhysicalWindowId>,
         item: El,
         (origin, size): ((f32, f32), (f32, f32)),
         layer: &mut Vec<El>,
@@ -834,7 +835,9 @@ impl MapView<'_> {
             .cursor(Cursor::Grab)
             .opacity(if dragging { 0.3 } else { 1.0 })
             .on_drag(move |ui: &mut Ui, d: &mut rune::Drag, _: &mut Tx| {
-                drag::drag(ui, d, &drag_rule, origin, size, |x, y| grid.target_at(x, y))
+                drag::drag(ui, d, &drag_rule, window.as_ref(), origin, size, |x, y| {
+                    grid.target_at(x, y)
+                })
             });
         // An open window's icon has no rule yet, so no rule menu.
         if index >= drag::WINDOW_BASE {

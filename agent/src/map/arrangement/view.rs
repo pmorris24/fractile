@@ -345,7 +345,7 @@ impl MapView<'_> {
         let room = rule_room(size);
         let name = |item: &Item| match item {
             Item::Rule(index) => self.rule_label(&rules[*index]),
-            Item::Window(bundle) => self.window_name(bundle),
+            Item::Window(bundle, _) => self.window_name(bundle),
         };
         for (slot, item) in items.iter().enumerate() {
             let at = rule_offset(slot, size.0);
@@ -381,14 +381,19 @@ impl MapView<'_> {
                         None => icon,
                     }
                 }
-                Item::Window(bundle) => {
+                Item::Window(bundle, window) => {
                     let icon = self.window_icon(bundle, RULE_ICON);
                     match live.as_mut() {
                         Some((layer, (cx, cy))) => {
                             let rule = drag::window_rule(bundle, workspace, position * 64 + slot);
                             let spot = ((*cx + at.0, *cy + at.1), (RULE_ICON, RULE_ICON));
-                            self.draggable_at(&rule, icon, spot, layer)
-                                .help(format!("{} · open here now", self.window_name(bundle)))
+                            let help = if window.is_some() {
+                                "open here now · drag to move just this window"
+                            } else {
+                                "open here now"
+                            };
+                            self.draggable_at(&rule, window.clone(), icon, spot, layer)
+                                .help(format!("{} · {help}", self.window_name(bundle)))
                         }
                         None => icon,
                     }

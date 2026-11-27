@@ -274,6 +274,9 @@ impl<B: WorkspaceBackend> WorkspaceRuntime<B> {
             WorkerAction::MoveApp(bundle_id, workspace) => {
                 self.move_app(&bundle_id, workspace, outputs, cancelled)
             }
+            WorkerAction::MoveWindow(window, workspace) => {
+                self.move_window(window, workspace, outputs, cancelled)
+            }
             WorkerAction::MoveTab { target, follow } => {
                 self.move_tab(target, follow, outputs, cancelled)
             }

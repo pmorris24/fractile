@@ -70,8 +70,8 @@ pub use app_loop::{MainThreadAgent, TickOutcome};
 pub use bridge::{
     HUD_MAX_DISPLAYS, HUD_MAX_FLOATING, HUD_MAX_TILES, HUD_PORTRAIT_PREVIEW_RECT, HUD_PREVIEW_RECT,
     UiAction, UiAgentSnapshot, UiBridge, UiHudDisplay, UiHudEvent, UiHudKind, UiHudLayout,
-    UiHudTile, UiHudToast, UiHudWorkspace, UiLaunchAtLogin, UiNews, UiWorkspaceWindows,
-    hud_preview_rect,
+    UiHudTile, UiHudToast, UiHudWorkspace, UiLaunchAtLogin, UiNews, UiOpenWindow,
+    UiWorkspaceWindows, hud_preview_rect,
 };
 
 pub struct HostCallbacks {
@@ -263,6 +263,8 @@ pub(crate) enum WorkerAction {
         follow: bool,
     },
     MoveApp(String, WorkspaceId),
+    /// Settings › Screens: one open window dropped on a workspace; only it moves.
+    MoveWindow(crate::PhysicalWindowId, WorkspaceId),
     /// Send the focused window's active tab to a workspace through the app's
     /// own "Move Tab to New Window"; a single-tab window moves whole.
     MoveTab {
@@ -319,6 +321,9 @@ impl WorkerAction {
                 format!("move {}{follow} queued", step.as_str())
             }
             Self::MoveApp(_, workspace) => format!("move app to workspace {workspace} queued"),
+            Self::MoveWindow(_, workspace) => {
+                format!("move window to workspace {workspace} queued")
+            }
             Self::MoveTab {
                 target,
                 follow: false,

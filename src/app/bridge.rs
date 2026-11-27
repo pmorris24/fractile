@@ -57,6 +57,8 @@ pub enum UiAction {
     SwitchWorkspace(WorkspaceId),
     /// Settings › Screens: an app dropped on a workspace; its open windows move there.
     MoveApp(String, WorkspaceId),
+    /// Settings › Screens: one open window dropped on a workspace; only it moves.
+    MoveWindow(crate::PhysicalWindowId, WorkspaceId),
     Retile,
     MarkWrong,
 }
@@ -81,6 +83,9 @@ impl From<UiAction> for Action {
             }
             UiAction::MoveApp(bundle, workspace) => {
                 Self::Worker(WorkerAction::MoveApp(bundle, workspace))
+            }
+            UiAction::MoveWindow(window, workspace) => {
+                Self::Worker(WorkerAction::MoveWindow(window, workspace))
             }
             UiAction::Retile => Self::Worker(WorkerAction::Retile),
             UiAction::MarkWrong => Self::Worker(WorkerAction::MarkWrong),
@@ -247,6 +252,16 @@ pub struct UiWorkspaceWindows {
     /// Whether the workspace's screen stands taller than it is wide: its tiles are then in
     /// [`HUD_PORTRAIT_PREVIEW_RECT`] space, else in [`HUD_PREVIEW_RECT`] space.
     pub portrait: bool,
+    /// Every window the workspace owns, tiles in layout order then floats, each with its app:
+    /// what Settings drags one at a time.
+    pub open: Vec<UiOpenWindow>,
+}
+
+/// One window a workspace owns, as Settings › Screens drags it.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct UiOpenWindow {
+    pub bundle: String,
+    pub window: crate::PhysicalWindowId,
 }
 
 impl UiAgentSnapshot {

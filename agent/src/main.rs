@@ -304,6 +304,15 @@ impl Ui {
         self.send_action(UiAction::MoveApp(bundle.to_owned(), workspace));
     }
 
+    /// Moves one open window to `workspace`, leaving the app's other windows and rules alone.
+    pub(crate) fn move_window(
+        &self,
+        window: fractile::PhysicalWindowId,
+        workspace: fractile::WorkspaceId,
+    ) {
+        self.send_action(UiAction::MoveWindow(window, workspace));
+    }
+
     pub fn toggle_automatic(&self) {
         self.send_action(UiAction::ToggleAutomatic);
     }

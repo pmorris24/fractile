@@ -1,9 +1,10 @@
 //! Dragging an app on the Rules map: from the press, through the slop that tells a drag from a
 //! click, to the drop that rewrites its rule. Dropped on a workspace, the app's open windows go
 //! there too. An open window's icon with no rule behind it drags as a rule-to-be
-//! (`window_rule`): its drop writes one.
+//! (`window_rule`). Dropped on a workspace it moves only that window and writes no rule;
+//! dropped on the float box it writes a float rule for its app.
 
-use fractile::WorkspaceId;
+use fractile::{PhysicalWindowId, WorkspaceId};
 
 use super::{Layout, SLOP, TILE_H};
 use crate::{
@@ -40,6 +41,8 @@ pub struct Drag {
     pub(super) delta: (f32, f32),
     pub(super) moved: bool,
     pub(super) target: Option<Place>,
+    /// The open window an open window's icon stands for: a drop on a workspace moves it alone.
+    pub(super) window: Option<PhysicalWindowId>,
 }
 
 impl Drag {
@@ -69,18 +72,22 @@ impl Drag {
             target: layout
                 .grid
                 .target_at(to.0 + tile_w / 2.0, to.1 + TILE_H / 2.0),
+            window: None,
         })
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub(super) fn drag(
     ui: &mut Ui,
     d: &rune::Drag,
     rule: &Rule,
+    window: Option<&PhysicalWindowId>,
     origin: (f32, f32),
     size: (f32, f32),
     target_at: impl Fn(f32, f32) -> Option<Place>,
 ) {
+    let down = d.phase == rune::Phase::Down;
     drag_step(
         ui,
         d.phase,
@@ -92,6 +99,9 @@ pub(super) fn drag(
         size,
         target_at,
     );
+    if down && let Some(drag) = ui.drag.as_mut() {
+        drag.window = window.cloned();
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -118,6 +128,7 @@ pub(super) fn drag_step(
                 delta: (0.0, 0.0),
                 moved: false,
                 target: None,
+                window: None,
             });
         }
         rune::Phase::Move => {
@@ -148,6 +159,12 @@ pub(super) fn drag_step(
                 || (target == Place::Float && matches!(current, Place::Ignore | Place::Pin));
             if unchanged {
                 ui.flush_pending_reload();
+                return;
+            }
+            // One open window to a workspace: only it moves, and no rule changes.
+            if let (Place::Workspace(workspace), Some(window)) = (target, &drag.window) {
+                ui.flush_pending_reload();
+                ui.move_window(window.clone(), workspace);
                 return;
             }
             let bundle = drag.snapshot.bundle_id.clone();
