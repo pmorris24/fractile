@@ -34,6 +34,7 @@ struct AppSettings {
     hud_style: HudStyle,
     hud_position: HudPosition,
     hud_stay: bool,
+    show_in_dock: bool,
     layout: LayoutMode,
     mouse_follows_focus: MouseFollowsFocus,
     trackpad_swipe: bool,
@@ -49,6 +50,7 @@ impl Default for AppSettings {
             hud_style: HudStyle::default(),
             hud_position: HudPosition::default(),
             hud_stay: false,
+            show_in_dock: true,
             layout: LayoutMode::default(),
             mouse_follows_focus: MouseFollowsFocus::default(),
             trackpad_swipe: true,
@@ -262,6 +264,8 @@ struct RawSettings {
     hud_position: HudPosition,
     #[serde(default)]
     hud_stay: bool,
+    #[serde(default = "default_show_in_dock")]
+    show_in_dock: bool,
     #[serde(default)]
     layout: LayoutMode,
     #[serde(default)]
@@ -289,6 +293,7 @@ impl Default for RawSettings {
             hud_style: HudStyle::default(),
             hud_position: HudPosition::default(),
             hud_stay: false,
+            show_in_dock: true,
             layout: LayoutMode::default(),
             mouse_follows_focus: MouseFollowsFocus::default(),
             trackpad_swipe: true,
@@ -345,6 +350,10 @@ impl RawSettings {
 }
 
 const fn default_hud() -> bool {
+    true
+}
+
+const fn default_show_in_dock() -> bool {
     true
 }
 
@@ -449,6 +458,7 @@ impl Config {
                 hud_style: raw.settings.hud_style,
                 hud_position: raw.settings.hud_position,
                 hud_stay: raw.settings.hud_stay,
+                show_in_dock: raw.settings.show_in_dock,
                 layout: raw.settings.layout,
                 mouse_follows_focus: raw.settings.mouse_follows_focus,
                 trackpad_swipe: raw.settings.trackpad_swipe,
@@ -489,6 +499,13 @@ impl Config {
     #[must_use]
     pub const fn hud_position(&self) -> HudPosition {
         self.settings.hud_position
+    }
+
+    /// `settings.show_in_dock`: Fractile keeps its live icon in the Dock, not only while Settings
+    /// is open.
+    #[must_use]
+    pub const fn show_in_dock(&self) -> bool {
+        self.settings.show_in_dock
     }
 
     /// `settings.hud_stay`: the Workspace HUD stays on screen and windows tile clear of it.

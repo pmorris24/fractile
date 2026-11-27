@@ -36,6 +36,7 @@ hud = true                            # optional (default: true); non-activating
 hud_style = "icons"                   # optional (default: "icons"); or "layouts"
 hud_position = "bottom"               # optional (default: "bottom"); or "top", "left", "right"
 hud_stay = false                      # optional (default: false); keep the HUD on screen, windows tile clear of it
+show_in_dock = true                   # optional (default: true); keep the live Dock icon, not only while Settings is open
 layout = "dwindle"                    # optional (default: "dwindle"); or "columns"
 mouse_follows_focus = "off"           # optional (default: "off"); or "display", "window"
 trackpad_swipe = true                 # optional (default: true); read only with [labs] swipe_switch
@@ -124,6 +125,13 @@ may return to a remembered workspace; see [Remembered Placements](#remembered-pl
 Title matching (`title` and `title_contains`) occurs only in memory, against the live title of a
 newly observed window. Titles are not serialized into persisted state, snapshots, `ctl debug`, or
 the HUD; only the filter you write lives in `config.toml`.
+
+## Dock icon
+
+`settings.show_in_dock` (Settings › General › Show in Dock, on by default) keeps Fractile in the
+Dock while it runs; off, it shows there only while Settings is open. The Dock icon is live: it
+draws the focused workspace's tile layout with the first window lit orange, and the workspace's
+number at the bottom right, and redraws when either changes.
 
 ## Workspace HUD
 

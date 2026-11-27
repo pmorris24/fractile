@@ -58,6 +58,7 @@ enum SettingKey {
     HudStyle,
     HudPosition,
     HudStay,
+    ShowInDock,
     Layout,
     MouseFollowsFocus,
     TrackpadSwipe,
@@ -74,6 +75,7 @@ impl SettingKey {
             "hud_style" => Ok(Self::HudStyle),
             "hud_position" => Ok(Self::HudPosition),
             "hud_stay" => Ok(Self::HudStay),
+            "show_in_dock" => Ok(Self::ShowInDock),
             "layout" => Ok(Self::Layout),
             "mouse_follows_focus" => Ok(Self::MouseFollowsFocus),
             "trackpad_swipe" => Ok(Self::TrackpadSwipe),
@@ -82,7 +84,7 @@ impl SettingKey {
             spacing::OUTER => Ok(Self::Outer),
             other => SpacingKey::parse(other).map(Self::Spacing).ok_or_else(|| {
                 format!(
-                    "unknown setting {raw:?}; valid keys: hud, hud_style, hud_position, hud_stay, layout, \
+                    "unknown setting {raw:?}; valid keys: hud, hud_style, hud_position, hud_stay, show_in_dock, layout, \
                      mouse_follows_focus, trackpad_swipe, menu_bar_icon, \
                      pause_on_builtin_display, gaps.inner, gaps.outer, gaps.top, gaps.bottom, \
                      gaps.left, gaps.right, single_window_max_width, single_window_max_height"
@@ -97,6 +99,7 @@ impl SettingKey {
             Self::HudStyle => "hud_style",
             Self::HudPosition => "hud_position",
             Self::HudStay => "hud_stay",
+            Self::ShowInDock => "show_in_dock",
             Self::Layout => "layout",
             Self::MouseFollowsFocus => "mouse_follows_focus",
             Self::TrackpadSwipe => "trackpad_swipe",
@@ -151,6 +154,10 @@ impl SettingKey {
                 let on = settings.effective_hud_stay();
                 (on.to_string(), serde_json::Value::Bool(on))
             }
+            Self::ShowInDock => {
+                let on = settings.effective_show_in_dock();
+                (on.to_string(), serde_json::Value::Bool(on))
+            }
             Self::PauseOnBuiltinDisplay => {
                 let on = settings.effective_pause_on_builtin_display();
                 (on.to_string(), serde_json::Value::Bool(on))
@@ -173,6 +180,7 @@ impl SettingKey {
             Self::HudStyle => settings.hud_style.is_some(),
             Self::HudPosition => settings.hud_position.is_some(),
             Self::HudStay => settings.hud_stay.is_some(),
+            Self::ShowInDock => settings.show_in_dock.is_some(),
             Self::Layout => settings.layout.is_some(),
             Self::MouseFollowsFocus => settings.mouse_follows_focus.is_some(),
             Self::TrackpadSwipe => settings.trackpad_swipe.is_some(),
@@ -190,6 +198,7 @@ impl SettingKey {
             Self::HudStyle => settings.hud_style = None,
             Self::HudPosition => settings.hud_position = None,
             Self::HudStay => settings.hud_stay = None,
+            Self::ShowInDock => settings.show_in_dock = None,
             Self::Layout => settings.layout = None,
             Self::MouseFollowsFocus => settings.mouse_follows_focus = None,
             Self::TrackpadSwipe => settings.trackpad_swipe = None,
@@ -376,6 +385,7 @@ enum SettingValue {
     TrackpadSwipe(bool),
     MenuBarIcon(MenuBarIcon),
     HudStay(bool),
+    ShowInDock(bool),
     PauseOnBuiltinDisplay(bool),
     Outer(i64),
     Spacing(SpacingKey, i64),
@@ -434,6 +444,13 @@ impl SettingValue {
                         "invalid value for menu_bar_icon: expected 'full', 'compact', or 'off', got {raw_value:?}"
                     )
                 }),
+            SettingKey::ShowInDock => match raw_value {
+                "true" => Ok(Self::ShowInDock(true)),
+                "false" => Ok(Self::ShowInDock(false)),
+                _ => Err(format!(
+                    "invalid value for show_in_dock: expected 'true' or 'false', got {raw_value:?}"
+                )),
+            },
             SettingKey::HudStay => match raw_value {
                 "true" => Ok(Self::HudStay(true)),
                 "false" => Ok(Self::HudStay(false)),
@@ -523,6 +540,13 @@ fn run_set(args: &[&str], path_override: Option<&Path>) -> Result<String, String
                 (
                     format!("set menu_bar_icon = {}", parsed.as_str()),
                     serde_json::Value::String(parsed.as_str().to_owned()),
+                )
+            }
+            SettingValue::ShowInDock(parsed) => {
+                doc.settings.show_in_dock = Some(parsed);
+                (
+                    format!("set show_in_dock = {parsed}"),
+                    serde_json::Value::Bool(parsed),
                 )
             }
             SettingValue::HudStay(parsed) => {

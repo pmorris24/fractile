@@ -12,6 +12,7 @@ mod brand;
 mod controls;
 #[cfg(test)]
 mod design_tokens;
+mod dock_icon;
 #[cfg(target_os = "macos")]
 mod host;
 mod hud;
@@ -86,6 +87,8 @@ pub struct Ui {
     /// The last arrangement of displays seen, which Settings › Screens keeps drawing after some
     /// of them are unplugged; read from disk once, on the first display read.
     pub(crate) known_displays: Option<panes::workspaces::remembered::Record>,
+    /// What the Dock icon last showed, so it is redrawn only when that changes.
+    pub(crate) dock_face: Option<dock_icon::Face>,
     /// Lab slug requested by a `fractile://labs/<slug>` deep link, preserved
     /// cleanly for Labs cards to highlight.
     pub highlight_lab: Option<String>,
@@ -132,6 +135,7 @@ impl Ui {
             displays: Vec::new(),
             displays_at: None,
             known_displays: None,
+            dock_face: None,
             highlight_lab: None,
             highlight_feature: None,
             error: None,
@@ -340,6 +344,17 @@ impl Ui {
         }
     }
 
+    /// Saves whether Fractile keeps its live icon in the Dock, and shows or hides it now. Off, it
+    /// stays while Settings is open, as before.
+    pub fn set_show_in_dock(&mut self, show: bool) {
+        self.edit(|doc| doc.set_show_in_dock(show));
+        if self.error.is_none()
+            && let Some(window) = &self.window
+        {
+            window.set_dock_icon(show || window.is_visible());
+        }
+    }
+
     /// Saves whether the Workspace HUD stays on screen; the engine reserves its strip of each
     /// display when it reads the file.
     pub fn set_hud_stay(&mut self, stay: bool) {
@@ -521,6 +536,11 @@ fn poll(ui: &mut Ui, clock: f64, tx: &mut Tx) -> bool {
         if let Some(driver) = &ui.hud_driver {
             driver.set_enabled(snapshot.hud);
         }
+        let face = dock_icon::face(&snapshot);
+        if !ui.fixture && ui.dock_face.as_ref() != Some(&face) {
+            dock_icon::show(&face);
+            ui.dock_face = Some(face);
+        }
         ui.agent = Some(snapshot);
         ui.look_up_apps();
         changed = true;
@@ -596,7 +616,10 @@ fn on_close(ui: &mut Ui, _tx: &mut Tx) {
     // Closing the setup window dismisses the tour. A first-run tour that never reached
     // Arrange & start leaves the windows where they are, paused (`onboarding::finish`).
     onboarding::dismiss(ui);
-    if let Some(window) = &ui.window {
+    // With Show in Dock on, the live icon stays when Settings closes.
+    if let Some(window) = &ui.window
+        && !ui.doc.show_in_dock()
+    {
         window.set_dock_icon(false);
     }
 }

@@ -232,6 +232,8 @@ pub struct UiAgentSnapshot {
     pub hud: bool,
     pub launch_at_login: UiLaunchAtLogin,
     pub active_workspaces: Vec<WorkspaceId>,
+    /// The visible workspace focus is on, of `active_workspaces`.
+    pub focused_workspace: Option<WorkspaceId>,
     /// Every workspace holding windows, with a preview of its tiles, for Settings › Screens.
     pub windows: Vec<UiWorkspaceWindows>,
     pub last_error: Option<String>,
@@ -422,6 +424,7 @@ mod tests {
             hud: true,
             launch_at_login: UiLaunchAtLogin::On,
             active_workspaces: vec![WorkspaceId::ONE],
+            focused_workspace: Some(WorkspaceId::ONE),
             windows: Vec::new(),
             last_error: None,
         };
@@ -537,6 +540,7 @@ mod tests {
             hud: false,
             launch_at_login: UiLaunchAtLogin::NeedsApproval,
             active_workspaces: vec![WorkspaceId::THREE, WorkspaceId::named('M').unwrap()],
+            focused_workspace: Some(WorkspaceId::THREE),
             windows: Vec::new(),
             last_error: Some("Hotkeys unavailable".into()),
         };

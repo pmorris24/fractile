@@ -155,7 +155,10 @@ pub fn run() -> Result<(), String> {
         app.windowless()
     };
     let window = app.handle();
-    if open_at_launch {
+    // Show in Dock (on unless config.toml turns it off) keeps the live icon there from launch.
+    let show_in_dock =
+        fractile::config::Config::load().map_or(true, |config| config.show_in_dock());
+    if open_at_launch || show_in_dock {
         window.set_dock_icon(true);
     }
     LAUNCH.with(|slot| {

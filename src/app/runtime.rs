@@ -8,6 +8,8 @@ pub(super) struct CycleStatus {
     pub(super) missing_frontmost_window: Option<AppInstanceId>,
     pub(super) close_recheck: Option<Instant>,
     pub(super) active: Vec<WorkspaceId>,
+    /// The visible workspace focus is on: the last one switched to or focused, else the first.
+    pub(super) focused: Option<WorkspaceId>,
     pub(super) layouts: Vec<status_item::WorkspaceLayout>,
     pub(super) menu: Vec<status_item::DisplayWorkspaces>,
     /// Every workspace holding windows, previewed for Settings.
@@ -710,9 +712,16 @@ impl<B: WorkspaceBackend> WorkspaceRuntime<B> {
             .filter(|resolved| self.scope.manages_selector(&resolved.selector))
             .map(|resolved| resolved.workspace)
             .collect();
+        let current = self.focus.history().current;
+        let focused = active
+            .iter()
+            .copied()
+            .find(|workspace| Some(*workspace) == current)
+            .or_else(|| active.first().copied());
         CycleStatus {
             missing_frontmost_window: None,
             close_recheck: None,
+            focused,
             layouts: self.status_layouts(visible, outputs),
             menu: self.workspace_menu(visible, outputs),
             windows: self.workspace_windows(outputs),

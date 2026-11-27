@@ -52,6 +52,21 @@ impl Doc {
             .unwrap_or_default()
     }
 
+    /// Whether Fractile keeps its live icon in the Dock, from `settings.show_in_dock` (defaults
+    /// to on).
+    pub fn show_in_dock(&self) -> bool {
+        self.doc
+            .get("settings")
+            .and_then(Item::as_table_like)
+            .and_then(|table| table.get("show_in_dock"))
+            .and_then(Item::as_bool)
+            .unwrap_or(true)
+    }
+
+    pub fn set_show_in_dock(&mut self, show: bool) {
+        self.set_setting("show_in_dock", (!show).then(|| value(false)));
+    }
+
     /// Whether the Workspace HUD stays on screen, from `settings.hud_stay` (defaults to off).
     pub fn hud_stay(&self) -> bool {
         self.doc

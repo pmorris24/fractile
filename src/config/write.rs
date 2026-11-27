@@ -54,6 +54,8 @@ struct EditableSettings {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     hud_stay: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    show_in_dock: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     layout: Option<LayoutMode>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     mouse_follows_focus: Option<MouseFollowsFocus>,
@@ -79,6 +81,7 @@ impl EditableSettings {
             && self.hud_style.is_none()
             && self.hud_position.is_none()
             && self.hud_stay.is_none()
+            && self.show_in_dock.is_none()
             && self.layout.is_none()
             && self.mouse_follows_focus.is_none()
             && self.trackpad_swipe.is_none()

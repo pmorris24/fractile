@@ -95,6 +95,7 @@ pub struct MainThreadAgent {
     exit_intent: Option<ExitIntent>,
     next_restore_retry: Option<Instant>,
     active_workspaces: Vec<WorkspaceId>,
+    focused_workspace: Option<WorkspaceId>,
     /// Every workspace holding windows, as the last cycle saw them, for Settings.
     workspace_windows: Vec<UiWorkspaceWindows>,
     last_error: Option<String>,
@@ -215,6 +216,7 @@ impl MainThreadAgent {
             exit_intent: None,
             next_restore_retry: None,
             active_workspaces: init.scope.initial_workspaces().to_vec(),
+            focused_workspace: init.scope.initial_workspaces().first().copied(),
             workspace_windows: Vec::new(),
             last_error: hotkey_error,
             latest_debug: None,
@@ -348,6 +350,7 @@ impl MainThreadAgent {
                                 .flatten()
                                 .min();
                         self.active_workspaces.clone_from(&status.active);
+                        self.focused_workspace = status.focused;
                         self.workspace_windows.clone_from(&status.windows);
                         if self.hud
                             && let Some(hud) = status.hud.clone()
@@ -584,6 +587,7 @@ impl MainThreadAgent {
             hud: self.hud,
             launch_at_login: self.launch_at_login.clone(),
             active_workspaces: self.active_workspaces.clone(),
+            focused_workspace: self.focused_workspace,
             windows: self.workspace_windows.clone(),
             last_error: self.last_error.clone(),
         }

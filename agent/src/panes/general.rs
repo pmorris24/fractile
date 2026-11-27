@@ -185,6 +185,26 @@ pub fn pane(ui: &Ui, p: Paint) -> El {
             highlight(mouse_follows_focus_row(ui, p), "mouse-follows-focus"),
         ];
         rows.extend(menu_bar_icon);
+        let in_dock = ui.doc.show_in_dock();
+        rows.push(highlight(
+            controls::toggle_row(
+                p,
+                "show-in-dock",
+                "Show in Dock",
+                Some((
+                    if in_dock {
+                        "The icon shows your focused workspace and its layout"
+                    } else {
+                        "Only while Settings is open"
+                    }
+                    .to_owned(),
+                    p.muted(),
+                )),
+                in_dock,
+                move |ui| ui.set_show_in_dock(!in_dock),
+            ),
+            "show-in-dock",
+        ));
         rows.push(login);
         sections.push(controls::card(p, "agent", rows));
     }

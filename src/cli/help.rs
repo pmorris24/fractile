@@ -165,6 +165,7 @@ pub(crate) fn config_help(executable: &str) -> String {
         "  hud_style       icons | layouts   Workspace HUD drawing style (default: icons)",
         "  hud_position    bottom | top | left | right  Workspace HUD screen edge (default: bottom)",
         "  hud_stay        true | false      Keep the Workspace HUD on screen; windows tile clear of it (default: false)",
+        "  show_in_dock    true | false      Keep Fractile's live icon in the Dock (default: true)",
         "  layout          dwindle | columns How new windows split the layout (default: dwindle)",
         "  mouse_follows_focus  off | display | window  Move pointer on focus changes (default: off)",
         "  trackpad_swipe  true | false      Three-finger swipe switches workspaces (default: true);",

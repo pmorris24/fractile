@@ -180,6 +180,8 @@ pub(crate) struct SettingsDoc {
     pub hud_position: Option<HudPosition>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub hud_stay: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub show_in_dock: Option<bool>,
     #[serde(
         default,
         skip_serializing_if = "Option::is_none",
@@ -243,6 +245,7 @@ impl SettingsDoc {
             && self.hud_style.is_none()
             && self.hud_position.is_none()
             && self.hud_stay.is_none()
+            && self.show_in_dock.is_none()
             && self.layout.is_none()
             && self.mouse_follows_focus.is_none()
             && self.trackpad_swipe.is_none()
@@ -354,6 +357,10 @@ impl SettingsDoc {
         self.menu_bar_icon.unwrap_or_default()
     }
 
+    pub(crate) fn effective_show_in_dock(&self) -> bool {
+        self.show_in_dock.unwrap_or(true)
+    }
+
     pub(crate) fn effective_hud_stay(&self) -> bool {
         self.hud_stay.unwrap_or(false)
     }
@@ -433,6 +440,7 @@ pub(crate) struct EffectiveSettings {
     pub hud_style: &'static str,
     pub hud_position: &'static str,
     pub hud_stay: bool,
+    pub show_in_dock: bool,
     pub layout: &'static str,
     pub mouse_follows_focus: &'static str,
     pub trackpad_swipe: bool,
@@ -533,6 +541,7 @@ impl ConfigDoc {
             hud_style: self.settings.effective_hud_style().as_str(),
             hud_position: self.settings.effective_hud_position().as_str(),
             hud_stay: self.settings.effective_hud_stay(),
+            show_in_dock: self.settings.effective_show_in_dock(),
             layout: self.settings.effective_layout().as_str(),
             mouse_follows_focus: self.settings.effective_mouse_follows_focus().as_str(),
             trackpad_swipe: self.settings.effective_trackpad_swipe(),
